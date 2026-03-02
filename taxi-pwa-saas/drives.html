@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LiveMad Driver – Premium</title>
+    <title>LiveMad driver – Premium</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -31,7 +31,7 @@
     
     <div id="auth-screen" class="flex flex-col justify-center p-10 h-full text-center ui-layer interact">
         <h1 class="text-4xl font-black mb-1">Live<span style="color:var(--blue)">Mad</span></h1>
-        <p class="text-[10px] font-bold tracking-[3px] text-sky-400 mb-10 uppercase">Driver Premium Panel</p>
+        <p class="text-[10px] font-bold tracking-[3px] text-sky-400 mb-10 uppercase">driver Premium Panel</p>
         <input type="text" id="user-input" placeholder="Usuario" class="lm-input">
         <input type="password" id="pass-input" placeholder="Contraseña" class="lm-input">
         <button onclick="intentarLogin()" class="lm-btn-primary mt-4">ENTRAR AL SISTEMA</button>
@@ -74,7 +74,7 @@
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
 
-        const { data: d } = await _supabase.from('Drivers').select('*').eq('usuario', u).single();
+        const { data: d } = await _supabase.from('drivers').select('*').eq('usuario', u).single();
 
         if (d && d.acceso_bloqueado) {
             alert("⚠️ Tu acceso está PAUSADO. Contacta con administración.");
