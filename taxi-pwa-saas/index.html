@@ -11,27 +11,41 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        :root { --blue: #00B5FF; --dark: #112F5C; --bg-app: #ffffff; --input-bg: #e5e7eb; }
+        :root { --blue: #00B5FF; --dark: #112F5C; --bg-app: #ffffff; --input-bg: #f3f4f6; }
         body { background: #001a3d; font-family: "Montserrat", sans-serif; margin: 0; display: flex; justify-content: center; height: 100vh; }
         .mobile-container { width: 100%; max-width: 414px; background: var(--bg-app); position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+        
+        /* Pantalla de Autenticación */
         #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: #001a3d; color: white; z-index: 1000; text-align: center; }
         .input-auth { width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 16px; }
-        #main-app { display: none; flex-direction: column; height: 100%; background: white; }
-        .user-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* App Principal */
+        #main-app { display: none; flex-direction: column; height: 100%; background: white; overflow-y: auto; }
+        .user-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
         .user-info { display: flex; align-items: center; gap: 12px; }
-        .avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; background: #ddd; }
-        .logo-txt { font-weight: 800; font-size: 22px; color: var(--dark); }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #ddd; }
+        .logo-txt { font-weight: 800; font-size: 20px; color: var(--dark); }
         .logo-txt span { color: var(--blue); }
-        .form-content { padding: 0 20px; }
-        .input-group { position: relative; margin-bottom: 10px; }
-        .input-group input { width: 100%; padding: 15px 50px 15px 18px; border-radius: 10px; background: var(--input-bg); border: none; font-size: 15px; font-weight: 500; color: #444; }
-        .input-group i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--blue); font-size: 18px; cursor: pointer; }
-        #map { width: 100%; flex-grow: 1; background: #f0f0f0; margin-top: 10px; }
-        .btn-ver-precio { background: linear-gradient(90deg, #38bdf8 0%, #4f46e5 100%); color: white; padding: 18px; border-radius: 12px; width: 90%; margin: 15px auto; font-weight: 700; text-align: center; cursor: pointer; border: none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); }
-        .bottom-nav { height: 75px; background: white; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #eee; }
-        .nav-item { text-align: center; color: #999; cursor: pointer; font-size: 11px; font-weight: 600; }
+
+        .form-content { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .input-group { position: relative; }
+        .input-group label { display: block; font-size: 10px; font-weight: 700; color: var(--dark); margin-bottom: 4px; margin-left: 5px; text-transform: uppercase; }
+        .input-group input { width: 100%; padding: 14px 45px 14px 15px; border-radius: 12px; background: var(--input-bg); border: 1px solid #e5e7eb; font-size: 14px; font-weight: 500; color: #333; outline: none; }
+        .input-group i { position: absolute; right: 15px; top: 35px; color: var(--blue); font-size: 18px; }
+
+        #map { width: 100%; height: 200px; background: #f0f0f0; margin-top: 10px; border-radius: 15px; }
+        
+        .info-card { background: #f9fafb; margin: 15px 20px; padding: 15px; border-radius: 15px; border: 1px solid #eee; display: none; }
+        .price-val { font-size: 28px; font-weight: 800; color: var(--dark); text-align: center; display: block; }
+        .tarifa-badge { font-size: 10px; background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; font-weight: 700; margin-bottom: 5px; display: inline-block; }
+
+        .btn-ver-precio { background: linear-gradient(90deg, #38bdf8 0%, #4f46e5 100%); color: white; padding: 18px; border-radius: 14px; width: 90%; margin: 10px auto; font-weight: 700; text-align: center; cursor: pointer; border: none; transition: 0.3s; }
+        .btn-ver-precio:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .bottom-nav { height: 70px; background: white; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #eee; margin-top: auto; }
+        .nav-item { text-align: center; color: #999; font-size: 10px; font-weight: 600; }
         .nav-item.active { color: var(--dark); }
-        .nav-item i { display: block; font-size: 22px; margin-bottom: 4px; }
+        .nav-item i { display: block; font-size: 20px; margin-bottom: 3px; }
     </style>
 </head>
 <body>
@@ -45,37 +59,52 @@
     </div>
 
     <div id="main-app">
-        <div id="view-home" style="display: flex; flex-direction: column; height: calc(100% - 75px);">
-            <header class="user-header">
-                <div class="user-info">
-                    <img id="img-mini" src="https://i.pravatar.cc/150?u=admin" class="avatar">
-                    <div>
-                        <p style="font-size: 12px; color: #aaa; margin:0;">Premium Access</p>
-                        <h2 id="name-mini" style="font-size: 16px; font-weight: 700; margin:0;">Dani Martínez</h2>
-                    </div>
-                </div>
-                <div class="logo-txt">Live<span>Mad</span></div>
-            </header>
-
-            <div class="form-content">
-                <div class="input-group">
-                    <input type="text" id="origin" placeholder="Origen">
-                    <i class="fa-solid fa-location-crosshairs" onclick="geolocalizar()"></i>
-                </div>
-                <div class="input-group">
-                    <input type="text" id="destination" placeholder="Destino">
-                    <i class="fa-solid fa-magnifying-glass"></i>
+        <header class="user-header">
+            <div class="user-info">
+                <img id="img-mini" src="https://i.pravatar.cc/150?u=admin" class="avatar">
+                <div>
+                    <p style="font-size: 10px; color: #aaa; margin:0;">Premium Member</p>
+                    <h2 style="font-size: 14px; font-weight: 700; margin:0;">Dani Martínez</h2>
                 </div>
             </div>
+            <div class="logo-txt">Live<span>Mad</span></div>
+        </header>
 
-            <div id="map"></div>
-            <button id="btnAction" class="btn-ver-precio" onclick="procesarViaje()">CALCULAR PRECIO</button>
+        <div class="form-content">
+            <div class="input-group">
+                <label>Recogida</label>
+                <input type="text" id="origin" placeholder="¿Dónde te buscamos?">
+                <i class="fa-solid fa-location-crosshairs" onclick="geolocalizar()"></i>
+            </div>
+            <div class="input-group">
+                <label>Destino</label>
+                <input type="text" id="destination" placeholder="¿A dónde vas?">
+                <i class="fa-solid fa-flag-checkered"></i>
+            </div>
+            <div class="input-group">
+                <label>Fecha y Hora (Mín. 30 min antelación)</label>
+                <input type="datetime-local" id="fechaHora">
+                <i class="fa-solid fa-calendar-day"></i>
+            </div>
         </div>
+
+        <div id="map"></div>
+
+        <div id="info-resumen" class="info-card">
+            <div id="tarifa-tag" class="tarifa-badge">TARIFA ESTÁNDAR</div>
+            <span id="precio-txt" class="price-val">0.00€</span>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #666; margin-top: 10px;">
+                <span><i class="fa-solid fa-route"></i> <span id="dist-txt">0 km</span></span>
+                <span><i class="fa-solid fa-clock"></i> <span id="time-txt">0 min</span></span>
+            </div>
+        </div>
+
+        <button id="btnAction" class="btn-ver-precio" onclick="procesarViaje()">CALCULAR PRECIO</button>
 
         <nav class="bottom-nav">
             <div class="nav-item active"><i class="fa-solid fa-house"></i>Home</div>
-            <div class="nav-item"><i class="fa-solid fa-route"></i>Viajes</div>
-            <div class="nav-item"><i class="fa-solid fa-circle-user"></i>Perfil</div>
+            <div class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i>Reservas</div>
+            <div class="nav-item"><i class="fa-solid fa-user"></i>Perfil</div>
         </nav>
     </div>
 </div>
@@ -84,11 +113,18 @@
     // --- CONFIGURACIÓN SUPABASE ---
     const SUPABASE_URL = 'https://wdxtnvblolhqipscpxer.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_zOMBuq-XNjESL-0p03fafQ_2hDT6Cni';
-    
-    // Cambiamos el nombre a supabaseClient para evitar errores de duplicado
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let map, directionsService, directionsRenderer, geocoder, ultimoCalculo = null;
+
+    // Al cargar, ponemos la fecha mínima (ahora + 30 min)
+    document.addEventListener('DOMContentLoaded', () => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 30);
+        const localTime = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        document.getElementById('fechaHora').min = localTime;
+        document.getElementById('fechaHora').value = localTime;
+    });
 
     function intentarAcceso() {
         const u = document.getElementById('user-login').value;
@@ -96,28 +132,17 @@
         if (u === 'admin' && p === '1234') {
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
-            // Cargamos el mapa solo después de entrar
             initMap();
-        } else { 
-            alert("Acceso denegado. Prueba con admin / 1234"); 
-        }
+        } else { alert("Acceso denegado"); }
     }
 
     function initMap() {
-        if (typeof google === 'undefined') return; // Evita errores si la API de Google no cargó
-        
+        if (typeof google === 'undefined') return;
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer();
         geocoder = new google.maps.Geocoder();
-        
-        map = new google.maps.Map(document.getElementById('map'), { 
-            center: {lat: 40.4168, lng: -3.7038}, 
-            zoom: 14, 
-            disableDefaultUI: true 
-        });
-        
+        map = new google.maps.Map(document.getElementById('map'), { center: {lat: 40.4168, lng: -3.7038}, zoom: 14, disableDefaultUI: true });
         directionsRenderer.setMap(map);
-        
         new google.maps.places.Autocomplete(document.getElementById('origin'), { componentRestrictions: { country: "es" } });
         new google.maps.places.Autocomplete(document.getElementById('destination'), { componentRestrictions: { country: "es" } });
     }
@@ -134,56 +159,92 @@
         }
     }
 
+    function obtenerTarifa(fechaStr) {
+        const f = new Date(fechaStr);
+        const dia = f.getDay(); 
+        const hora = f.getHours();
+        let base = 6.00;
+        let kmPrecio = 1.45;
+        let nombre = "TARIFA DIURNA";
+
+        if (dia === 0 || dia === 6) {
+            kmPrecio = 1.65;
+            nombre = "TARIFA FIN DE SEMANA";
+        } else if (hora >= 21 || hora < 7) {
+            kmPrecio = 1.65;
+            nombre = "TARIFA NOCTURNA";
+        }
+        return { base, kmPrecio, nombre };
+    }
+
     async function procesarViaje() {
         const btn = document.getElementById('btnAction');
         const o = document.getElementById('origin').value;
         const d = document.getElementById('destination').value;
+        const fh = document.getElementById('fechaHora').value;
 
-        if (!o || !d) {
-            alert("Por favor indica origen y destino");
+        if (!o || !d || !fh) {
+            alert("Completa todos los campos");
+            return;
+        }
+
+        // Validación 30 min
+        const fSeleccionada = new Date(fh);
+        const ahora = new Date();
+        if ((fSeleccionada - ahora) < (30 * 60000)) {
+            alert("La reserva debe ser con al menos 30 minutos de antelación.");
             return;
         }
 
         if (!ultimoCalculo) {
-            // Primer clic: Calcular ruta y precio
+            btn.innerText = "CALCULANDO...";
             directionsService.route({ origin: o, destination: d, travelMode: 'DRIVING' }, (res, status) => {
                 if(status === 'OK') {
                     directionsRenderer.setDirections(res);
-                    const km = res.routes[0].legs[0].distance.value / 1000;
-                    const precio = (5 + km * 1.5).toFixed(2);
-                    ultimoCalculo = { o, d, p: precio, k: km.toFixed(1) };
-                    btn.innerText = `CONFIRMAR Y PEDIR (${precio}€)`;
+                    const leg = res.routes[0].legs[0];
+                    const km = leg.distance.value / 1000;
+                    const tiempo = leg.duration.text;
+                    
+                    const t = obtenerTarifa(fh);
+                    const total = (t.base + (km * t.kmPrecio)).toFixed(2);
+
+                    ultimoCalculo = { o, d, p: total, k: km.toFixed(1), f: fh, t: t.nombre };
+
+                    // Mostrar Card
+                    document.getElementById('dist-txt').innerText = km.toFixed(1) + " km";
+                    document.getElementById('time-txt').innerText = tiempo;
+                    document.getElementById('precio-txt').innerText = total + "€";
+                    document.getElementById('tarifa-tag').innerText = t.nombre;
+                    document.getElementById('info-resumen').style.display = 'block';
+                    
+                    btn.innerText = "CONFIRMAR RESERVA";
                 } else {
-                    alert("No se pudo calcular la ruta");
+                    alert("Error al calcular ruta");
+                    btn.innerText = "CALCULAR PRECIO";
                 }
             });
         } else {
-            // Segundo clic: Enviar a Supabase
             btn.disabled = true;
-            btn.innerText = "ENVIANDO SOLICITUD...";
+            btn.innerText = "ENVIANDO...";
             
-            try {
-                const { error } = await supabaseClient.from('viajes').insert([{
-                    cliente_nombre: "Dani Martínez",
-                    origen: ultimoCalculo.o,
-                    destino: ultimoCalculo.d,
-                    precio: parseFloat(ultimoCalculo.p),
-                    distancia: ultimoCalculo.k + " km",
-                    estado: 'pendiente'
-                }]);
+            const { error } = await supabaseClient.from('viajes').insert([{
+                cliente_nombre: "Dani Martínez",
+                origen: ultimoCalculo.o,
+                destino: ultimoCalculo.d,
+                precio: parseFloat(ultimoCalculo.p),
+                distancia: ultimoCalculo.k + " km",
+                fecha_reserva: ultimoCalculo.f,
+                tarifa_aplicada: ultimoCalculo.t,
+                estado: 'pendiente'
+            }]);
 
-                if (!error) {
-                    alert("¡Viaje solicitado con éxito!");
-                    location.reload();
-                } else {
-                    console.error(error);
-                    alert("Error al guardar en la base de datos. Verifica la tabla 'viajes'.");
-                    btn.disabled = false;
-                    btn.innerText = "REINTENTAR";
-                }
-            } catch (err) {
-                alert("Error de conexión");
+            if (!error) {
+                alert("¡Reserva confirmada con éxito!");
+                location.reload();
+            } else {
+                alert("Error en base de datos");
                 btn.disabled = false;
+                btn.innerText = "REINTENTAR";
             }
         }
     }
