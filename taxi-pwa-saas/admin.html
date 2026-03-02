@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>LiveMad – Panel de Control Flota</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background: #001a3d; color: white; font-family: sans-serif; }
+        .card-admin { background: #0a2551; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; }
+        .btn-pay { background: #22c55e; color: black; font-weight: bold; padding: 10px; border-radius: 10px; width: 100%; }
+        .btn-pause { background: #ef4444; color: white; font-weight: bold; padding: 10px; border-radius: 10px; width: 100%; }
+    </style>
+</head>
+<body class="p-5">
+
+    <h1 class="text-2xl font-bold mb-6 text-sky-400 text-center">Gestión de Conductores</h1>
+
+    <div id="lista-conductores" class="space-y-6">
+        </div>
+
+    <script>
+        const S_URL = 'https://asqglwuasvpwstyzvujy.supabase.co';
+        const S_KEY = 'TU_KEY_AQUI'; // Usa la misma de tus otros archivos
+        const _sp = supabase.createClient(S_URL, S_KEY);
+
+        async function cargarConductores() {
+            const { data } = await _sp.from('Drivers').select('*');
+            const lista = document.getElementById('lista-conductores');
+            lista.innerHTML = '';
+
+            data.forEach(d => {
+                lista.innerHTML += `
+                <div class="card-admin">
+                    <div class="flex justify-between mb-4">
+                        <h2 class="font-bold text-lg">${d.nombre}</h2>
+                        <span class="${d.acceso_bloqueado ? 'text-red-500' : 'text-green-500'} font-bold text-xs uppercase">
+                            ${d.acceso_bloqueado ? 'BLOQUEADO' : 'ACTIVO'}
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-[10px] text-gray-400 mb-4">
+                        <p>Matrícula: <span class="text-white">${d.matricula || '---'}</span></p>
+                        <p>Coche: <span class="text-white">${d.marca_v || '---'}</span></p>
+                        <p>Tel: <span class="text-white">${d.telefono || '---'}</span></p>
+                        <p>Color: <span class="text-white">${d.color_v || '---'}</span></p>
+                    </div>
+
+                    <div class="bg-black/20 p-3 rounded-xl mb-4">
+                        <div class="flex justify-between text-sm">
+                            <span>Recuento Total:</span>
+                            <span class="font-bold">${d.total_dinero_generado} €</span>
+                        </div>
+                        <div class="flex justify-between text-orange-400 text-sm mt-1">
+                            <span>Mi Comisión (10%):</span>
+                            <span class="font-black text-lg">${d.comision_pendiente_10} €</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="bloquear('${d.id}', ${!d.acceso_bloqueado})" class="btn-pause">
+                            ${d.acceso_bloqueado ? 'ACTIVAR ACCESO' : 'PAUSAR ACCESO'}
+                        </button>
+                        <button onclick="resetComision('${d.id}')" class="btn-pay">PAGADO (RESET)</button>
+                    </div>
+                </div>
+                `;
+            });
+        }
+
+        async function bloquear(id, estado) {
+            await _sp.from('Drivers').update({ acceso_bloqueado: estado }).eq('id', id);
+            cargarConductores();
+        }
+
+        async function resetComision(id) {
+            if(confirm("¿Confirmas que el conductor te ha pagado su comisión mensual?")) {
+                await _sp.from('Drivers').update({ comision_pendiente_10: 0 }).eq('id', id);
+                cargarConductores();
+            }
+        }
+
+        cargarConductores();
+    </script>
+</body>
+</html>
