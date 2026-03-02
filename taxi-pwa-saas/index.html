@@ -39,8 +39,8 @@
 <div class="mobile-container">
     <div id="auth-screen">
         <div style="font-size: 35px; font-weight: 800; margin-bottom: 40px;">Live<span style="color:var(--blue)">Mad</span></div>
-        <input type="text" id="user-login" placeholder="admin" class="input-auth">
-        <input type="password" id="pass-login" placeholder="1234" class="input-auth">
+        <input type="text" id="user-login" placeholder="Usuario (admin)" class="input-auth">
+        <input type="password" id="pass-login" placeholder="Contraseña (1234)" class="input-auth">
         <button onclick="intentarAcceso()" class="btn-ver-precio" style="width: 100%; margin-top: 20px;">INICIAR SESIÓN</button>
     </div>
 
@@ -81,10 +81,12 @@
 </div>
 
 <script>
-    // --- CONEXIÓN SUPABASE ---
+    // --- CONFIGURACIÓN SUPABASE ---
     const SUPABASE_URL = 'https://wdxtnvblolhqipscpxer.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_zOMBuq-XNjESL-0p03fafQ_2hDT6Cni';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    
+    // Cambiamos el nombre a supabaseClient para evitar errores de duplicado
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let map, directionsService, directionsRenderer, geocoder, ultimoCalculo = null;
 
@@ -94,16 +96,28 @@
         if (u === 'admin' && p === '1234') {
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
+            // Cargamos el mapa solo después de entrar
             initMap();
-        } else { alert("Acceso denegado"); }
+        } else { 
+            alert("Acceso denegado. Prueba con admin / 1234"); 
+        }
     }
 
     function initMap() {
+        if (typeof google === 'undefined') return; // Evita errores si la API de Google no cargó
+        
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer();
         geocoder = new google.maps.Geocoder();
-        map = new google.maps.Map(document.getElementById('map'), { center: {lat: 40.4168, lng: -3.7038}, zoom: 14, disableDefaultUI: true });
+        
+        map = new google.maps.Map(document.getElementById('map'), { 
+            center: {lat: 40.4168, lng: -3.7038}, 
+            zoom: 14, 
+            disableDefaultUI: true 
+        });
+        
         directionsRenderer.setMap(map);
+        
         new google.maps.places.Autocomplete(document.getElementById('origin'), { componentRestrictions: { country: "es" } });
         new google.maps.places.Autocomplete(document.getElementById('destination'), { componentRestrictions: { country: "es" } });
     }
@@ -125,38 +139,57 @@
         const o = document.getElementById('origin').value;
         const d = document.getElementById('destination').value;
 
+        if (!o || !d) {
+            alert("Por favor indica origen y destino");
+            return;
+        }
+
         if (!ultimoCalculo) {
+            // Primer clic: Calcular ruta y precio
             directionsService.route({ origin: o, destination: d, travelMode: 'DRIVING' }, (res, status) => {
                 if(status === 'OK') {
                     directionsRenderer.setDirections(res);
                     const km = res.routes[0].legs[0].distance.value / 1000;
                     const precio = (5 + km * 1.5).toFixed(2);
                     ultimoCalculo = { o, d, p: precio, k: km.toFixed(1) };
-                    btn.innerText = `PEDIR TAXI (${precio}€)`;
+                    btn.innerText = `CONFIRMAR Y PEDIR (${precio}€)`;
+                } else {
+                    alert("No se pudo calcular la ruta");
                 }
             });
         } else {
+            // Segundo clic: Enviar a Supabase
             btn.disabled = true;
             btn.innerText = "ENVIANDO SOLICITUD...";
-            const { error } = await supabase.from('viajes').insert([{
-                cliente_nombre: "Dani Martínez",
-                origen: ultimoCalculo.o,
-                destino: ultimoCalculo.d,
-                precio: parseFloat(ultimoCalculo.p),
-                distancia: ultimoCalculo.k + " km",
-                estado: 'pendiente'
-            }]);
+            
+            try {
+                const { error } = await supabaseClient.from('viajes').insert([{
+                    cliente_nombre: "Dani Martínez",
+                    origen: ultimoCalculo.o,
+                    destino: ultimoCalculo.d,
+                    precio: parseFloat(ultimoCalculo.p),
+                    distancia: ultimoCalculo.k + " km",
+                    estado: 'pendiente'
+                }]);
 
-            if (!error) {
-                alert("¡Viaje solicitado! Buscando conductor...");
-                location.reload();
-            } else {
-                alert("Error al conectar con la base de datos");
+                if (!error) {
+                    alert("¡Viaje solicitado con éxito!");
+                    location.reload();
+                } else {
+                    console.error(error);
+                    alert("Error al guardar en la base de datos. Verifica la tabla 'viajes'.");
+                    btn.disabled = false;
+                    btn.innerText = "REINTENTAR";
+                }
+            } catch (err) {
+                alert("Error de conexión");
                 btn.disabled = false;
             }
         }
     }
 </script>
+
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places" async defer></script>
+
 </body>
 </html>
