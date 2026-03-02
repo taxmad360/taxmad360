@@ -145,9 +145,9 @@
         if (nuevoEstado === 'finalizado') {
             const { data: v } = await _supabase.from('viajes').select('*').eq('id', id).single();
             const usuario = document.getElementById('display-name').innerText;
-            const { data: d } = await _supabase.from('Drivers').select('*').eq('usuario', usuario).single();
+            const { data: d } = await _supabase.from('drivers').select('*').eq('usuario', usuario).single();
             
-            await _supabase.from('Drivers').update({
+            await _supabase.from('drivers').update({
                 total_dinero_generado: (d.total_dinero_generado || 0) + v.precio,
                 comision_pendiente_10: (d.comision_pendiente_10 || 0) + (v.precio * 0.10)
             }).eq('id', d.id);
