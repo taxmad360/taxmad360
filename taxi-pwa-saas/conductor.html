@@ -2,29 +2,36 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaxMad – Driver GPS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TaxMad – Driver GPS Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background: #000; color: white; font-family: sans-serif; margin: 0; overflow: hidden; }
-        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        body { background: #000; color: white; font-family: 'Montserrat', sans-serif; margin: 0; overflow: hidden; }
+        .glass-card { background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         .ui-overlay { position: relative; z-index: 10; pointer-events: none; }
         .pointer-events-auto { pointer-events: auto; }
         .hidden { display: none; }
+        
+        /* Animación para nuevos viajes */
+        .slide-up { animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        /* Estilo Dark para Google Maps */
+        .gm-style iframe + div { border:none !important; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
 
     <div id="login-screen" class="flex-1 flex flex-col justify-center items-center p-6 ui-overlay pointer-events-auto">
-        <div class="w-full max-sm glass-card p-8 rounded-3xl shadow-2xl">
-            <h2 class="text-3xl font-bold text-center mb-8 text-[#00f2fe]">Driver GPS</h2>
+        <div class="w-full max-w-sm glass-card p-8 rounded-3xl shadow-2xl">
+            <h2 class="text-3xl font-bold text-center mb-8 text-[#00f2fe]">Live<span class="text-white">Mad</span> Driver</h2>
             <div class="space-y-4">
-                <input type="text" id="user" placeholder="Usuario (admin)" class="w-full bg-[#111] border border-zinc-800 rounded-xl p-4 outline-none">
-                <input type="password" id="pass" placeholder="Contraseña (1234)" class="w-full bg-[#111] border border-zinc-800 rounded-xl p-4 outline-none">
-                <button onclick="intentarLogin()" class="w-full bg-[#00f2fe] text-black font-bold p-4 rounded-xl shadow-lg">ENTRAR</button>
+                <input type="text" id="user" placeholder="Usuario" class="w-full bg-[#111] border border-zinc-800 rounded-xl p-4 outline-none text-white">
+                <input type="password" id="pass" placeholder="Contraseña" class="w-full bg-[#111] border border-zinc-800 rounded-xl p-4 outline-none text-white">
+                <button onclick="intentarLogin()" class="w-full bg-[#00f2fe] text-black font-bold p-4 rounded-xl shadow-lg active:scale-95 transition-transform">ENTRAR AL PANEL</button>
             </div>
         </div>
     </div>
@@ -34,15 +41,15 @@
         <div id="map"></div>
 
         <div class="ui-overlay p-4">
-            <div class="glass-card p-4 rounded-2xl flex items-center justify-between pointer-events-auto">
+            <div class="glass-card p-4 rounded-2xl flex items-center justify-between pointer-events-auto shadow-xl">
                 <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-[#00f2fe] rounded-full flex items-center justify-center text-black font-bold" id="driver-initial">A</div>
+                    <div class="w-10 h-10 bg-[#00f2fe] rounded-full flex items-center justify-center text-black font-bold text-lg" id="driver-initial">-</div>
                     <div>
-                        <p class="text-xs text-gray-400">Conductor</p>
-                        <p class="font-bold text-sm" id="driver-display-name">Admin</p>
+                        <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Servicio Activo</p>
+                        <p class="font-bold text-sm text-white" id="driver-display-name">Cargando...</p>
                     </div>
                 </div>
-                <button onclick="toggleConexion()" id="btn-conexion" class="bg-green-600 text-white px-6 py-2 rounded-full font-bold text-xs transition-all">
+                <button onclick="toggleConexion()" id="btn-conexion" class="bg-green-600 text-white px-5 py-2 rounded-full font-bold text-xs transition-all shadow-lg shadow-green-900/20">
                     CONECTADO
                 </button>
             </div>
@@ -50,16 +57,22 @@
 
         <div class="flex-1"></div>
 
+        <div id="trip-container" class="ui-overlay p-4 pointer-events-auto mb-2">
+            </div>
+
         <div class="ui-overlay p-4 pointer-events-auto">
-            <div class="glass-card p-4 rounded-2xl flex justify-around text-[#00f2fe]">
-                <button class="text-center"><i class="fas fa-home block"></i><span class="text-[10px]">Home</span></button>
-                <button class="text-zinc-500"><i class="fas fa-list block"></i><span class="text-[10px]">Viajes</span></button>
-                <button class="text-zinc-500"><i class="fas fa-wallet block"></i><span class="text-[10px]">Cartera</span></button>
+            <div class="glass-card p-4 rounded-2xl flex justify-around text-[#00f2fe] border-t border-zinc-800">
+                <button class="flex flex-col items-center"><i class="fas fa-location-arrow mb-1"></i><span class="text-[9px] uppercase font-bold">Mapa</span></button>
+                <button class="flex flex-col items-center text-zinc-500"><i class="fas fa-history mb-1"></i><span class="text-[9px] uppercase font-bold">Viajes</span></button>
+                <button class="flex flex-col items-center text-zinc-500"><i class="fas fa-user-circle mb-1"></i><span class="text-[9px] uppercase font-bold">Perfil</span></button>
             </div>
         </div>
     </div>
 
+    <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
     <script>
+        // Configuración Supabase
         const SP_URL = 'https://asqglwuasvpwstyzvujy.supabase.co';
         const SP_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzcWdsd2xnZ3F4YW55cWtzdXNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNDc1NjUsImV4cCI6MjA4NjcyMzU2NX0.nFCvgWihLakBxfXX32NuXjHdJXCH5IYVfddoyehbkHg';
         const _supabase = window.supabase.createClient(SP_URL, SP_KEY);
@@ -67,6 +80,7 @@
         let map, marker, watchId;
         let conectado = true;
         let driverId = null;
+        const alertSound = document.getElementById('alert-sound');
 
         // 1. LOGIN
         async function intentarLogin() {
@@ -76,11 +90,11 @@
             if (user === 'admin' && pass === '1234') {
                 iniciarPanel('Administrador');
             } else {
-                const { data } = await _supabase.from('Drivers').select('*').eq('nombre', user).single();
+                const { data, error } = await _supabase.from('Drivers').select('*').eq('nombre', user).single();
                 if (data) {
                     driverId = data.id;
                     iniciarPanel(data.nombre);
-                } else { alert("Error de acceso"); }
+                } else { alert("Usuario no encontrado"); }
             }
         }
 
@@ -88,20 +102,40 @@
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('home-conductor').classList.remove('hidden');
             document.getElementById('driver-display-name').innerText = nombre;
-            document.getElementById('driver-initial').innerText = nombre[0];
+            document.getElementById('driver-initial').innerText = nombre[0].toUpperCase();
+            
             initGoogleMap();
             startTracking();
+            listenToTrips();
         }
 
-        // 2. MAPA Y GPS
+        // 2. MAPA Y SEGUIMIENTO GPS
         function initGoogleMap() {
+            const darkStyle = [
+                { "elementType": "geometry", "stylers": [{ "color": "#1d2c4d" }] },
+                { "elementType": "labels.text.fill", "stylers": [{ "color": "#8ec3b9" }] },
+                { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#304a7d" }] },
+                { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#0e1626" }] }
+            ];
+
             map = new google.maps.Map(document.getElementById("map"), {
                 center: { lat: 40.4168, lng: -3.7038 },
-                zoom: 16,
-                styles: [{ "elementType": "geometry", "stylers": [{ "color": "#212121" }] }, /* ...estilo oscuro... */],
+                zoom: 17,
+                styles: darkStyle,
                 disableDefaultUI: true
             });
-            marker = new google.maps.Marker({ map: map, icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 5, fillLight: 1, fillColor: '#00f2fe', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 } });
+
+            marker = new google.maps.Marker({
+                map: map,
+                icon: {
+                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                    scale: 6,
+                    fillColor: '#00f2fe',
+                    fillOpacity: 1,
+                    strokeColor: '#fff',
+                    strokeWeight: 2
+                }
+            });
         }
 
         function startTracking() {
@@ -109,32 +143,94 @@
                 watchId = navigator.geolocation.watchPosition(async (pos) => {
                     if (!conectado) return;
                     
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    const coords = { lat, lng };
-
-                    // Mover marcador en el mapa
+                    const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                     marker.setPosition(coords);
                     map.panTo(coords);
 
-                    // Actualizar en Supabase (Tabla Drivers)
                     if (driverId) {
-                        await _supabase.from('Drivers').update({ latitud: lat, longitud: lng, estado: 'libre' }).eq('id', driverId);
+                        await _supabase.from('Drivers').update({ 
+                            latitud: coords.lat, 
+                            longitud: coords.lng, 
+                            estado: 'libre' 
+                        }).eq('id', driverId);
                     }
                 }, null, { enableHighAccuracy: true });
             }
+        }
+
+        // 3. GESTIÓN DE VIAJES (Realtime)
+        function listenToTrips() {
+            _supabase
+                .channel('viajes-channel')
+                .on('postgres_changes', { event: '*', table: 'viajes' }, payload => {
+                    if (payload.eventType === 'INSERT' && conectado) {
+                        alertSound.play();
+                        renderTripCard(payload.new);
+                    }
+                    if (payload.eventType === 'UPDATE' || payload.eventType === 'DELETE') {
+                        refreshCurrentTrips();
+                    }
+                })
+                .subscribe();
+            
+            refreshCurrentTrips(); // Carga inicial
+        }
+
+        async function refreshCurrentTrips() {
+            const { data } = await _supabase.from('viajes').select('*').or('estado.eq.pendiente,estado.eq.aceptado');
+            const container = document.getElementById('trip-container');
+            container.innerHTML = '';
+            if (data) data.forEach(trip => renderTripCard(trip));
+        }
+
+        function renderTripCard(trip) {
+            const container = document.getElementById('trip-container');
+            const isPending = trip.estado === 'pendiente';
+            
+            const card = document.createElement('div');
+            card.className = "glass-card p-5 rounded-3xl mb-3 slide-up shadow-2xl border-[#00f2fe]/20";
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <span class="bg-[#00f2fe] text-black text-[9px] font-black px-2 py-1 rounded-md uppercase tracking-tighter">${trip.estado}</span>
+                        <p class="text-xs text-gray-400 mt-1"><i class="far fa-clock"></i> ${new Date(trip.fecha_reserva).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                    </div>
+                    <p class="text-2xl font-black text-white">${trip.precio}€</p>
+                </div>
+                <div class="space-y-3 mb-5">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-circle text-[8px] text-[#00f2fe]"></i>
+                        <p class="text-xs font-bold truncate">${trip.origen}</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-square text-[8px] text-zinc-500"></i>
+                        <p class="text-xs font-bold truncate text-gray-300">${trip.destino}</p>
+                    </div>
+                </div>
+                <button onclick="cambiarEstadoViaje('${trip.id}', '${isPending ? 'aceptado' : 'finalizado'}')" 
+                    class="w-full ${isPending ? 'bg-[#00f2fe] text-black' : 'bg-white text-black'} font-black py-4 rounded-2xl text-xs uppercase tracking-widest shadow-lg">
+                    ${isPending ? 'Aceptar Servicio' : 'Finalizar Viaje'}
+                </button>
+            `;
+            container.appendChild(card);
+        }
+
+        async function cambiarEstadoViaje(id, nuevoEstado) {
+            const { error } = await _supabase.from('viajes').update({ estado: nuevoEstado }).eq('id', id);
+            if (!error) refreshCurrentTrips();
         }
 
         function toggleConexion() {
             conectado = !conectado;
             const btn = document.getElementById('btn-conexion');
             if (conectado) {
-                btn.className = "bg-green-600 text-white px-6 py-2 rounded-full font-bold text-xs pointer-events-auto";
+                btn.className = "bg-green-600 text-white px-5 py-2 rounded-full font-bold text-xs pointer-events-auto shadow-lg";
                 btn.innerText = "CONECTADO";
             } else {
-                btn.className = "bg-zinc-700 text-gray-400 px-6 py-2 rounded-full font-bold text-xs pointer-events-auto";
+                btn.className = "bg-zinc-700 text-gray-400 px-5 py-2 rounded-full font-bold text-xs pointer-events-auto shadow-none";
                 btn.innerText = "OFFLINE";
                 if (driverId) _supabase.from('Drivers').update({ estado: 'desconectado' }).eq('id', driverId);
+                document.getElementById('trip-container').innerHTML = '';
             }
         }
     </script>
