@@ -85,7 +85,7 @@
                 comision_pendiente_10: 0
             };
 
-            const { error } = await _sp.from('Drivers').insert([datos]);
+            const { error } = await _sp.from('drivers').insert([datos]);
 
             if(error) {
                 alert("Error: " + error.message);
@@ -98,7 +98,7 @@
         }
 
         async function cargarDrivers() {
-            const { data, error } = await _sp.from('Drivers').select('*');
+            const { data, error } = await _sp.from('drivers').select('*');
             if(error) return;
 
             const lista = document.getElementById('lista-conductores');
@@ -121,7 +121,7 @@
         }
 
         async function resetDeuda(id) {
-            await _sp.from('Drivers').update({ comision_pendiente_10: 0 }).eq('id', id);
+            await _sp.from('drivers').update({ comision_pendiente_10: 0 }).eq('id', id);
             cargarDrivers();
         }
     </script>
