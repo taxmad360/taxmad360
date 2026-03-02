@@ -2,85 +2,128 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>LiveMad – Panel de Control Flota</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveMad Admin – Demo de Pruebas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background: #001a3d; color: white; font-family: sans-serif; }
+        body { background: #001a3d; color: white; font-family: 'Montserrat', sans-serif; }
         .card-admin { background: #0a2551; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; }
-        .btn-pay { background: #22c55e; color: black; font-weight: bold; padding: 10px; border-radius: 10px; width: 100%; }
-        .btn-pause { background: #ef4444; color: white; font-weight: bold; padding: 10px; border-radius: 10px; width: 100%; }
+        .lm-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; color: white; width: 100%; outline: none; }
+        .hidden { display: none !important; }
     </style>
 </head>
-<body class="p-5">
+<body class="p-6">
 
-    <h1 class="text-2xl font-bold mb-6 text-sky-400 text-center">Gestión de Conductores</h1>
-
-    <div id="lista-conductores" class="space-y-6">
+    <div id="admin-login-screen" class="flex flex-col items-center justify-center h-screen">
+        <div class="card-admin w-full max-w-md text-center">
+            <h1 class="text-3xl font-black mb-6">LiveMad <span class="text-sky-400">ADMIN</span></h1>
+            <div class="space-y-4">
+                <input type="text" id="admin-user" placeholder="Usuario Administrador" class="lm-input">
+                <input type="password" id="admin-pass" placeholder="Contraseña Maestra" class="lm-input">
+                <button onclick="loginAdmin()" class="w-full bg-sky-500 py-3 rounded-xl font-bold text-black uppercase">Entrar al Panel</button>
+            </div>
         </div>
+    </div>
+
+    <div id="admin-panel" class="max-w-4xl mx-auto hidden">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-black">Control de Flota</h1>
+            <button onclick="location.reload()" class="text-xs bg-white/10 px-4 py-2 rounded-lg">Cerrar Sesión</button>
+        </div>
+
+        <div class="card-admin mb-8">
+            <h3 class="text-sky-400 font-bold mb-4 uppercase text-xs">Registrar Nuevo Conductor</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input type="text" id="new-nombre" placeholder="Nombre Conductor" class="lm-input">
+                <input type="text" id="new-usuario" placeholder="Usuario Login" class="lm-input">
+                <input type="password" id="new-pass" placeholder="Contraseña" class="lm-input">
+                <input type="text" id="new-tel" placeholder="Teléfono" class="lm-input">
+                <input type="text" id="new-coche" placeholder="Marca/Modelo" class="lm-input">
+                <input type="text" id="new-placa" placeholder="Matrícula" class="lm-input">
+            </div>
+            <button onclick="crearConductor()" class="mt-4 w-full bg-green-500 py-3 rounded-xl font-bold text-black uppercase">Guardar en Base de Datos</button>
+        </div>
+
+        <div id="lista-conductores" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            </div>
+    </div>
 
     <script>
         const S_URL = 'https://asqglwuasvpwstyzvujy.supabase.co';
-        const S_KEY = 'TU_KEY_AQUI'; // Usa la misma de tus otros archivos
+        const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzcWdsd2xnZ3F4YW55cWtzdXNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNDc1NjUsImV4cCI6MjA4NjcyMzU2NX0.nFCvgWihLakBxfXX32NuXjHdJXCH5IYVfddoyehbkHg';
         const _sp = supabase.createClient(S_URL, S_KEY);
 
-        async function cargarConductores() {
-            const { data } = await _sp.from('Drivers').select('*');
-            const lista = document.getElementById('lista-conductores');
-            lista.innerHTML = '';
+        // LOGIN DE PRUEBA
+        function loginAdmin() {
+            const u = document.getElementById('admin-user').value;
+            const p = document.getElementById('admin-pass').value;
 
-            data.forEach(d => {
-                lista.innerHTML += `
-                <div class="card-admin">
-                    <div class="flex justify-between mb-4">
-                        <h2 class="font-bold text-lg">${d.nombre}</h2>
-                        <span class="${d.acceso_bloqueado ? 'text-red-500' : 'text-green-500'} font-bold text-xs uppercase">
-                            ${d.acceso_bloqueado ? 'BLOQUEADO' : 'ACTIVO'}
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 text-[10px] text-gray-400 mb-4">
-                        <p>Matrícula: <span class="text-white">${d.matricula || '---'}</span></p>
-                        <p>Coche: <span class="text-white">${d.marca_v || '---'}</span></p>
-                        <p>Tel: <span class="text-white">${d.telefono || '---'}</span></p>
-                        <p>Color: <span class="text-white">${d.color_v || '---'}</span></p>
-                    </div>
-
-                    <div class="bg-black/20 p-3 rounded-xl mb-4">
-                        <div class="flex justify-between text-sm">
-                            <span>Recuento Total:</span>
-                            <span class="font-bold">${d.total_dinero_generado} €</span>
-                        </div>
-                        <div class="flex justify-between text-orange-400 text-sm mt-1">
-                            <span>Mi Comisión (10%):</span>
-                            <span class="font-black text-lg">${d.comision_pendiente_10} €</span>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="bloquear('${d.id}', ${!d.acceso_bloqueado})" class="btn-pause">
-                            ${d.acceso_bloqueado ? 'ACTIVAR ACCESO' : 'PAUSAR ACCESO'}
-                        </button>
-                        <button onclick="resetComision('${d.id}')" class="btn-pay">PAGADO (RESET)</button>
-                    </div>
-                </div>
-                `;
-            });
-        }
-
-        async function bloquear(id, estado) {
-            await _sp.from('Drivers').update({ acceso_bloqueado: estado }).eq('id', id);
-            cargarConductores();
-        }
-
-        async function resetComision(id) {
-            if(confirm("¿Confirmas que el conductor te ha pagado su comisión mensual?")) {
-                await _sp.from('Drivers').update({ comision_pendiente_10: 0 }).eq('id', id);
-                cargarConductores();
+            if(u === 'superadmin' && p === 'madrid2026') {
+                document.getElementById('admin-login-screen').classList.add('hidden');
+                document.getElementById('admin-panel').classList.remove('hidden');
+                cargarDrivers();
+            } else {
+                alert("Credenciales de administrador incorrectas");
             }
         }
 
-        cargarConductores();
+        async function crearConductor() {
+            const btn = event.target;
+            btn.innerText = "PROCESANDO...";
+            btn.disabled = true;
+
+            const datos = {
+                nombre: document.getElementById('new-nombre').value,
+                usuario: document.getElementById('new-usuario').value,
+                password: document.getElementById('new-pass').value,
+                telefono: document.getElementById('new-tel').value,
+                marca_v: document.getElementById('new-coche').value,
+                matricula: document.getElementById('new-placa').value,
+                total_dinero_generado: 0,
+                comision_pendiente_10: 0
+            };
+
+            const { error } = await _sp.from('Drivers').insert([datos]);
+
+            if(error) {
+                alert("Error: " + error.message);
+                btn.innerText = "REINTENTAR";
+                btn.disabled = false;
+            } else {
+                alert("¡Conductor registrado!");
+                location.reload();
+            }
+        }
+
+        async function cargarDrivers() {
+            const { data, error } = await _sp.from('Drivers').select('*');
+            if(error) return;
+
+            const lista = document.getElementById('lista-conductores');
+            lista.innerHTML = data.map(d => `
+                <div class="card-admin border border-white/5">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold">${d.nombre}</h4>
+                        <span class="text-[10px] bg-sky-500/20 text-sky-400 px-2 py-1 rounded">ID: ${d.id.slice(0,5)}</span>
+                    </div>
+                    <p class="text-[11px] text-gray-400">Usuario: ${d.usuario} | Tel: ${d.telefono}</p>
+                    <div class="mt-4 pt-4 border-t border-white/10 flex justify-between">
+                        <div>
+                            <p class="text-[9px] uppercase text-gray-500">Deuda 10%</p>
+                            <p class="text-xl font-black text-orange-400">${d.comision_pendiente_10}€</p>
+                        </div>
+                        <button onclick="resetDeuda('${d.id}')" class="text-[10px] bg-green-500 text-black px-3 py-1 rounded font-bold self-end">PAGADO</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function resetDeuda(id) {
+            await _sp.from('Drivers').update({ comision_pendiente_10: 0 }).eq('id', id);
+            cargarDrivers();
+        }
     </script>
 </body>
 </html>
