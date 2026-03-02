@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LiveMad – Premium App</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root { --blue: #00B5FF; --dark: #112F5C; --bg-app: #ffffff; --input-bg: #e5e7eb; }
+        body { background: #001a3d; font-family: "Montserrat", sans-serif; margin: 0; display: flex; justify-content: center; height: 100vh; }
+        .mobile-container { width: 100%; max-width: 414px; background: var(--bg-app); position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+        #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: #001a3d; color: white; z-index: 1000; text-align: center; }
+        .input-auth { width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 16px; }
+        #main-app { display: none; flex-direction: column; height: 100%; background: white; }
+        .user-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; background: #ddd; }
+        .logo-txt { font-weight: 800; font-size: 22px; color: var(--dark); }
+        .logo-txt span { color: var(--blue); }
+        .form-content { padding: 0 20px; }
+        .input-group { position: relative; margin-bottom: 10px; }
+        .input-group input { width: 100%; padding: 15px 50px 15px 18px; border-radius: 10px; background: var(--input-bg); border: none; font-size: 15px; font-weight: 500; color: #444; }
+        .input-group i { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--blue); font-size: 18px; cursor: pointer; }
+        #map { width: 100%; flex-grow: 1; background: #f0f0f0; margin-top: 10px; }
+        .btn-ver-precio { background: linear-gradient(90deg, #38bdf8 0%, #4f46e5 100%); color: white; padding: 18px; border-radius: 12px; width: 90%; margin: 15px auto; font-weight: 700; text-align: center; cursor: pointer; border: none; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); }
+        .bottom-nav { height: 75px; background: white; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #eee; }
+        .nav-item { text-align: center; color: #999; cursor: pointer; font-size: 11px; font-weight: 600; }
+        .nav-item.active { color: var(--dark); }
+        .nav-item i { display: block; font-size: 22px; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="mobile-container">
+    <div id="auth-screen">
+        <div style="font-size: 35px; font-weight: 800; margin-bottom: 40px;">Live<span style="color:var(--blue)">Mad</span></div>
+        <input type="text" id="user-login" placeholder="admin" class="input-auth">
+        <input type="password" id="pass-login" placeholder="1234" class="input-auth">
+        <button onclick="intentarAcceso()" class="btn-ver-precio" style="width: 100%; margin-top: 20px;">INICIAR SESIÓN</button>
+    </div>
+
+    <div id="main-app">
+        <div id="view-home" style="display: flex; flex-direction: column; height: calc(100% - 75px);">
+            <header class="user-header">
+                <div class="user-info">
+                    <img id="img-mini" src="https://i.pravatar.cc/150?u=admin" class="avatar">
+                    <div>
+                        <p style="font-size: 12px; color: #aaa; margin:0;">Premium Access</p>
+                        <h2 id="name-mini" style="font-size: 16px; font-weight: 700; margin:0;">Dani Martínez</h2>
+                    </div>
+                </div>
+                <div class="logo-txt">Live<span>Mad</span></div>
+            </header>
+
+            <div class="form-content">
+                <div class="input-group">
+                    <input type="text" id="origin" placeholder="Origen">
+                    <i class="fa-solid fa-location-crosshairs" onclick="geolocalizar()"></i>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="destination" placeholder="Destino">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+            </div>
+
+            <div id="map"></div>
+            <button id="btnAction" class="btn-ver-precio" onclick="procesarViaje()">CALCULAR PRECIO</button>
+        </div>
+
+        <nav class="bottom-nav">
+            <div class="nav-item active"><i class="fa-solid fa-house"></i>Home</div>
+            <div class="nav-item"><i class="fa-solid fa-route"></i>Viajes</div>
+            <div class="nav-item"><i class="fa-solid fa-circle-user"></i>Perfil</div>
+        </nav>
+    </div>
+</div>
+
+<script>
+    // --- CONEXIÓN SUPABASE ---
+    const SUPABASE_URL = 'https://wdxtnvblolhqipscpxer.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_zOMBuq-XNjESL-0p03fafQ_2hDT6Cni';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let map, directionsService, directionsRenderer, geocoder, ultimoCalculo = null;
+
+    function intentarAcceso() {
+        const u = document.getElementById('user-login').value;
+        const p = document.getElementById('pass-login').value;
+        if (u === 'admin' && p === '1234') {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
+            initMap();
+        } else { alert("Acceso denegado"); }
+    }
+
+    function initMap() {
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer();
+        geocoder = new google.maps.Geocoder();
+        map = new google.maps.Map(document.getElementById('map'), { center: {lat: 40.4168, lng: -3.7038}, zoom: 14, disableDefaultUI: true });
+        directionsRenderer.setMap(map);
+        new google.maps.places.Autocomplete(document.getElementById('origin'), { componentRestrictions: { country: "es" } });
+        new google.maps.places.Autocomplete(document.getElementById('destination'), { componentRestrictions: { country: "es" } });
+    }
+
+    function geolocalizar() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                geocoder.geocode({ location: coords }, (res, status) => {
+                    if (status === "OK") document.getElementById('origin').value = res[0].formatted_address;
+                });
+                map.setCenter(coords);
+            });
+        }
+    }
+
+    async function procesarViaje() {
+        const btn = document.getElementById('btnAction');
+        const o = document.getElementById('origin').value;
+        const d = document.getElementById('destination').value;
+
+        if (!ultimoCalculo) {
+            directionsService.route({ origin: o, destination: d, travelMode: 'DRIVING' }, (res, status) => {
+                if(status === 'OK') {
+                    directionsRenderer.setDirections(res);
+                    const km = res.routes[0].legs[0].distance.value / 1000;
+                    const precio = (5 + km * 1.5).toFixed(2);
+                    ultimoCalculo = { o, d, p: precio, k: km.toFixed(1) };
+                    btn.innerText = `PEDIR TAXI (${precio}€)`;
+                }
+            });
+        } else {
+            btn.disabled = true;
+            btn.innerText = "ENVIANDO SOLICITUD...";
+            const { error } = await supabase.from('viajes').insert([{
+                cliente_nombre: "Dani Martínez",
+                origen: ultimoCalculo.o,
+                destino: ultimoCalculo.d,
+                precio: parseFloat(ultimoCalculo.p),
+                distancia: ultimoCalculo.k + " km",
+                estado: 'pendiente'
+            }]);
+
+            if (!error) {
+                alert("¡Viaje solicitado! Buscando conductor...");
+                location.reload();
+            } else {
+                alert("Error al conectar con la base de datos");
+                btn.disabled = false;
+            }
+        }
+    }
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places" async defer></script>
+</body>
+</html>

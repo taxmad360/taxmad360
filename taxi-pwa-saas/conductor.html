@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaxMad – Driver GPS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background: #000; color: white; font-family: sans-serif; margin: 0; overflow: hidden; }
+        .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        .ui-overlay { position: relative; z-index: 10; pointer-events: none; }
+        .pointer-events-auto { pointer-events: auto; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <div id="login-screen" class="flex-1 flex flex-col justify-center items-center p-6 ui-overlay pointer-events-auto">
+        <div class="w-full max-sm glass-card p-8 rounded-3xl shadow-2xl">
+            <h2 class="text-3xl font-bold text-center mb-8 text-[#00f2fe]">Driver GPS</h2>
+            <div class="space-y-4">
+                <input type="text" id="user" placeholder="Usuario (admin)" class="w-full bg-[#111] border border-zinc-800 rounded-xl p-4 outline-none">
+                <input type="password" id="pass" placeholder="Contraseña (1234)" class="w-full bg-[#111] border border-zinc-800 rounded-xl p-4 outline-none">
+                <button onclick="intentarLogin()" class="w-full bg-[#00f2fe] text-black font-bold p-4 rounded-xl shadow-lg">ENTRAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="home-conductor" class="hidden flex-1 flex flex-col relative">
+        
+        <div id="map"></div>
+
+        <div class="ui-overlay p-4">
+            <div class="glass-card p-4 rounded-2xl flex items-center justify-between pointer-events-auto">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-[#00f2fe] rounded-full flex items-center justify-center text-black font-bold" id="driver-initial">A</div>
+                    <div>
+                        <p class="text-xs text-gray-400">Conductor</p>
+                        <p class="font-bold text-sm" id="driver-display-name">Admin</p>
+                    </div>
+                </div>
+                <button onclick="toggleConexion()" id="btn-conexion" class="bg-green-600 text-white px-6 py-2 rounded-full font-bold text-xs transition-all">
+                    CONECTADO
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1"></div>
+
+        <div class="ui-overlay p-4 pointer-events-auto">
+            <div class="glass-card p-4 rounded-2xl flex justify-around text-[#00f2fe]">
+                <button class="text-center"><i class="fas fa-home block"></i><span class="text-[10px]">Home</span></button>
+                <button class="text-zinc-500"><i class="fas fa-list block"></i><span class="text-[10px]">Viajes</span></button>
+                <button class="text-zinc-500"><i class="fas fa-wallet block"></i><span class="text-[10px]">Cartera</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SP_URL = 'https://asqglwuasvpwstyzvujy.supabase.co';
+        const SP_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzcWdsd2xnZ3F4YW55cWtzdXNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNDc1NjUsImV4cCI6MjA4NjcyMzU2NX0.nFCvgWihLakBxfXX32NuXjHdJXCH5IYVfddoyehbkHg';
+        const _supabase = window.supabase.createClient(SP_URL, SP_KEY);
+
+        let map, marker, watchId;
+        let conectado = true;
+        let driverId = null;
+
+        // 1. LOGIN
+        async function intentarLogin() {
+            const user = document.getElementById('user').value;
+            const pass = document.getElementById('pass').value;
+
+            if (user === 'admin' && pass === '1234') {
+                iniciarPanel('Administrador');
+            } else {
+                const { data } = await _supabase.from('Drivers').select('*').eq('nombre', user).single();
+                if (data) {
+                    driverId = data.id;
+                    iniciarPanel(data.nombre);
+                } else { alert("Error de acceso"); }
+            }
+        }
+
+        function iniciarPanel(nombre) {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('home-conductor').classList.remove('hidden');
+            document.getElementById('driver-display-name').innerText = nombre;
+            document.getElementById('driver-initial').innerText = nombre[0];
+            initGoogleMap();
+            startTracking();
+        }
+
+        // 2. MAPA Y GPS
+        function initGoogleMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 40.4168, lng: -3.7038 },
+                zoom: 16,
+                styles: [{ "elementType": "geometry", "stylers": [{ "color": "#212121" }] }, /* ...estilo oscuro... */],
+                disableDefaultUI: true
+            });
+            marker = new google.maps.Marker({ map: map, icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 5, fillLight: 1, fillColor: '#00f2fe', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 } });
+        }
+
+        function startTracking() {
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(async (pos) => {
+                    if (!conectado) return;
+                    
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    const coords = { lat, lng };
+
+                    // Mover marcador en el mapa
+                    marker.setPosition(coords);
+                    map.panTo(coords);
+
+                    // Actualizar en Supabase (Tabla Drivers)
+                    if (driverId) {
+                        await _supabase.from('Drivers').update({ latitud: lat, longitud: lng, estado: 'libre' }).eq('id', driverId);
+                    }
+                }, null, { enableHighAccuracy: true });
+            }
+        }
+
+        function toggleConexion() {
+            conectado = !conectado;
+            const btn = document.getElementById('btn-conexion');
+            if (conectado) {
+                btn.className = "bg-green-600 text-white px-6 py-2 rounded-full font-bold text-xs pointer-events-auto";
+                btn.innerText = "CONECTADO";
+            } else {
+                btn.className = "bg-zinc-700 text-gray-400 px-6 py-2 rounded-full font-bold text-xs pointer-events-auto";
+                btn.innerText = "OFFLINE";
+                if (driverId) _supabase.from('Drivers').update({ estado: 'desconectado' }).eq('id', driverId);
+            }
+        }
+    </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&callback=initGoogleMap" async defer></script>
+</body>
+</html>
