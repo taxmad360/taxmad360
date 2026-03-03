@@ -20,14 +20,15 @@
         .screen.active { display: flex; }
 
         #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: var(--dark); color: white; z-index: 5000; text-align: center; }
-        #auth-screen.as-profile { z-index: 3000; padding-bottom: 120px; }
+        #auth-screen.as-profile { z-index: 3000; padding-bottom: 120px; background: #f8fafc; color: #334155; }
 
         .input-auth { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 14px; }
+        .as-profile .input-auth { background: white; border: 1px solid #ddd; color: #334155; }
         
-        .photo-picker { width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px dashed var(--blue); margin: 0 auto 20px; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .photo-picker { width: 110px; height: 110px; border-radius: 50%; background: #e2e8f0; border: 3px solid var(--blue); margin: 0 auto 20px; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
         .photo-picker img { width: 100%; height: 100%; object-fit: cover; }
 
-        .user-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; background: white; position: sticky; top: 0; z-index: 100; }
+        .user-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; background: white; position: sticky; top: 0; z-index: 4000; }
         .logo-txt { font-weight: 800; font-size: 20px; color: var(--dark); }
         .logo-txt span { color: var(--blue); }
 
@@ -35,7 +36,10 @@
 
         .input-group { position: relative; margin-bottom: 12px; }
         .input-group label { display: block; font-size: 10px; font-weight: 800; color: var(--dark); margin-bottom: 6px; text-transform: uppercase; opacity: 0.6; }
-        .input-group input { width: 100%; padding: 14px 15px; border-radius: 14px; background: var(--input-bg); border: 1px solid #eee; font-size: 14px; outline: none; }
+        .input-group input { width: 100%; padding: 14px 15px; border-radius: 14px; background: var(--input-bg); border: 1px solid #eee; font-size: 14px; outline: none; padding-right: 45px; }
+
+        .btn-gps { position: absolute; right: 10px; bottom: 8px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; color: var(--blue); cursor: pointer; border-radius: 10px; transition: all 0.2s; }
+        .btn-gps:active { transform: scale(0.9); background: #e0f2fe; }
 
         #map { width: 100%; height: 200px; background: #e5e7eb; border-radius: 20px; margin: 10px 0; }
 
@@ -53,8 +57,19 @@
 
 <div class="mobile-container">
     
+    <header id="app-header" class="user-header hidden">
+        <div class="flex items-center gap-3">
+            <img id="u-img" src="" class="w-11 h-11 rounded-full border-2 border-sky-400 object-cover bg-gray-100" onclick="showTab('perfil')">
+            <div>
+                <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Premium User</p>
+                <h2 id="u-name" class="text-sm font-bold text-slate-800">...</h2>
+            </div>
+        </div>
+        <div class="logo-txt">Tax<span>Mad</span></div>
+    </header>
+
     <div id="auth-screen">
-        <button id="btn-close-profile" onclick="showTab('home')" class="hidden absolute top-10 right-8 text-white/50 text-2xl">
+        <button id="btn-close-profile" onclick="showTab('home')" class="hidden absolute top-5 right-5 text-gray-400 text-2xl z-[5001]">
             <i class="fa-solid fa-circle-xmark"></i>
         </button>
 
@@ -89,7 +104,7 @@
                 
                 <button id="btn-save-reg" onclick="registrarUsuario()" class="btn-main">GUARDAR DATOS</button>
                 
-                <button id="btn-logout" onclick="cerrarSesion()" class="mt-8 text-red-400 font-bold text-xs uppercase tracking-widest hidden flex items-center justify-center gap-2 w-full">
+                <button id="btn-logout" onclick="cerrarSesion()" class="mt-8 text-red-500 font-bold text-xs uppercase tracking-widest hidden flex items-center justify-center gap-2 w-full">
                     <i class="fa-solid fa-power-off"></i> Cerrar Sesión
                 </button>
                 <p id="btn-back-login" class="mt-4 text-xs text-gray-400 cursor-pointer" onclick="toggleAuth('login')">Volver al inicio</p>
@@ -98,17 +113,6 @@
     </div>
 
     <div id="main-app" class="screen">
-        <header class="user-header">
-            <div class="flex items-center gap-3">
-                <img id="u-img" src="" class="w-11 h-11 rounded-full border-2 border-sky-400 object-cover bg-gray-100" onclick="showTab('perfil')">
-                <div>
-                    <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Premium User</p>
-                    <h2 id="u-name" class="text-sm font-bold text-slate-800">...</h2>
-                </div>
-            </div>
-            <div class="logo-txt">Tax<span>Mad</span></div>
-        </header>
-
         <div class="taxcoin-card">
             <div>
                 <p class="text-[10px] font-bold opacity-70 uppercase mb-1">Taxcoins</p>
@@ -120,7 +124,10 @@
         <div class="px-5 mt-4 space-y-4">
             <div class="input-group">
                 <label>Recogida</label>
-                <input type="text" id="origin" placeholder="¿Dónde estás?">
+                <input type="text" id="origin" placeholder="¿Dónde recogemos?">
+                <div class="btn-gps" onclick="obtenerUbicacionActual()">
+                    <i class="fa-solid fa-crosshairs text-lg"></i>
+                </div>
             </div>
             <div class="input-group">
                 <label>Destino</label>
@@ -201,12 +208,12 @@
             password: p, 
             telefono: document.getElementById('reg-tel').value,
             taxcoins: currentUser?.taxcoins || 0,
-            foto: currentUser?.foto || `https://ui-avatars.com/api/?name=${n}&background=00B5FF&color=fff`
+            foto: document.getElementById('img-preview').src || `https://ui-avatars.com/api/?name=${n}&background=00B5FF&color=fff`
         };
 
         const { error } = await _supabase.from('clientes').upsert([datos], {onConflict: 'usuario'});
         if(!error) {
-            alert("¡Datos guardados!");
+            alert("¡Datos actualizados!");
             if(!currentUser) toggleAuth('login');
             else {
                 const { data } = await _supabase.from('clientes').select('*').eq('usuario', u).single();
@@ -226,6 +233,7 @@
         if (data && data.password === p) {
             currentUser = data;
             document.getElementById('bottom-nav').classList.remove('hidden');
+            document.getElementById('app-header').classList.remove('hidden');
             showTab('home');
             actualizarUI();
             initMap();
@@ -238,6 +246,31 @@
         document.getElementById('u-name').innerText = currentUser.nombre;
         document.getElementById('u-tc').innerText = (currentUser.taxcoins || 0).toFixed(2);
         document.getElementById('u-img').src = currentUser.foto;
+    }
+
+    // --- GEOLOCALIZACIÓN ---
+    function obtenerUbicacionActual() {
+        if (!navigator.geolocation) return alert("Tu navegador no soporta geolocalización");
+        
+        const btnIcon = document.querySelector('.btn-gps i');
+        btnIcon.classList.add('fa-spin');
+
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            const geocoder = new google.maps.Geocoder();
+            
+            geocoder.geocode({ location: latlng }, (results, status) => {
+                btnIcon.classList.remove('fa-spin');
+                if (status === "OK" && results[0]) {
+                    document.getElementById('origin').value = results[0].formatted_address;
+                } else {
+                    alert("No pudimos obtener la dirección exacta");
+                }
+            });
+        }, () => {
+            btnIcon.classList.remove('fa-spin');
+            alert("Error: Activa el GPS de tu móvil");
+        });
     }
 
     let directionsService, directionsRenderer;
@@ -271,28 +304,13 @@
                 }
             });
         } else {
-            // CAMBIO CLAVE: Estado 'pendiente' para que el conductor lo vea
             const { error } = await _supabase.from('viajes').insert([{
                 cliente_id: currentUser.id, 
-                cliente_nombre: currentUser.nombre, // Añadido para el panel conductor
-                origen: o, 
-                destino: d, 
-                precio: parseFloat(ultimoCalculo),
-                estado: 'pendiente', 
-                fecha_reserva: fechaReserva.toISOString()
+                cliente_nombre: currentUser.nombre,
+                origen: o, destino: d, precio: parseFloat(ultimoCalculo),
+                estado: 'pendiente', fecha_reserva: fechaReserva.toISOString()
             }]);
-            
-            if(!error) { 
-                alert("Reserva confirmada. Buscando conductor..."); 
-                ultimoCalculo = null;
-                document.getElementById('info-resumen').classList.add('hidden');
-                document.getElementById('btnAction').innerText = "CALCULAR PRECIO";
-                document.getElementById('origin').value = "";
-                document.getElementById('destination').value = "";
-                showTab('hucha'); 
-            } else {
-                alert("Error al reservar: " + error.message);
-            }
+            if(!error) { alert("¡Reserva confirmada!"); ultimoCalculo = null; showTab('hucha'); }
         }
     }
 
@@ -328,16 +346,14 @@
         const container = document.getElementById('lista-viajes');
         if(!data || data.length === 0) { container.innerHTML = "<p class='text-center opacity-40 py-10'>Sin viajes</p>"; return; }
         container.innerHTML = data.map(v => `
-            <div class="trip-item shadow-sm">
-                <div class="flex justify-between mb-2">
-                    <span class="text-[10px] font-bold text-sky-500">${new Date(v.fecha_reserva).toLocaleString()}</span>
-                    <span class="bg-gray-100 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">${v.estado}</span>
+            <div class="trip-item">
+                <div class="flex justify-between mb-2 text-[10px] font-bold">
+                    <span class="text-sky-500">${new Date(v.fecha_reserva).toLocaleString()}</span>
+                    <span class="uppercase bg-slate-100 px-2 py-1 rounded">${v.estado}</span>
                 </div>
-                <p class="text-[11px] truncate font-bold"><i class="fa-solid fa-circle text-sky-400 mr-1 text-[8px]"></i> ${v.origen}</p>
-                <p class="text-[11px] truncate font-bold"><i class="fa-solid fa-location-dot text-red-400 mr-1 text-[8px]"></i> ${v.destino}</p>
-                <div class="mt-2 pt-2 border-t border-dashed flex justify-between items-center">
-                    <span class="text-xs font-black text-slate-800">${v.precio.toFixed(2)}€</span>
-                </div>
+                <p class="text-[11px] truncate opacity-70">📍 ${v.origen}</p>
+                <p class="text-[11px] truncate opacity-70">🏁 ${v.destino}</p>
+                <p class="mt-2 font-black text-right">${v.precio.toFixed(2)}€</p>
             </div>
         `).join('');
     }
@@ -351,7 +367,7 @@
             document.getElementById('auth-logo').classList.toggle('hidden', currentUser);
             document.getElementById('btn-back-login').classList.toggle('hidden', currentUser);
             document.getElementById('btn-logout').classList.toggle('hidden', !currentUser);
-            document.getElementById('reg-title').innerText = currentUser ? "EDITAR PERFIL" : "CREAR CUENTA";
+            document.getElementById('reg-title').innerText = currentUser ? "EDITAR MI PERFIL" : "CREAR CUENTA";
             if(currentUser) {
                 document.getElementById('reg-nom').value = currentUser.nombre;
                 document.getElementById('reg-ape').value = currentUser.apellido || "";
