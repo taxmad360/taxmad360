@@ -40,7 +40,7 @@
             <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase">Contraseña</label>
             <input type="password" id="pass-input" class="lm-input" placeholder="••••••••">
         </div>
-        <button onclick="intentarLogin()" class="w-full bg-sky-500 p-5 rounded-2xl font-black italic mt-4 shadow-lg shadow-sky-500/20 active:scale-95 transition-transform">CONECTAR AL SISTEMA</button>
+        <button onclick="intentarLogin()" class="w-full bg-sky-500 p-5 rounded-2xl font-black italic mt-4 shadow-lg shadow-sky-500/20 active:scale-95 transition-transform text-black uppercase">Conectar al Sistema</button>
     </div>
 
     <div id="main-app" class="hidden flex-col h-full w-full">
@@ -73,9 +73,8 @@
 
         <div id="scr-perfil" class="screen p-6">
             <h2 class="text-xl font-black italic mb-6">Mi <span class="text-sky-500">Perfil</span></h2>
-            
             <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="bg-gradient-to-br from-sky-500 to-blue-700 p-4 rounded-2xl shadow-lg shadow-sky-500/10">
+                <div class="bg-gradient-to-br from-sky-500 to-blue-700 p-4 rounded-2xl shadow-lg">
                     <p class="text-[8px] font-black uppercase text-white/70">Saldo Generado</p>
                     <p class="text-2xl font-black italic" id="stats-total">0€</p>
                 </div>
@@ -84,28 +83,14 @@
                     <p class="text-2xl font-black italic text-rose-500" id="stats-comision">0€</p>
                 </div>
             </div>
-
-            <div id="profile-details-container" class="bg-white/5 p-6 rounded-3xl space-y-5 border border-white/5">
-                </div>
-            
-            <button onclick="location.reload()" class="w-full mt-12 bg-rose-500/10 text-rose-500 p-4 rounded-xl font-bold text-[10px] uppercase tracking-widest border border-rose-500/20">
-                <i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión
-            </button>
+            <div id="profile-details-container" class="bg-white/5 p-6 rounded-3xl space-y-5 border border-white/5"></div>
+            <button onclick="location.reload()" class="w-full mt-12 bg-rose-500/10 text-rose-500 p-4 rounded-xl font-bold text-[10px] uppercase tracking-widest border border-rose-500/20">Cerrar Sesión</button>
         </div>
 
         <nav class="absolute bottom-0 w-full h-20 bg-[#0a2551] flex justify-around items-center border-t border-white/10 px-4">
-            <div onclick="showTab('panel')" id="n-panel" class="nav-btn active">
-                <i class="fa-solid fa-house-chimney text-xl"></i>
-                <p class="text-[9px] mt-1 font-bold">PANEL</p>
-            </div>
-            <div onclick="showTab('viajes')" id="n-viajes" class="nav-btn">
-                <i class="fa-solid fa-route text-xl"></i>
-                <p class="text-[9px] mt-1 font-bold">VIAJES</p>
-            </div>
-            <div onclick="showTab('perfil')" id="n-perfil" class="nav-btn">
-                <i class="fa-solid fa-address-card text-xl"></i>
-                <p class="text-[9px] mt-1 font-bold">PERFIL</p>
-            </div>
+            <div onclick="showTab('panel')" id="n-panel" class="nav-btn active"><i class="fa-solid fa-house-chimney text-xl"></i><p class="text-[9px] mt-1 font-bold">PANEL</p></div>
+            <div onclick="showTab('viajes')" id="n-viajes" class="nav-btn"><i class="fa-solid fa-route text-xl"></i><p class="text-[9px] mt-1 font-bold">VIAJES</p></div>
+            <div onclick="showTab('perfil')" id="n-perfil" class="nav-btn"><i class="fa-solid fa-address-card text-xl"></i><p class="text-[9px] mt-1 font-bold">PERFIL</p></div>
         </nav>
     </div>
 
@@ -127,6 +112,7 @@
     let currentDriver = null;
     let map, marker;
     let isConnected = false;
+    let gpsInterval = null;
 
     async function intentarLogin() {
         const u = document.getElementById('user-input').value;
@@ -136,20 +122,16 @@
         const { data: d, error } = await _supabase.from('drivers').select('*').eq('usuario', u).single();
         
         if (d && d.password === p) {
-            // VERIFICACIÓN DE BLOQUEO (BANEO)
             if(d.baneado) {
-                alert("ACCESO DENEGADO: Tu cuenta ha sido bloqueada por la administración.");
+                alert("ACCESO DENEGADO: Tu cuenta ha sido bloqueada.");
                 return;
             }
 
             currentDriver = d;
             document.getElementById('auth-screen').classList.remove('active');
             document.getElementById('main-app').classList.replace('hidden', 'flex');
-            
-            // Llenar datos interfaz
             document.getElementById('header-name').innerText = d.nombre;
             document.getElementById('avatar-init').innerText = d.nombre[0].toUpperCase();
-            
             document.getElementById('profile-details-container').innerHTML = `
                 <div><p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Nombre</p><p class="font-bold text-sm">${d.nombre}</p></div>
                 <div><p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Vehículo</p><p class="font-bold text-sm">${d.marca_v || d.modelo_coche} - ${d.matricula}</p></div>
@@ -164,22 +146,19 @@
         }
     }
 
-    // ESCUCHA SEGURIDAD Y VIAJES
     function escucharCambiosMaster() {
-        // Suscribirse a cambios en viajes
         _supabase.channel('viajes_live').on('postgres_changes', { event: '*', table: 'viajes' }, () => {
             cargarActivos();
             if(document.getElementById('scr-viajes').classList.contains('active')) cargarHistorial();
         }).subscribe();
 
-        // SEGURIDAD: Expulsión si el admin banea
         _supabase.channel('seguridad').on('postgres_changes', { 
             event: 'UPDATE', 
             table: 'drivers', 
             filter: `id=eq.${currentDriver.id}` 
         }, (payload) => {
             if(payload.new.baneado) {
-                alert("¡ATENCIÓN! Tu licencia ha sido revocada. Contacta con soporte.");
+                alert("¡ATENCIÓN! Tu licencia ha sido revocada.");
                 location.reload();
             }
         }).subscribe();
@@ -187,7 +166,7 @@
 
     function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: 40.4168, lng: -3.7038}, zoom: 15, disableDefaultUI: true,
+            center: {lat: 40.4168, lng: -3.7038}, zoom: 16, disableDefaultUI: true,
             styles: [{ "stylers": [{ "hue": "#2c3e50" }, { "saturation": 250 }] }]
         });
         marker = new google.maps.Marker({ 
@@ -204,15 +183,28 @@
         if(isConnected) iniciarGPS(); else detenerGPS();
     }
 
-    function iniciarGPS() { actualizarPos(); window.gpsInterval = setInterval(actualizarPos, 60000); }
-    function detenerGPS() { clearInterval(window.gpsInterval); }
+    function iniciarGPS() { 
+        actualizarPos(); 
+        // Actualización cada 5 minutos (300,000 milisegundos)
+        gpsInterval = setInterval(actualizarPos, 300000); 
+    }
+
+    function detenerGPS() { 
+        if(gpsInterval) clearInterval(gpsInterval); 
+    }
 
     function actualizarPos() {
+        if (!navigator.geolocation) return;
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            map.setCenter(p); marker.setPosition(p);
-            await _supabase.from('drivers').update({ latitud: p.lat.toString(), longitud: p.lng.toString() }).eq('id', currentDriver.id);
-        });
+            // Actualizar Mapa y Marcador
+            if(map) { map.panTo(p); marker.setPosition(p); }
+            // Guardar en Supabase
+            await _supabase.from('drivers').update({ 
+                latitud: p.lat.toString(), 
+                longitud: p.lng.toString() 
+            }).eq('id', currentDriver.id);
+        }, null, { enableHighAccuracy: true });
     }
 
     function showTab(tab) {
@@ -251,10 +243,10 @@
     }
 
     function renderBotones(t) {
-        if(t.estado === 'pendiente') return `<button onclick="updateTrip('${t.id}','aceptado')" class="w-full bg-sky-500 p-3 rounded-xl font-bold text-xs text-black">ACEPTAR SERVICIO</button>`;
-        if(t.estado === 'aceptado') return `<button onclick="updateTrip('${t.id}','en_punto')" class="w-full bg-emerald-500 p-3 rounded-xl font-bold text-xs text-black">HE LLEGADO</button>`;
+        if(t.estado === 'pendiente') return `<button onclick="updateTrip('${t.id}','aceptado')" class="w-full bg-sky-500 p-3 rounded-xl font-bold text-xs text-black">ACEPTAR</button>`;
+        if(t.estado === 'aceptado') return `<button onclick="updateTrip('${t.id}','en_punto')" class="w-full bg-emerald-500 p-3 rounded-xl font-bold text-xs text-black">LLEGADO</button>`;
         if(t.estado === 'en_punto') return `<button onclick="updateTrip('${t.id}','en_curso')" class="w-full bg-amber-500 p-3 rounded-xl font-bold text-xs text-black">INICIAR VIAJE</button>`;
-        if(t.estado === 'en_curso') return `<button onclick="finalizarViaje('${t.id}')" class="w-full bg-rose-500 p-3 rounded-xl font-bold text-xs text-white">FINALIZAR Y COBRAR</button>`;
+        if(t.estado === 'en_curso') return `<button onclick="finalizarViaje('${t.id}')" class="w-full bg-rose-500 p-3 rounded-xl font-bold text-xs text-white">FINALIZAR</button>`;
     }
 
     async function updateTrip(id, status) { 
@@ -264,16 +256,11 @@
 
     async function finalizarViaje(id) { 
         await _supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id); 
-        // Actualizar comisiones en tabla drivers
         const { data: trip } = await _supabase.from('viajes').select('precio').eq('id', id).single();
         const comisionAdd = parseFloat(trip.precio) * 0.10;
-        
-        // Obtenemos deuda actual y sumamos
         const { data: drv } = await _supabase.from('drivers').select('comision_pendiente_10').eq('id', currentDriver.id).single();
         const nuevaDeuda = (drv.comision_pendiente_10 || 0) + comisionAdd;
-        
         await _supabase.from('drivers').update({ comision_pendiente_10: nuevaDeuda }).eq('id', currentDriver.id);
-        
         verQR(id); 
         cargarActivos(); 
     }
@@ -301,7 +288,6 @@
         `).join('');
     }
 </script>
-
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA" async defer></script>
 </body>
 </html>
