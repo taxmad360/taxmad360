@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TaxMad Driver – Premium</title>
+    <title>TaxMad Driver – Terminal Oficial</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,23 +14,15 @@
         :root { --blue: #00B5FF; --dark: #001a3d; --card: #0a2551; }
         body { background: var(--dark); font-family: 'Montserrat', sans-serif; color: white; margin: 0; height: 100vh; overflow: hidden; }
         .mobile-container { width: 100%; max-width: 414px; margin: 0 auto; background: var(--dark); position: relative; display: flex; flex-direction: column; height: 100vh; }
-        
         .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 90px; }
         .screen.active { display: flex; }
-
         .status-toggle { transition: all 0.3s; font-weight: 800; font-size: 10px; padding: 8px 16px; border-radius: 99px; cursor: pointer; border: none; text-transform: uppercase; }
         .status-off { background: #334155; color: #94a3b8; }
         .status-on { background: #22c55e; color: #052e16; box-shadow: 0 0 15px rgba(34, 197, 94, 0.3); }
-
-        #map { width: 100%; height: 280px; min-height: 280px; background: #e5e7eb; }
-        
+        #map { width: 100%; height: 280px; min-height: 280px; background: #1a1a1a; }
         .nav-btn { color: #64748b; cursor: pointer; text-align: center; flex: 1; transition: 0.2s; padding: 10px 0; }
         .nav-btn.active { color: var(--blue); }
-
-        #modal-qr { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; 
-            display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; 
-        }
+        #modal-qr { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
         #qrcode { background: white; padding: 15px; border-radius: 10px; margin: 20px 0; }
         .lm-input { width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: white; outline: none; }
     </style>
@@ -40,15 +32,15 @@
 <div class="mobile-container">
     
     <div id="auth-screen" class="screen active justify-center p-10 text-center">
-        <h1 class="text-4xl font-black mb-1">Tax<span style="color:var(--blue)">Mad</span></h1>
-        <p class="text-[10px] font-bold tracking-[4px] text-sky-400 mb-12 uppercase">Driver Panel</p>
+        <h1 class="text-4xl font-black mb-1 italic">Tax<span style="color:var(--blue)">Mad</span></h1>
+        <p class="text-[10px] font-bold tracking-[4px] text-sky-400 mb-12 uppercase">Driver Terminal</p>
         <div class="text-left">
-            <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase">Usuario</label>
+            <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase">Usuario de Conductor</label>
             <input type="text" id="user-input" class="lm-input" placeholder="Ej: driver01">
             <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase">Contraseña</label>
             <input type="password" id="pass-input" class="lm-input" placeholder="••••••••">
         </div>
-        <button onclick="intentarLogin()" class="w-full bg-sky-500 p-5 rounded-2xl font-black italic mt-4 shadow-lg shadow-sky-500/20 active:scale-95 transition-transform">ENTRAR AL PANEL</button>
+        <button onclick="intentarLogin()" class="w-full bg-sky-500 p-5 rounded-2xl font-black italic mt-4 shadow-lg shadow-sky-500/20 active:scale-95 transition-transform">CONECTAR AL SISTEMA</button>
     </div>
 
     <div id="main-app" class="hidden flex-col h-full w-full">
@@ -66,7 +58,10 @@
         <div id="scr-panel" class="screen">
             <div id="map"></div>
             <div class="p-5">
-                <h3 class="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-4">Servicios Activos</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-[10px] font-black text-sky-400 uppercase tracking-widest">Servicios en Tiempo Real</h3>
+                    <span class="text-[9px] text-green-500 animate-pulse font-bold">● VIVO</span>
+                </div>
                 <div id="active-trips" class="space-y-3"></div>
             </div>
         </div>
@@ -80,34 +75,18 @@
             <h2 class="text-xl font-black italic mb-6">Mi <span class="text-sky-500">Perfil</span></h2>
             
             <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="bg-gradient-to-br from-sky-500 to-blue-700 p-4 rounded-2xl shadow-lg">
-                    <p class="text-[8px] font-black uppercase text-white/70">Saldo Mensual</p>
+                <div class="bg-gradient-to-br from-sky-500 to-blue-700 p-4 rounded-2xl shadow-lg shadow-sky-500/10">
+                    <p class="text-[8px] font-black uppercase text-white/70">Saldo Generado</p>
                     <p class="text-2xl font-black italic" id="stats-total">0€</p>
                 </div>
                 <div class="bg-white/10 border border-white/10 p-4 rounded-2xl text-right">
-                    <p class="text-[8px] font-black uppercase text-rose-400">Debe (10%)</p>
+                    <p class="text-[8px] font-black uppercase text-rose-400">Deuda (10%)</p>
                     <p class="text-2xl font-black italic text-rose-500" id="stats-comision">0€</p>
                 </div>
             </div>
 
-            <div class="bg-white/5 p-6 rounded-3xl space-y-5 border border-white/5">
-                <div>
-                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Nombre y Apellidos</p>
-                    <p class="font-bold text-sm" id="prof-full-name">---</p>
+            <div id="profile-details-container" class="bg-white/5 p-6 rounded-3xl space-y-5 border border-white/5">
                 </div>
-                <div>
-                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Vehículo y Matrícula</p>
-                    <p class="font-bold text-sm" id="prof-car">---</p>
-                </div>
-                <div>
-                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Licencia Municipal</p>
-                    <p class="font-bold text-sm text-sky-400" id="prof-lic">---</p>
-                </div>
-                <div>
-                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Titular de Licencia</p>
-                    <p class="font-bold text-sm" id="prof-owner">---</p>
-                </div>
-            </div>
             
             <button onclick="location.reload()" class="w-full mt-12 bg-rose-500/10 text-rose-500 p-4 rounded-xl font-bold text-[10px] uppercase tracking-widest border border-rose-500/20">
                 <i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión
@@ -131,10 +110,10 @@
     </div>
 
     <div id="modal-qr">
-        <div class="bg-white/10 p-8 rounded-3xl border border-white/10 w-full max-w-[320px] text-center">
+        <div class="bg-[#0a2551] p-8 rounded-3xl border border-white/10 w-full max-w-[320px] text-center">
             <h3 class="text-sky-400 font-black text-sm uppercase italic">Factura Digital</h3>
             <div id="qrcode" class="flex justify-center"></div>
-            <p class="text-[10px] text-gray-400 mb-6 uppercase font-bold" id="qr-info-txt">TX-000000</p>
+            <p class="text-[10px] text-gray-400 mb-6 uppercase font-bold" id="qr-info-txt">TX-VIAJE-FINALIZADO</p>
             <button onclick="document.getElementById('modal-qr').style.display = 'none'" class="w-full bg-white text-black py-4 rounded-2xl font-black text-xs uppercase shadow-xl">CERRAR</button>
         </div>
     </div>
@@ -154,30 +133,62 @@
         const p = document.getElementById('pass-input').value;
         if(!u || !p) return alert("Rellena todos los campos");
 
-        const { data: d } = await _supabase.from('drivers').select('*').eq('usuario', u).single();
+        const { data: d, error } = await _supabase.from('drivers').select('*').eq('usuario', u).single();
+        
         if (d && d.password === p) {
+            // VERIFICACIÓN DE BLOQUEO (BANEO)
+            if(d.baneado) {
+                alert("ACCESO DENEGADO: Tu cuenta ha sido bloqueada por la administración.");
+                return;
+            }
+
             currentDriver = d;
             document.getElementById('auth-screen').classList.remove('active');
             document.getElementById('main-app').classList.replace('hidden', 'flex');
             
+            // Llenar datos interfaz
             document.getElementById('header-name').innerText = d.nombre;
             document.getElementById('avatar-init').innerText = d.nombre[0].toUpperCase();
-            document.getElementById('prof-full-name').innerText = `${d.nombre} ${d.apellidos || ''}`;
-            document.getElementById('prof-car').innerText = `${d.modelo_coche || 'N/A'} [ ${d.matricula || '---'} ]`;
-            document.getElementById('prof-lic').innerText = d.num_licencia || 'MAD-000';
-            document.getElementById('prof-owner').innerText = d.nombre_dueno || d.nombre;
+            
+            document.getElementById('profile-details-container').innerHTML = `
+                <div><p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Nombre</p><p class="font-bold text-sm">${d.nombre}</p></div>
+                <div><p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Vehículo</p><p class="font-bold text-sm">${d.marca_v || d.modelo_coche} - ${d.matricula}</p></div>
+                <div><p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Licencia</p><p class="font-bold text-sm text-sky-400">${d.num_licencia || 'LIC-OFICIAL'}</p></div>
+            `;
 
             showTab('panel');
             initMap();
-            escucharCambios();
+            escucharCambiosMaster();
         } else {
-            alert("Usuario o contraseña incorrectos");
+            alert("Credenciales incorrectas");
         }
+    }
+
+    // ESCUCHA SEGURIDAD Y VIAJES
+    function escucharCambiosMaster() {
+        // Suscribirse a cambios en viajes
+        _supabase.channel('viajes_live').on('postgres_changes', { event: '*', table: 'viajes' }, () => {
+            cargarActivos();
+            if(document.getElementById('scr-viajes').classList.contains('active')) cargarHistorial();
+        }).subscribe();
+
+        // SEGURIDAD: Expulsión si el admin banea
+        _supabase.channel('seguridad').on('postgres_changes', { 
+            event: 'UPDATE', 
+            table: 'drivers', 
+            filter: `id=eq.${currentDriver.id}` 
+        }, (payload) => {
+            if(payload.new.baneado) {
+                alert("¡ATENCIÓN! Tu licencia ha sido revocada. Contacta con soporte.");
+                location.reload();
+            }
+        }).subscribe();
     }
 
     function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: 40.4168, lng: -3.7038}, zoom: 15, disableDefaultUI: true
+            center: {lat: 40.4168, lng: -3.7038}, zoom: 15, disableDefaultUI: true,
+            styles: [{ "stylers": [{ "hue": "#2c3e50" }, { "saturation": 250 }] }]
         });
         marker = new google.maps.Marker({ 
             map: map, 
@@ -193,7 +204,7 @@
         if(isConnected) iniciarGPS(); else detenerGPS();
     }
 
-    function iniciarGPS() { actualizarPos(); window.gpsInterval = setInterval(actualizarPos, 300000); }
+    function iniciarGPS() { actualizarPos(); window.gpsInterval = setInterval(actualizarPos, 60000); }
     function detenerGPS() { clearInterval(window.gpsInterval); }
 
     function actualizarPos() {
@@ -215,10 +226,7 @@
     }
 
     async function calcularSaldo() {
-        const ahora = new Date();
-        const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).toISOString();
-        const { data } = await _supabase.from('viajes').select('precio').eq('driver_id', currentDriver.id).eq('estado', 'finalizado').gte('created_at', inicioMes);
-        
+        const { data } = await _supabase.from('viajes').select('precio').eq('driver_id', currentDriver.id).eq('estado', 'finalizado');
         if (data) {
             let total = data.reduce((sum, t) => sum + (parseFloat(t.precio) || 0), 0);
             document.getElementById('stats-total').innerText = total.toFixed(2) + "€";
@@ -239,14 +247,44 @@
                 <p class="text-xs text-gray-400 mb-4">${t.destino}</p>
                 ${renderBotones(t)}
             </div>
-        `).join('') : '<div class="text-center py-10 opacity-20 text-xs uppercase font-bold">Sin servicios</div>';
+        `).join('') : '<div class="text-center py-10 opacity-20 text-[10px] font-bold uppercase">Buscando servicios...</div>';
     }
 
     function renderBotones(t) {
-        if(t.estado === 'pendiente') return `<button onclick="updateTrip('${t.id}','aceptado')" class="w-full bg-sky-500 p-3 rounded-xl font-bold text-xs">ACEPTAR</button>`;
-        if(t.estado === 'aceptado') return `<button onclick="updateTrip('${t.id}','en_punto')" class="w-full bg-emerald-500 p-3 rounded-xl font-bold text-xs">LLEGADO</button>`;
-        if(t.estado === 'en_punto') return `<button onclick="updateTrip('${t.id}','en_curso')" class="w-full bg-amber-500 p-3 rounded-xl font-bold text-xs">INICIAR</button>`;
-        if(t.estado === 'en_curso') return `<button onclick="finalizarViaje('${t.id}')" class="w-full bg-rose-500 p-3 rounded-xl font-bold text-xs">FINALIZAR</button>`;
+        if(t.estado === 'pendiente') return `<button onclick="updateTrip('${t.id}','aceptado')" class="w-full bg-sky-500 p-3 rounded-xl font-bold text-xs text-black">ACEPTAR SERVICIO</button>`;
+        if(t.estado === 'aceptado') return `<button onclick="updateTrip('${t.id}','en_punto')" class="w-full bg-emerald-500 p-3 rounded-xl font-bold text-xs text-black">HE LLEGADO</button>`;
+        if(t.estado === 'en_punto') return `<button onclick="updateTrip('${t.id}','en_curso')" class="w-full bg-amber-500 p-3 rounded-xl font-bold text-xs text-black">INICIAR VIAJE</button>`;
+        if(t.estado === 'en_curso') return `<button onclick="finalizarViaje('${t.id}')" class="w-full bg-rose-500 p-3 rounded-xl font-bold text-xs text-white">FINALIZAR Y COBRAR</button>`;
+    }
+
+    async function updateTrip(id, status) { 
+        await _supabase.from('viajes').update({ estado: status, driver_id: currentDriver.id }).eq('id', id); 
+        cargarActivos(); 
+    }
+
+    async function finalizarViaje(id) { 
+        await _supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id); 
+        // Actualizar comisiones en tabla drivers
+        const { data: trip } = await _supabase.from('viajes').select('precio').eq('id', id).single();
+        const comisionAdd = parseFloat(trip.precio) * 0.10;
+        
+        // Obtenemos deuda actual y sumamos
+        const { data: drv } = await _supabase.from('drivers').select('comision_pendiente_10').eq('id', currentDriver.id).single();
+        const nuevaDeuda = (drv.comision_pendiente_10 || 0) + comisionAdd;
+        
+        await _supabase.from('drivers').update({ comision_pendiente_10: nuevaDeuda }).eq('id', currentDriver.id);
+        
+        verQR(id); 
+        cargarActivos(); 
+    }
+
+    async function verQR(id) {
+        const { data: t } = await _supabase.from('viajes').select('*').eq('id', id).single();
+        const info = { cli: t.cliente_nombre, org: t.origen, des: t.destino, eur: t.precio, lic: currentDriver.num_licencia };
+        const encoded = btoa(JSON.stringify(info));
+        document.getElementById('modal-qr').style.display = 'flex';
+        document.getElementById('qrcode').innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), { text: `https://taxmad.pro/invoice?v=${encoded}`, width: 180, height: 180 });
     }
 
     async function cargarHistorial() {
@@ -254,32 +292,13 @@
         document.getElementById('history-list').innerHTML = data.map(t => `
             <div class="bg-white/5 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
                 <div class="max-w-[70%]">
-                    <p class="text-[8px] text-gray-500 font-bold">${new Date(t.created_at).toLocaleString()}</p>
+                    <p class="text-[8px] text-gray-500 font-bold uppercase">${new Date(t.created_at).toLocaleDateString()}</p>
                     <p class="text-[11px] font-bold truncate">${t.destino}</p>
                     <p class="text-sky-400 font-black text-sm">${t.precio}€</p>
                 </div>
                 <button onclick="verQR('${t.id}')" class="bg-sky-500/10 text-sky-400 p-3 rounded-xl"><i class="fa-solid fa-qrcode"></i></button>
             </div>
         `).join('');
-    }
-
-    async function verQR(id) {
-        const { data: t } = await _supabase.from('viajes').select('*').eq('id', id).single();
-        const info = { cli: t.cliente_nombre, org: t.origen, des: t.destino, eur: t.precio, cif: currentDriver.cif, lic: currentDriver.num_licencia };
-        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(info))));
-        document.getElementById('modal-qr').style.display = 'flex';
-        document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: `https://tuweb.com/factura.html?v=${encoded}`, width: 180, height: 180 });
-    }
-
-    async function updateTrip(id, status) { await _supabase.from('viajes').update({ estado: status, driver_id: currentDriver.id }).eq('id', id); cargarActivos(); }
-    async function finalizarViaje(id) { await _supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id); verQR(id); cargarActivos(); }
-
-    function escucharCambios() {
-        _supabase.channel('viajes_live').on('postgres_changes', { event: '*', table: 'viajes' }, () => {
-            cargarActivos();
-            if(document.getElementById('scr-viajes').classList.contains('active')) cargarHistorial();
-        }).subscribe();
     }
 </script>
 
