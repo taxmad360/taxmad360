@@ -19,7 +19,10 @@
         .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 100px; }
         .screen.active { display: flex; }
 
+        /* Ajuste de Auth Screen para que no tape el Nav si está logueado */
         #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: var(--dark); color: white; z-index: 5000; text-align: center; }
+        #auth-screen.as-profile { z-index: 3000; padding-bottom: 120px; } /* Menor z-index para perfil */
+
         .input-auth { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 14px; }
         
         .photo-picker { width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px dashed var(--blue); margin: 0 auto 20px; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -41,7 +44,7 @@
         
         .trip-item { background: white; padding: 15px; border-radius: 20px; margin-bottom: 10px; border: 1px solid #eee; }
 
-        nav { position: fixed; bottom: 0; width: 100%; max-width: 414px; height: 85px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; z-index: 4000; }
+        nav { position: fixed; bottom: 0; width: 100%; max-width: 414px; height: 85px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; z-index: 6000; }
         .nav-btn { color: #cbd5e1; cursor: pointer; text-align: center; }
         .nav-btn.active { color: var(--blue); }
         .hidden { display: none !important; }
@@ -52,6 +55,10 @@
 <div class="mobile-container">
     
     <div id="auth-screen">
+        <button id="btn-close-profile" onclick="showTab('home')" class="hidden absolute top-10 right-8 text-white/50 text-2xl">
+            <i class="fa-solid fa-circle-xmark"></i>
+        </button>
+
         <div id="auth-content">
             <div class="mb-10" id="auth-logo">
                 <h1 class="text-4xl font-black italic">Tax<span class="text-sky-400">Mad</span></h1>
@@ -83,7 +90,9 @@
                 
                 <button id="btn-save-reg" onclick="registrarUsuario()" class="btn-main">GUARDAR DATOS</button>
                 
-                <button id="btn-logout" onclick="cerrarSesion()" class="mt-4 text-red-400 font-bold text-xs uppercase tracking-widest hidden">Cerrar Sesión</button>
+                <button id="btn-logout" onclick="cerrarSesion()" class="mt-8 text-red-400 font-bold text-xs uppercase tracking-widest hidden flex items-center justify-center gap-2 w-full">
+                    <i class="fa-solid fa-power-off"></i> Cerrar Sesión
+                </button>
                 <p id="btn-back-login" class="mt-4 text-xs text-gray-400 cursor-pointer" onclick="toggleAuth('login')">Volver al inicio</p>
             </div>
         </div>
@@ -131,12 +140,10 @@
             </div>
 
             <div id="map"></div>
-            
             <div id="info-resumen" class="hidden bg-sky-50 p-4 rounded-2xl text-center">
                 <p class="text-[10px] font-black text-sky-600 uppercase">Precio Estimado</p>
                 <span id="precio-txt" class="text-3xl font-black text-slate-800">0.00€</span>
             </div>
-
             <button id="btnAction" class="btn-main mb-6" onclick="procesarViaje()">CALCULAR PRECIO</button>
         </div>
     </div>
@@ -145,7 +152,6 @@
         <div class="p-6">
             <h1 class="text-3xl font-black italic mb-2">Mis <span class="text-sky-500">Viajes</span></h1>
             <p class="text-gray-400 text-xs mb-6">Historial de reservas y Taxcoins</p>
-            
             <div id="lista-viajes" class="space-y-3">
                 <p class="text-center text-gray-400 py-10">Cargando historial...</p>
             </div>
@@ -175,7 +181,6 @@
 
     let currentUser = null, ultimoCalculo = null;
 
-    // --- SESIÓN Y PERFIL ---
     function cerrarSesion() {
         localStorage.removeItem('taxmad_user');
         location.reload();
@@ -188,9 +193,7 @@
         const n = document.getElementById('reg-nom').value;
 
         if(!u || !p || !n) return alert("Completa los campos obligatorios");
-
         btn.disabled = true;
-        btn.innerText = "PROCESANDO...";
 
         const datos = { 
             nombre: n, 
@@ -203,28 +206,26 @@
         };
 
         const { error } = await _supabase.from('clientes').upsert([datos], {onConflict: 'usuario'});
-        
         if(!error) {
             alert("¡Datos guardados!");
             if(!currentUser) toggleAuth('login');
             else {
-                currentUser = (await _supabase.from('clientes').select('*').eq('usuario', u).single()).data;
+                const { data } = await _supabase.from('clientes').select('*').eq('usuario', u).single();
+                currentUser = data;
+                actualizarUI();
                 showTab('home');
             }
         }
         btn.disabled = false;
-        btn.innerText = "GUARDAR DATOS";
     }
 
     async function intentarAcceso() {
         const u = document.getElementById('user-login').value;
         const p = document.getElementById('pass-login').value;
-        
-        const { data, error } = await _supabase.from('clientes').select('*').eq('usuario', u).single();
+        const { data } = await _supabase.from('clientes').select('*').eq('usuario', u).single();
         
         if (data && data.password === p) {
             currentUser = data;
-            document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('bottom-nav').classList.remove('hidden');
             showTab('home');
             actualizarUI();
@@ -240,7 +241,6 @@
         document.getElementById('u-img').src = currentUser.foto;
     }
 
-    // --- RESERVAS Y MAPA ---
     let directionsService, directionsRenderer;
     function initMap() {
         if(typeof google === 'undefined') return;
@@ -255,24 +255,18 @@
     async function procesarViaje() {
         const o = document.getElementById('origin').value;
         const d = document.getElementById('destination').value;
-        const fecha = document.getElementById('res-date').value;
-        const hora = document.getElementById('res-time').value;
+        const f = document.getElementById('res-date').value;
+        const h = document.getElementById('res-time').value;
+        if(!o || !d || !f || !h) return alert("Faltan datos");
 
-        if(!o || !d || !fecha || !hora) return alert("Completa todos los datos de la reserva");
-
-        // Validar 30 minutos mínimo
-        const fechaReserva = new Date(`${fecha}T${hora}`);
-        const ahora = new Date();
-        const diferenciaMinutos = (fechaReserva - ahora) / (1000 * 60);
-
-        if(diferenciaMinutos < 30) return alert("⚠️ La reserva debe ser con al menos 30 minutos de antelación.");
+        const fechaReserva = new Date(`${f}T${h}`);
+        if((fechaReserva - new Date()) / 60000 < 30) return alert("Margen mínimo: 30 min");
 
         if(!ultimoCalculo) {
             directionsService.route({ origin: o, destination: d, travelMode: 'DRIVING' }, (res, status) => {
                 if(status === 'OK') {
                     directionsRenderer.setDirections(res);
-                    const dist = res.routes[0].legs[0].distance.value / 1000;
-                    ultimoCalculo = (5.50 + (dist * 1.40)).toFixed(2);
+                    ultimoCalculo = (5.50 + ((res.routes[0].legs[0].distance.value / 1000) * 1.40)).toFixed(2);
                     document.getElementById('precio-txt').innerText = ultimoCalculo + "€";
                     document.getElementById('info-resumen').classList.remove('hidden');
                     document.getElementById('btnAction').innerText = "CONFIRMAR RESERVA";
@@ -280,32 +274,26 @@
             });
         } else {
             const { error } = await _supabase.from('viajes').insert([{
-                cliente_id: currentUser.id,
-                origen: o, destino: d,
-                precio: parseFloat(ultimoCalculo),
-                estado: 'reservado',
-                fecha_reserva: fechaReserva.toISOString()
+                cliente_id: currentUser.id, origen: o, destino: d, precio: parseFloat(ultimoCalculo),
+                estado: 'reservado', fecha_reserva: fechaReserva.toISOString()
             }]);
-
-            if(!error) {
-                alert("✅ Reserva confirmada. La verás en tu historial.");
-                ultimoCalculo = null;
-                document.getElementById('info-resumen').classList.add('hidden');
-                document.getElementById('btnAction').innerText = "CALCULAR PRECIO";
-                showTab('hucha');
-            }
+            if(!error) { alert("Reserva OK"); ultimoCalculo = null; showTab('hucha'); }
         }
     }
 
-    // --- NAVEGACIÓN Y HISTORIAL ---
     async function showTab(t) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         
+        // Resetear estado del Auth Screen
+        const auth = document.getElementById('auth-screen');
+        auth.classList.add('hidden');
+        auth.classList.remove('as-profile');
+        document.getElementById('btn-close-profile').classList.add('hidden');
+
         if(t === 'home') {
             document.getElementById('main-app').classList.add('active');
             document.getElementById('n-home').classList.add('active');
-            document.getElementById('auth-screen').classList.add('hidden');
         } 
         else if(t === 'hucha') {
             document.getElementById('hucha-screen').classList.add('active');
@@ -313,31 +301,26 @@
             cargarHistorial();
         } 
         else if(t === 'perfil') {
+            document.getElementById('n-perfil').classList.add('active');
+            auth.classList.remove('hidden');
+            auth.classList.add('as-profile');
+            document.getElementById('btn-close-profile').classList.remove('hidden');
             toggleAuth('register');
         }
     }
 
     async function cargarHistorial() {
-        const container = document.getElementById('lista-viajes');
         const { data } = await _supabase.from('viajes').select('*').eq('cliente_id', currentUser.id).order('created_at', {ascending: false});
-        
-        if(!data || data.length === 0) {
-            container.innerHTML = `<p class="text-center text-gray-400 py-10">No tienes viajes registrados aún.</p>`;
-            return;
-        }
-
+        const container = document.getElementById('lista-viajes');
+        if(!data || data.length === 0) { container.innerHTML = "<p class='text-center opacity-40 py-10'>Sin viajes</p>"; return; }
         container.innerHTML = data.map(v => `
             <div class="trip-item">
                 <div class="flex justify-between mb-2">
-                    <span class="text-[10px] font-bold text-sky-500 uppercase">${new Date(v.fecha_reserva).toLocaleString()}</span>
+                    <span class="text-[10px] font-bold text-sky-500">${new Date(v.fecha_reserva).toLocaleString()}</span>
                     <span class="text-xs font-black">${v.precio.toFixed(2)}€</span>
                 </div>
-                <p class="text-xs text-slate-700 truncate"><i class="fa-solid fa-location-dot mr-2 opacity-30"></i>${v.origen}</p>
-                <p class="text-xs text-slate-700 truncate"><i class="fa-solid fa-flag-checkered mr-2 opacity-30"></i>${v.destino}</p>
-                <div class="mt-2 pt-2 border-t border-gray-50 flex justify-between items-center">
-                    <span class="text-[9px] px-2 py-1 bg-gray-100 rounded-full font-bold uppercase">${v.estado}</span>
-                    <span class="text-[9px] text-green-500 font-bold">+ ${(v.precio * 0.1).toFixed(2)} TC</span>
-                </div>
+                <p class="text-[11px] truncate opacity-70">${v.origen}</p>
+                <p class="text-[11px] truncate opacity-70">${v.destino}</p>
             </div>
         `).join('');
     }
@@ -348,11 +331,10 @@
         document.getElementById('register-box').classList.toggle('hidden', v !== 'register');
         
         if(v === 'register') {
-            document.getElementById('auth-logo').classList.add('hidden');
+            document.getElementById('auth-logo').classList.toggle('hidden', currentUser);
             document.getElementById('btn-back-login').classList.toggle('hidden', currentUser);
             document.getElementById('btn-logout').classList.toggle('hidden', !currentUser);
             document.getElementById('reg-title').innerText = currentUser ? "EDITAR PERFIL" : "CREAR CUENTA";
-            
             if(currentUser) {
                 document.getElementById('reg-nom').value = currentUser.nombre;
                 document.getElementById('reg-ape').value = currentUser.apellido || "";
@@ -362,8 +344,6 @@
                 document.getElementById('img-preview').classList.remove('hidden');
                 document.getElementById('icon-cam').classList.add('hidden');
             }
-        } else {
-            document.getElementById('auth-logo').classList.remove('hidden');
         }
     }
 
