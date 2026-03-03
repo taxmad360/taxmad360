@@ -11,53 +11,62 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        :root { --blue: #00B5FF; --dark: #112F5C; --bg-app: #ffffff; --input-bg: #f3f4f6; }
-        body { background: #001a3d; font-family: "Montserrat", sans-serif; margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
-        .mobile-container { width: 100%; max-width: 414px; background: var(--bg-app); position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+        :root { --blue: #00B5FF; --dark: #001a3d; --bg-app: #ffffff; --input-bg: #f3f4f6; }
+        body { background: #000c1d; font-family: "Montserrat", sans-serif; margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
         
-        /* Pantallas de Autenticación */
-        #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: #001a3d; color: white; z-index: 5000; text-align: center; overflow-y: auto; }
-        .input-auth { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 14px; }
+        .mobile-container { width: 100%; max-width: 414px; background: var(--bg-app); position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
         
-        .photo-picker { width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px dashed var(--blue); margin: 0 auto 20px; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .photo-picker img { width: 100%; height: 100%; object-fit: cover; display: none; }
-        .photo-picker i { font-size: 24px; color: var(--blue); }
+        /* Pantallas */
+        .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 90px; transition: all 0.3s ease; }
+        .screen.active { display: flex; }
 
-        /* App Principal */
-        #main-app, #hucha-screen { display: none; flex-direction: column; height: 100%; background: white; overflow-y: auto; padding-bottom: 100px; }
-        .user-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: white; position: sticky; top: 0; z-index: 100; }
-        .logo-txt { font-weight: 800; font-size: 20px; color: var(--dark); }
+        /* Auth */
+        #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: var(--dark); color: white; z-index: 5000; text-align: center; }
+        .input-auth { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 14px; transition: 0.3s; }
+        .input-auth:focus { border-color: var(--blue); background: rgba(255,255,255,0.1); }
+        
+        .photo-picker { width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px dashed var(--blue); margin: 0 auto 20px; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .photo-picker img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Header */
+        .user-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; background: white; position: sticky; top: 0; z-index: 100; }
+        .logo-txt { font-weight: 800; font-size: 20px; color: var(--dark); letter-spacing: -1px; }
         .logo-txt span { color: var(--blue); }
 
-        .form-content { padding: 20px; display: flex; flex-direction: column; gap: 8px; }
-        .input-group { position: relative; }
-        .input-group label { display: block; font-size: 9px; font-weight: 800; color: var(--dark); margin-bottom: 4px; margin-left: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .input-group input { width: 100%; padding: 12px 45px 12px 15px; border-radius: 12px; background: var(--input-bg); border: 1px solid #e5e7eb; font-size: 14px; font-weight: 500; color: #333; outline: none; }
-        .input-group i { position: absolute; right: 15px; top: 32px; color: var(--blue); font-size: 16px; }
+        /* Cards */
+        .taxcoin-card { background: linear-gradient(135deg, #001a3d 0%, #004e92 100%); margin: 15px 20px; padding: 20px; border-radius: 24px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 25px rgba(0,181,255,0.25); position: relative; overflow: hidden; }
+        .taxcoin-card::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); pointer-events: none; }
+        .tc-val { font-size: 26px; font-weight: 900; color: var(--blue); }
 
-        #map { width: 100%; height: 200px; background: #f0f0f0; border-radius: 15px; margin: 10px 0; }
-        .taxcoin-card { background: linear-gradient(135deg, #001a3d 0%, #112F5C 100%); margin: 10px 20px; padding: 15px; border-radius: 20px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 20px rgba(0,181,255,0.2); }
-        .tc-val { font-size: 22px; font-weight: 900; color: var(--blue); }
+        .input-group { position: relative; margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 10px; font-weight: 800; color: var(--dark); margin-bottom: 6px; text-transform: uppercase; opacity: 0.6; }
+        .input-group input { width: 100%; padding: 14px 45px 14px 15px; border-radius: 14px; background: var(--input-bg); border: 1px solid #eee; font-size: 14px; font-weight: 600; outline: none; transition: 0.3s; }
+        .input-group input:focus { border-color: var(--blue); background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .input-group i { position: absolute; right: 18px; top: 38px; color: var(--blue); }
 
-        /* Card de Información de Pago */
-        .info-card { background: #f0f9ff; margin: 10px 20px; padding: 15px; border-radius: 15px; border: 1px solid #bae6fd; display: none; text-align: center; }
-        .price-val { font-size: 28px; font-weight: 800; color: var(--dark); display: block; }
-        .payment-note { font-size: 10px; color: #0369a1; font-weight: 700; text-transform: uppercase; margin-top: 5px; }
-        
-        .btn-main { background: linear-gradient(90deg, #38bdf8 0%, #4f46e5 100%); color: white; padding: 16px; border-radius: 14px; width: 90%; margin: 10px auto; font-weight: 800; text-align: center; cursor: pointer; border: none; text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* Widget de Viaje Activo */
-        #active-trip-widget { display: none; position: absolute; bottom: 90px; left: 15px; right: 15px; background: #001a3d; border-radius: 20px; padding: 15px; z-index: 2000; color: white; border: 1px solid rgba(0,181,255,0.3); }
+        #map { width: 100%; height: 220px; background: #e5e7eb; border-radius: 20px; margin: 10px 0; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
 
-        /* Modal de Chat Moderno */
+        .btn-main { background: linear-gradient(90deg, #00B5FF 0%, #0072ff 100%); color: white; padding: 18px; border-radius: 16px; font-weight: 800; text-align: center; cursor: pointer; border: none; text-transform: uppercase; letter-spacing: 1px; width: 100%; box-shadow: 0 8px 20px rgba(0,181,255,0.3); transition: 0.3s; }
+        .btn-main:active { transform: scale(0.98); }
+        .btn-main:disabled { opacity: 0.6; filter: grayscale(1); }
+
+        /* Widget Viaje */
+        #active-trip-widget { display: none; position: absolute; bottom: 95px; left: 15px; right: 15px; background: var(--dark); border-radius: 24px; padding: 20px; z-index: 2000; color: white; border: 1px solid rgba(0,181,255,0.3); animation: slideUp 0.5s ease; }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Chat */
         #chat-modal { display: none; position: fixed; inset: 0; background: white; z-index: 6000; flex-direction: column; }
         #chat-messages { flex: 1; overflow-y: auto; padding: 20px; background: #f8fafc; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 12px 16px; border-radius: 18px; font-size: 13px; max-width: 80%; line-height: 1.4; }
+        .msg { padding: 12px 16px; border-radius: 18px; font-size: 14px; max-width: 80%; line-height: 1.4; position: relative; }
         .msg-me { align-self: flex-end; background: var(--blue); color: white; border-bottom-right-radius: 4px; }
         .msg-them { align-self: flex-start; background: #e2e8f0; color: var(--dark); border-bottom-left-radius: 4px; }
+
+        /* Nav */
+        nav { position: fixed; bottom: 0; w-full; max-width: 414px; height: 85px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; z-index: 4000; padding-bottom: 10px; }
+        .nav-btn { color: #cbd5e1; transition: 0.3s; cursor: pointer; text-align: center; }
+        .nav-btn.active { color: var(--blue); }
         
         .hidden { display: none !important; }
-        .nav-btn.active { color: var(--blue); }
     </style>
 </head>
 <body>
@@ -65,41 +74,44 @@
 <div class="mobile-container">
     
     <div id="auth-screen">
-        <div style="font-size: 35px; font-weight: 900; margin-bottom: 30px;">Tax<span style="color:var(--blue)">Mad</span></div>
+        <div class="mb-10">
+            <h1 class="text-4xl font-black italic">Tax<span class="text-sky-400">Mad</span></h1>
+            <p class="text-[10px] tracking-[4px] opacity-50 uppercase">Premium Mobility</p>
+        </div>
+
         <div id="login-box">
             <input type="text" id="user-login" placeholder="Usuario" class="input-auth">
             <input type="password" id="pass-login" placeholder="Contraseña" class="input-auth">
-            <button onclick="intentarAcceso()" class="btn-main" style="width: 100%;">ENTRAR</button>
-            <p class="mt-4 text-xs text-gray-400">¿No tienes cuenta? <span class="text-sky-400 font-bold cursor-pointer" onclick="toggleAuth('register')">Regístrate</span></p>
+            <button onclick="intentarAcceso()" class="btn-main mt-4">ENTRAR</button>
+            <p class="mt-6 text-sm text-gray-400">¿Nuevo aquí? <span class="text-sky-400 font-bold cursor-pointer" onclick="toggleAuth('register')">Crea una cuenta</span></p>
         </div>
 
         <div id="register-box" class="hidden">
-            <h2 id="form-title" class="mb-4 font-bold">Crear Cuenta</h2>
-            <input type="file" id="reg-foto-input" accept="image/*" class="hidden" onchange="previewImagen(this)">
             <div class="photo-picker" onclick="document.getElementById('reg-foto-input').click()">
-                <i class="fa-solid fa-camera" id="icon-cam"></i>
-                <img id="img-preview" src="">
+                <i class="fa-solid fa-camera text-2xl text-sky-400" id="icon-cam"></i>
+                <img id="img-preview" src="" class="hidden">
             </div>
+            <input type="file" id="reg-foto-input" accept="image/*" class="hidden" onchange="previewImagen(this)">
+            
             <div class="grid grid-cols-2 gap-2">
                 <input type="text" id="reg-nom" placeholder="Nombre" class="input-auth">
                 <input type="text" id="reg-ape" placeholder="Apellido" class="input-auth">
             </div>
             <input type="text" id="reg-user" placeholder="Usuario" class="input-auth">
             <input type="password" id="reg-pass" placeholder="Contraseña" class="input-auth">
-            <input type="password" id="reg-pass2" placeholder="Confirmar" class="input-auth">
             <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-auth">
-            <button id="btn-registro" onclick="registrarUsuario()" class="btn-main" style="width: 100%;">GUARDAR</button>
-            <p class="mt-4 text-xs text-gray-400 cursor-pointer" onclick="toggleAuth('login')">Volver al Login</p>
+            <button onclick="registrarUsuario()" class="btn-main">GUARDAR REGISTRO</button>
+            <p class="mt-4 text-xs text-gray-400 cursor-pointer" onclick="toggleAuth('login')">Volver al inicio</p>
         </div>
     </div>
 
-    <div id="main-app">
+    <div id="main-app" class="screen">
         <header class="user-header">
             <div class="flex items-center gap-3">
-                <img id="u-img" src="" class="w-10 h-10 rounded-full border-2 border-sky-400 object-cover" onclick="abrirEditor()">
+                <img id="u-img" src="" class="w-11 h-11 rounded-full border-2 border-sky-400 object-cover bg-gray-100" onclick="showTab('perfil')">
                 <div>
-                    <p style="font-size: 8px; color: #aaa; font-weight:800; letter-spacing: 1px;">TAXMAD CLIENT</p>
-                    <h2 id="u-name" style="font-size: 13px; font-weight: 700;">---</h2>
+                    <p class="text-[8px] font-black text-gray-400 uppercase tracking-widest">Bienvenido</p>
+                    <h2 id="u-name" class="text-sm font-bold text-slate-800">Cargando...</h2>
                 </div>
             </div>
             <div class="logo-txt">Tax<span>Mad</span></div>
@@ -107,68 +119,104 @@
 
         <div class="taxcoin-card">
             <div>
-                <p class="text-[9px] font-black opacity-60 uppercase">Saldo Taxcoins</p>
-                <p class="tc-val"><span id="u-tc">0.00</span> <small class="text-xs">TC</small></p>
+                <p class="text-[10px] font-bold opacity-70 uppercase mb-1">Taxcoins Acumulados</p>
+                <p class="tc-val"><span id="u-tc">0.00</span> <small class="text-xs ml-1 opacity-80">TC</small></p>
             </div>
-            <button onclick="showTab('hucha')" class="bg-white/10 p-2 px-4 rounded-xl text-[10px] font-bold border border-white/20">MI HUCHA</button>
+            <i class="fa-solid fa-coins text-3xl opacity-20"></i>
         </div>
 
-        <div class="form-content">
-            <div class="input-group"><label>Recogida</label><input type="text" id="origin" placeholder="Origen"><i class="fa-solid fa-location-dot"></i></div>
-            <div class="input-group"><label>Destino</label><input type="text" id="destination" placeholder="Destino"><i class="fa-solid fa-flag-checkered"></i></div>
-            <div id="map"></div>
-            
-            <div id="info-resumen" class="info-card">
-                <p class="text-[9px] font-bold text-sky-600 mb-1">PRECIO ESTIMADO</p>
-                <span id="precio-txt" class="price-val">0.00€</span>
-                <p class="payment-note"><i class="fa-solid fa-wallet mr-1"></i> Pago directo al conductor (Efectivo/Tarjeta)</p>
+        <div class="px-5 space-y-4">
+            <div class="input-group">
+                <label>Punto de Recogida</label>
+                <input type="text" id="origin" placeholder="¿Dónde te buscamos?">
+                <i class="fa-solid fa-location-dot"></i>
+            </div>
+            <div class="input-group">
+                <label>Destino Final</label>
+                <input type="text" id="destination" placeholder="¿A dónde vas?">
+                <i class="fa-solid fa-flag-checkered"></i>
             </div>
 
-            <button id="btnAction" class="btn-main" onclick="procesarViaje()">CALCULAR PRECIO</button>
+            <div id="map"></div>
+            
+            <div id="info-resumen" class="hidden bg-sky-50 p-4 rounded-2xl border border-sky-100 text-center animate-pulse">
+                <p class="text-[10px] font-black text-sky-600 uppercase mb-1">Precio Estimado</p>
+                <span id="precio-txt" class="text-3xl font-black text-slate-800">0.00€</span>
+                <p class="text-[9px] text-sky-500 font-bold mt-2"><i class="fa-solid fa-credit-card mr-1"></i> PAGO AL CONDUCTOR</p>
+            </div>
+
+            <button id="btnAction" class="btn-main mb-4" onclick="procesarViaje()">CALCULAR PRECIO</button>
         </div>
     </div>
 
-    <div id="hucha-screen">
+    <div id="hucha-screen" class="screen">
         <div class="p-6">
-            <h1 class="text-2xl font-black italic">Mi Hucha <span class="text-sky-500">TC</span></h1>
-            <p class="text-gray-500 text-xs mb-6">Puntos acumulados por tus trayectos.</p>
-            <div id="lista-tc" class="mt-4 space-y-2"></div>
+            <h1 class="text-3xl font-black italic mb-2">Mi <span class="text-sky-500">Hucha</span></h1>
+            <div class="bg-slate-50 p-6 rounded-3xl border border-dashed border-slate-200 text-center mb-8">
+                <p class="text-xs font-bold text-slate-400 uppercase mb-2">Total disponible para canjear</p>
+                <p class="text-4xl font-black text-slate-800" id="hucha-total">0.00 <span class="text-lg text-sky-500">TC</span></p>
+            </div>
+            
+            <h3 class="text-xs font-black uppercase text-slate-400 mb-4 tracking-widest">Últimos Movimientos</h3>
+            <div id="lista-tc" class="space-y-3">
+                <p class="text-center text-gray-400 text-xs py-10">No hay movimientos recientes.</p>
+            </div>
         </div>
     </div>
 
     <div id="active-trip-widget">
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex justify-between items-center mb-5">
             <div class="flex gap-3 items-center">
-                <div class="w-10 h-10 bg-sky-400 rounded-lg flex items-center justify-center font-black" id="dr-icon">T</div>
+                <div class="w-12 h-12 bg-sky-500 rounded-2xl flex items-center justify-center shadow-lg shadow-sky-500/30">
+                    <i class="fa-solid fa-taxi text-white text-xl"></i>
+                </div>
                 <div>
-                    <div id="dr-name" class="text-sm font-bold">Buscando...</div>
-                    <div id="dr-vehicle" class="text-[9px] text-sky-400 font-bold uppercase">En camino</div>
+                    <div id="dr-name" class="text-base font-bold">Buscando conductor...</div>
+                    <div id="dr-vehicle" class="text-[10px] text-sky-400 font-black uppercase tracking-tighter">Tu taxi está en camino</div>
                 </div>
             </div>
-            <div id="timer" class="text-lg font-black text-sky-400">05:00</div>
+            <div id="timer" class="text-xl font-black text-sky-400">05:00</div>
         </div>
-        <div class="flex gap-2">
-            <button onclick="llamarSeguro()" class="flex-1 bg-white/5 p-3 rounded-xl text-center text-[10px] font-bold border border-white/10 italic"><i class="fa-solid fa-phone mr-2"></i>Llamar</button>
-            <button onclick="abrirChat()" class="flex-1 bg-white/5 p-3 rounded-xl text-center text-[10px] font-bold border border-white/10 italic"><i class="fa-solid fa-comment mr-2"></i>Chat</button>
+        <div class="flex gap-3">
+            <button onclick="llamarSeguro()" class="flex-1 bg-white/10 hover:bg-white/20 p-4 rounded-2xl text-[11px] font-bold transition">
+                <i class="fa-solid fa-phone mr-2 text-sky-400"></i>LLAMAR
+            </button>
+            <button onclick="abrirChat()" class="flex-1 bg-white/10 hover:bg-white/20 p-4 rounded-2xl text-[11px] font-bold transition">
+                <i class="fa-solid fa-comment-dots mr-2 text-sky-400"></i>CHAT
+            </button>
         </div>
     </div>
 
     <div id="chat-modal">
-        <div class="p-4 border-b flex items-center gap-4 bg-white sticky top-0 shadow-sm">
-            <button onclick="cerrarChat()"><i class="fa-solid fa-arrow-left"></i></button>
-            <span class="font-bold" id="chat-title">Chat con Conductor</span>
+        <div class="p-5 border-b flex items-center gap-4 bg-white shadow-sm">
+            <button onclick="cerrarChat()" class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-chevron-left"></i></button>
+            <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase">Chat con Conductor</p>
+                <span class="font-black text-slate-800" id="chat-title">CONDUCTOR TAXMAD</span>
+            </div>
         </div>
         <div id="chat-messages"></div>
-        <div class="p-4 border-t flex gap-2 bg-white">
-            <input type="text" id="chat-input" placeholder="Escribe un mensaje..." class="flex-1 p-3 bg-gray-100 rounded-full outline-none text-sm">
-            <button onclick="enviarMensaje()" class="bg-sky-500 text-white w-12 h-12 rounded-full shadow-lg"><i class="fa-solid fa-paper-plane"></i></button>
+        <div class="p-4 border-t flex gap-3 bg-white">
+            <input type="text" id="chat-input" placeholder="Escribe un mensaje..." class="flex-1 p-4 bg-gray-100 rounded-2xl outline-none text-sm font-medium">
+            <button onclick="enviarMensaje()" class="bg-sky-500 text-white w-14 h-14 rounded-2xl shadow-lg shadow-sky-500/40 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
         </div>
     </div>
 
-    <nav class="fixed bottom-0 w-full max-w-[414px] h-20 bg-white border-t flex justify-around items-center z-[4000]">
-        <div onclick="showTab('home')" id="n-home" class="nav-btn active text-center text-[10px] font-bold"><i class="fa-solid fa-car-side text-xl block mb-1"></i>Viajar</div>
-        <div onclick="showTab('hucha')" id="n-hucha" class="nav-btn text-center text-[10px] font-bold"><i class="fa-solid fa-wallet text-xl block mb-1"></i>Hucha</div>
-        <div onclick="abrirEditor()" id="n-perfil" class="nav-btn text-center text-[10px] font-bold"><i class="fa-solid fa-user-gear text-xl block mb-1"></i>Perfil</div>
+    <nav id="bottom-nav">
+        <div onclick="showTab('home')" id="n-home" class="nav-btn active">
+            <i class="fa-solid fa-house-chimney text-xl block mb-1"></i>
+            <span class="text-[9px] font-bold uppercase">Inicio</span>
+        </div>
+        <div onclick="showTab('hucha')" id="n-hucha" class="nav-btn">
+            <i class="fa-solid fa-wallet text-xl block mb-1"></i>
+            <span class="text-[9px] font-bold uppercase">Hucha</span>
+        </div>
+        <div onclick="showTab('perfil')" id="n-perfil" class="nav-btn">
+            <i class="fa-solid fa-circle-user text-xl block mb-1"></i>
+            <span class="text-[9px] font-bold uppercase">Perfil</span>
+        </div>
     </nav>
 </div>
 
@@ -185,33 +233,29 @@
             const reader = new FileReader();
             reader.onload = (e) => {
                 document.getElementById('img-preview').src = e.target.result;
-                document.getElementById('img-preview').style.display = 'block';
-                document.getElementById('icon-cam').style.display = 'none';
+                document.getElementById('img-preview').classList.remove('hidden');
+                document.getElementById('icon-cam').classList.add('hidden');
             }
             reader.readAsDataURL(input.files[0]);
         }
-    }
-
-    async function subirFoto(file, usuario) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${usuario}-${Date.now()}.${fileExt}`;
-        const { error } = await _supabase.storage.from('avatars').upload(fileName, file);
-        if (error) return null;
-        const { data: { publicUrl } } = _supabase.storage.from('avatars').getPublicUrl(fileName);
-        return publicUrl;
     }
 
     // --- AUTH ---
     async function registrarUsuario() {
         const u = document.getElementById('reg-user').value;
         const p = document.getElementById('reg-pass').value;
-        const fotoFile = document.getElementById('reg-foto-input').files[0];
-        if(!u || !p) return alert("Faltan datos");
+        if(!u || !p) return alert("Usuario y contraseña requeridos");
 
-        let urlFoto = currentUser?.foto || `https://ui-avatars.com/api/?name=${u}`;
+        const fotoFile = document.getElementById('reg-foto-input').files[0];
+        let urlFoto = currentUser?.foto || `https://ui-avatars.com/api/?name=${u}&background=00B5FF&color=fff`;
+
         if (fotoFile) {
-            const res = await subirFoto(fotoFile, u);
-            if(res) urlFoto = res;
+            const fileName = `${u}-${Date.now()}`;
+            const { data: uploadData, error: uploadError } = await _supabase.storage.from('avatars').upload(fileName, fotoFile);
+            if(!uploadError) {
+                const { data } = _supabase.storage.from('avatars').getPublicUrl(fileName);
+                urlFoto = data.publicUrl;
+            }
         }
 
         const datos = { 
@@ -223,30 +267,44 @@
         };
 
         const { error } = await _supabase.from('clientes').upsert([datos], {onConflict: 'usuario'});
-        if(!error) location.reload();
+        if(!error) {
+            alert("¡Perfil actualizado con éxito!");
+            location.reload();
+        }
     }
 
     async function intentarAcceso() {
         const u = document.getElementById('user-login').value;
         const p = document.getElementById('pass-login').value;
-        const { data } = await _supabase.from('clientes').select('*').eq('usuario', u).single();
+        const { data, error } = await _supabase.from('clientes').select('*').eq('usuario', u).single();
+        
         if (data && data.password === p) {
             currentUser = data;
             document.getElementById('auth-screen').classList.add('hidden');
-            document.getElementById('main-app').style.display = 'flex';
-            document.getElementById('u-name').innerText = data.nombre;
-            document.getElementById('u-tc').innerText = data.taxcoins.toFixed(2);
+            showTab('home');
+            document.getElementById('u-name').innerText = data.nombre + " " + (data.apellido || "");
+            document.getElementById('u-tc').innerText = (data.taxcoins || 0).toFixed(2);
+            document.getElementById('hucha-total').innerHTML = `${(data.taxcoins || 0).toFixed(2)} <span class="text-lg text-sky-500">TC</span>`;
             document.getElementById('u-img').src = data.foto;
             initMap();
-        } else alert("Error de acceso");
+        } else {
+            alert("Credenciales incorrectas");
+        }
     }
 
     // --- MAPAS & VIAJE ---
     let directionsService, directionsRenderer, map;
     function initMap() {
         directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: "#00B5FF", strokeWeight: 5 }});
-        map = new google.maps.Map(document.getElementById('map'), { center: {lat: 40.41, lng: -3.70}, zoom: 14, disableDefaultUI: true });
+        directionsRenderer = new google.maps.DirectionsRenderer({ 
+            polylineOptions: { strokeColor: "#00B5FF", strokeWeight: 6, strokeOpacity: 0.8 }
+        });
+        map = new google.maps.Map(document.getElementById('map'), { 
+            center: {lat: 40.4168, lng: -3.7038}, 
+            zoom: 14, 
+            disableDefaultUI: true,
+            styles: [{"featureType":"poi","stylers":[{"visibility":"off"}]}]
+        });
         directionsRenderer.setMap(map);
         new google.maps.places.Autocomplete(document.getElementById('origin'));
         new google.maps.places.Autocomplete(document.getElementById('destination'));
@@ -255,40 +313,49 @@
     async function procesarViaje() {
         const o = document.getElementById('origin').value;
         const d = document.getElementById('destination').value;
+        if(!o || !d) return alert("Ingresa origen y destino");
+
         if(!ultimoCalculo) {
             directionsService.route({ origin: o, destination: d, travelMode: 'DRIVING' }, (res, status) => {
                 if(status === 'OK') {
                     directionsRenderer.setDirections(res);
-                    const precio = (6 + (res.routes[0].legs[0].distance.value/1000 * 1.5)).toFixed(2);
+                    const distKm = res.routes[0].legs[0].distance.value / 1000;
+                    const precio = (5.50 + (distKm * 1.35)).toFixed(2);
                     ultimoCalculo = precio;
                     document.getElementById('precio-txt').innerText = precio + "€";
-                    document.getElementById('info-resumen').style.display = 'block';
-                    document.getElementById('btnAction').innerText = "PEDIR TAXI AHORA";
+                    document.getElementById('info-resumen').classList.remove('hidden');
+                    document.getElementById('btnAction').innerText = "CONFIRMAR SOLICITUD";
                 }
             });
         } else {
-            const { data } = await _supabase.from('viajes').insert([{ 
-                cliente_id: currentUser.id, cliente_nombre: currentUser.nombre,
-                origen: o, destino: d, precio: parseFloat(ultimoCalculo), estado: 'pendiente' 
+            document.getElementById('btnAction').innerText = "BUSCANDO TAXI...";
+            document.getElementById('btnAction').disabled = true;
+
+            const { data, error } = await _supabase.from('viajes').insert([{ 
+                cliente_id: currentUser.id, 
+                cliente_nombre: currentUser.nombre,
+                origen: o, destino: d, 
+                precio: parseFloat(ultimoCalculo), 
+                estado: 'pendiente' 
             }]).select();
+
             if(data) {
                 activeViajeId = data[0].id;
-                document.getElementById('btnAction').innerText = "BUSCANDO...";
-                document.getElementById('btnAction').disabled = true;
                 escucharEstadoViaje(activeViajeId);
             }
         }
     }
 
     function escucharEstadoViaje(id) {
-        _supabase.channel('viajes_cambios')
-        .on('postgres_changes', { event: 'UPDATE', table: 'viajes', filter: `id=eq.${id}` }, async payload => {
+        _supabase.channel('viaje_'+id)
+        .on('postgres_changes', { event: 'UPDATE', table: 'viajes', filter: 'id=eq.'+id }, async payload => {
             if(payload.new.estado === 'aceptado') {
                 const { data: dr } = await _supabase.from('drivers').select('*').eq('id', payload.new.driver_id).single();
                 driverPhone = dr.telefono;
                 document.getElementById('active-trip-widget').style.display = 'block';
                 document.getElementById('dr-name').innerText = dr.nombre;
-                document.getElementById('dr-vehicle').innerText = dr.matricula || "Taxi Premium";
+                document.getElementById('dr-vehicle').innerText = dr.matricula || "Toyota Prius (Eco)";
+                document.getElementById('btnAction').innerText = "VIAJE EN CURSO";
             }
         }).subscribe();
     }
@@ -297,14 +364,14 @@
     function abrirChat() {
         document.getElementById('chat-modal').style.display = 'flex';
         cargarMensajes();
-        _supabase.channel('mensajes_realtime')
-        .on('postgres_changes', { event: 'INSERT', table: 'mensajes', filter: `viaje_id=eq.${activeViajeId}` }, payload => {
+        _supabase.channel('chat_'+activeViajeId)
+        .on('postgres_changes', { event: 'INSERT', table: 'mensajes', filter: 'viaje_id=eq.'+activeViajeId }, payload => {
             renderMsg(payload.new);
         }).subscribe();
     }
 
     async function cargarMensajes() {
-        const { data } = await _supabase.from('mensajes').select('*').eq('viaje_id', activeViajeId).order('creado_at');
+        const { data } = await _supabase.from('mensajes').select('*').eq('viaje_id', activeViajeId).order('created_at');
         document.getElementById('chat-messages').innerHTML = '';
         if(data) data.forEach(renderMsg);
     }
@@ -312,29 +379,56 @@
     function renderMsg(m) {
         const container = document.getElementById('chat-messages');
         const isMe = m.remitente_id === currentUser.id;
-        container.innerHTML += `<div class="msg ${isMe ? 'msg-me' : 'msg-them'}">${m.texto}</div>`;
+        const div = document.createElement('div');
+        div.className = `msg ${isMe ? 'msg-me' : 'msg-them'}`;
+        div.innerText = m.texto;
+        container.appendChild(div);
         container.scrollTop = container.scrollHeight;
     }
 
     async function enviarMensaje() {
-        const msg = document.getElementById('chat-input').value;
-        if(!msg) return;
-        await _supabase.from('mensajes').insert([{ viaje_id: activeViajeId, remitente_id: currentUser.id, texto: msg }]);
+        const txt = document.getElementById('chat-input').value;
+        if(!txt || !activeViajeId) return;
+        await _supabase.from('mensajes').insert([{ 
+            viaje_id: activeViajeId, 
+            remitente_id: currentUser.id, 
+            texto: txt 
+        }]);
         document.getElementById('chat-input').value = '';
     }
 
-    function cerrarChat() { document.getElementById('chat-modal').style.display = 'none'; }
-    function llamarSeguro() { if(driverPhone) window.location.href = `tel:${driverPhone}`; }
-    function showTab(t) { 
-        document.getElementById('main-app').style.display = t=='home'?'flex':'none'; 
-        document.getElementById('hucha-screen').style.display = t=='hucha'?'flex':'none';
+    // --- NAVEGACIÓN ---
+    function showTab(t) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        
+        if(t === 'home') {
+            document.getElementById('main-app').classList.add('active');
+            document.getElementById('n-home').classList.add('active');
+        } else if(t === 'hucha') {
+            document.getElementById('hucha-screen').classList.add('active');
+            document.getElementById('n-hucha').classList.add('active');
+        } else if(t === 'perfil') {
+            toggleAuth('register');
+        }
     }
+
     function toggleAuth(v) {
+        document.getElementById('auth-screen').classList.remove('hidden');
         document.getElementById('login-box').classList.add('hidden');
         document.getElementById('register-box').classList.add('hidden');
         document.getElementById(v + '-box').classList.remove('hidden');
+        
+        if(v === 'register' && currentUser) {
+            document.getElementById('reg-nom').value = currentUser.nombre;
+            document.getElementById('reg-user').value = currentUser.usuario;
+            document.getElementById('reg-tel').value = currentUser.telefono;
+        }
     }
-    function abrirEditor() { toggleAuth('register'); }
+
+    function cerrarChat() { document.getElementById('chat-modal').style.display = 'none'; }
+    function llamarSeguro() { if(driverPhone) window.open(`tel:${driverPhone}`); }
+
 </script>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places" async defer></script>
