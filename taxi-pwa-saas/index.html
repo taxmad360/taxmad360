@@ -19,13 +19,17 @@
         #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: #001a3d; color: white; z-index: 5000; text-align: center; overflow-y: auto; }
         .input-auth { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 14px; }
         
+        /* Selector de Foto Circular */
+        .photo-picker { width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px dashed var(--blue); margin: 0 auto 20px; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .photo-picker img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .photo-picker i { font-size: 24px; color: var(--blue); }
+
         /* App Principal */
         #main-app, #hucha-screen { display: none; flex-direction: column; height: 100%; background: white; overflow-y: auto; padding-bottom: 100px; }
         .user-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: white; position: sticky; top: 0; z-index: 100; }
         .logo-txt { font-weight: 800; font-size: 20px; color: var(--dark); }
         .logo-txt span { color: var(--blue); }
 
-        /* Formularios y Inputs */
         .form-content { padding: 20px; display: flex; flex-direction: column; gap: 8px; }
         .input-group { position: relative; }
         .input-group label { display: block; font-size: 9px; font-weight: 800; color: var(--dark); margin-bottom: 4px; margin-left: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -42,8 +46,8 @@
         .tarifa-badge { font-size: 10px; background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; font-weight: 700; margin-bottom: 5px; display: inline-block; }
 
         .btn-main { background: linear-gradient(90deg, #38bdf8 0%, #4f46e5 100%); color: white; padding: 16px; border-radius: 14px; width: 90%; margin: 10px auto; font-weight: 800; text-align: center; cursor: pointer; border: none; text-transform: uppercase; letter-spacing: 1px; }
+        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        /* Hucha y Movimientos */
         .movimiento-item { background: white; margin: 8px 20px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; }
         .nav-btn { cursor: pointer; transition: 0.3s; color: #9ca3af; }
         .nav-btn.active { color: #00B5FF; }
@@ -68,6 +72,13 @@
 
         <div id="register-box" class="hidden">
             <h2 id="form-title" class="mb-4 font-bold">Crear Cuenta</h2>
+            
+            <input type="file" id="reg-foto-input" accept="image/*" class="hidden" onchange="previewImagen(this)">
+            <div class="photo-picker" onclick="document.getElementById('reg-foto-input').click()">
+                <i class="fa-solid fa-camera" id="icon-cam"></i>
+                <img id="img-preview" src="">
+            </div>
+
             <div class="grid grid-cols-2 gap-2">
                 <input type="text" id="reg-nom" placeholder="Nombre" class="input-auth">
                 <input type="text" id="reg-ape" placeholder="Apellido" class="input-auth">
@@ -76,8 +87,7 @@
             <input type="password" id="reg-pass" placeholder="Contraseña" class="input-auth">
             <input type="password" id="reg-pass2" placeholder="Confirmar" class="input-auth">
             <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-auth">
-            <input type="text" id="reg-foto" placeholder="URL Foto" class="input-auth">
-            <button onclick="registrarUsuario()" class="btn-main" style="width: 100%;">GUARDAR</button>
+            <button id="btn-registro" onclick="registrarUsuario()" class="btn-main" style="width: 100%;">GUARDAR</button>
             <p class="mt-4 text-xs text-gray-400" onclick="toggleAuth('login')">Volver al Login</p>
         </div>
     </div>
@@ -85,10 +95,10 @@
     <div id="main-app">
         <header class="user-header">
             <div class="flex items-center gap-3">
-                <img id="u-img" src="https://ui-avatars.com/api/?name=User&background=00B5FF&color=fff" class="w-10 h-10 rounded-full border-2 border-sky-400" onclick="abrirEditor()">
+                <img id="u-img" src="" class="w-10 h-10 rounded-full border-2 border-sky-400 object-cover" onclick="abrirEditor()">
                 <div>
                     <p style="font-size: 8px; color: #aaa; font-weight:800; letter-spacing: 1px;">TAXMAD CLIENT</p>
-                    <h2 id="u-name" style="font-size: 13px; font-weight: 700;">Dani Martínez</h2>
+                    <h2 id="u-name" style="font-size: 13px; font-weight: 700;">---</h2>
                 </div>
             </div>
             <div class="logo-txt text-right">Tax<span>Mad</span></div>
@@ -130,29 +140,8 @@
                 <h2 class="text-4xl font-black mt-1" id="hucha-main-val">0.00 <small class="text-lg">TC</small></h2>
                 <button onclick="transferirTC()" class="w-full mt-6 py-3 bg-sky-500 rounded-xl font-bold text-sm shadow-lg border-b-4 border-sky-700 active:border-0">ENVIAR TC A UN AMIGO</button>
             </div>
-            
             <h3 class="mt-8 mb-4 px-2 text-xs font-black text-gray-400 uppercase italic tracking-widest">Actividad Reciente</h3>
-            <div id="lista-tc" class="space-y-1">
-                </div>
-        </div>
-    </div>
-
-    <div id="active-trip-widget">
-        <div class="flex justify-between items-center mb-4">
-            <div class="flex gap-3 items-center">
-                <div id="dr-avatar" class="w-10 h-10 bg-sky-400 rounded-lg flex items-center justify-center font-black text-dark text-xl">?</div>
-                <div>
-                    <div id="dr-name" class="text-sm font-bold">Asignando...</div>
-                    <div id="dr-vehicle" class="text-[9px] text-sky-400 font-bold uppercase tracking-tighter">Buscando unidad cercana</div>
-                </div>
-            </div>
-            <div class="text-center bg-sky-400/10 p-2 rounded-xl border border-sky-400/20">
-                <div id="timer" class="text-lg font-black text-sky-400">--:--</div>
-            </div>
-        </div>
-        <div class="flex gap-2">
-            <a id="link-call" href="#" class="flex-1 bg-white/5 p-3 rounded-xl text-center text-[10px] font-bold border border-white/10 italic"><i class="fa-solid fa-phone mr-2"></i>Llamar</a>
-            <a id="link-chat" href="#" class="flex-1 bg-white/5 p-3 rounded-xl text-center text-[10px] font-bold border border-white/10 italic"><i class="fa-solid fa-comment mr-2"></i>Chat</a>
+            <div id="lista-tc" class="space-y-1"></div>
         </div>
     </div>
 
@@ -170,6 +159,28 @@
 
     let map, directionsRenderer, directionsService, currentUser = null, ultimoCalculo = null;
 
+    // --- MANEJO DE FOTO ---
+    function previewImagen(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('img-preview').src = e.target.result;
+                document.getElementById('img-preview').style.display = 'block';
+                document.getElementById('icon-cam').style.display = 'none';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async function subirFoto(file, usuario) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${usuario}-${Date.now()}.${fileExt}`;
+        const { data, error } = await _supabase.storage.from('avatars').upload(fileName, file);
+        if (error) return null;
+        const { data: { publicUrl } } = _supabase.storage.from('avatars').getPublicUrl(fileName);
+        return publicUrl;
+    }
+
     // --- NAVEGACIÓN ---
     function showTab(tab) {
         document.getElementById('main-app').style.display = tab === 'home' ? 'flex' : 'none';
@@ -185,23 +196,35 @@
         document.getElementById(view + '-box').classList.remove('hidden');
     }
 
-    // --- AUTH ---
+    // --- REGISTRO Y LOGIN ---
     async function registrarUsuario() {
+        const btn = document.getElementById('btn-registro');
         const u = document.getElementById('reg-user').value;
         const p = document.getElementById('reg-pass').value;
-        if(p !== document.getElementById('reg-pass2').value) return alert("Contraseñas no coinciden");
+        const fotoFile = document.getElementById('reg-foto-input').files[0];
+
+        if(!u || !p) return alert("Faltan datos");
+        if(p !== document.getElementById('reg-pass2').value) return alert("Passwords no coinciden");
+
+        btn.innerText = "PROCESANDO...";
+        btn.disabled = true;
+
+        let urlFoto = currentUser?.foto || `https://ui-avatars.com/api/?name=${u}`;
+        if (fotoFile) {
+            const subida = await subirFoto(fotoFile, u);
+            if (subida) urlFoto = subida;
+        }
 
         const datos = {
             nombre: document.getElementById('reg-nom').value,
             apellido: document.getElementById('reg-ape').value,
             usuario: u, password: p,
             telefono: document.getElementById('reg-tel').value,
-            foto: document.getElementById('reg-foto').value,
-            taxcoins: 0
+            foto: urlFoto, taxcoins: currentUser ? currentUser.taxcoins : 0
         };
 
         const { error } = await _supabase.from('clientes').upsert([datos], {onConflict: 'usuario'});
-        if(!error) { alert("Perfil Guardado"); location.reload(); }
+        if(!error) { alert("¡Guardado!"); location.reload(); } else { alert("Error"); btn.disabled = false; btn.innerText = "GUARDAR"; }
     }
 
     async function intentarAcceso() {
@@ -215,12 +238,12 @@
             document.getElementById('main-app').style.display = 'flex';
             document.getElementById('u-name').innerText = `${data.nombre} ${data.apellido}`;
             document.getElementById('u-tc').innerText = data.taxcoins.toFixed(2);
-            if(data.foto) document.getElementById('u-img').src = data.foto;
+            document.getElementById('u-img').src = data.foto || `https://ui-avatars.com/api/?name=${data.nombre}`;
             initMap();
-        } else { alert("Error de acceso"); }
+        } else { alert("Credenciales incorrectas"); }
     }
 
-    // --- MAPA Y VIAJE ---
+    // --- LÓGICA DE VIAJES ---
     function initMap() {
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: "#00B5FF", strokeWeight: 6 }});
@@ -252,47 +275,17 @@
                 cliente_id: currentUser.id, cliente_nombre: currentUser.nombre,
                 origen: o, destino: d, precio: parseFloat(ultimoCalculo.p), estado: 'pendiente'
             }]).select();
-            if(data) { alert("Buscando Conductor..."); btn.style.display='none'; monitorear(data[0].id); }
+            if(data) { alert("Buscando Conductor..."); btn.style.display='none'; }
         }
     }
 
-    function monitorear(id) {
-        _supabase.channel('viajes').on('postgres_changes', { event: 'UPDATE', table: 'viajes', filter: `id=eq.${id}` }, payload => {
-            const v = payload.new;
-            if(v.estado === 'aceptado') mostrarWidget(v);
-            if(v.estado === 'finalizado') finalizarServicio();
-        }).subscribe();
-    }
-
-    async function mostrarWidget(v) {
-        const { data: dr } = await _supabase.from('drivers').select('*').eq('id', v.driver_id).single();
-        document.getElementById('active-trip-widget').style.display = 'block';
-        document.getElementById('dr-name').innerText = dr.nombre;
-        document.getElementById('dr-vehicle').innerText = `${dr.marca_v} • ${dr.matricula}`;
-        document.getElementById('link-call').href = `tel:${dr.telefono}`;
-        let seg = 300;
-        setInterval(() => {
-            seg--; let m=Math.floor(seg/60), s=seg%60;
-            document.getElementById('timer').innerText = `${m}:${s<10?'0'+s:s}`;
-        }, 1000);
-    }
-
-    async function finalizarServicio() {
-        const recompensa = 0.50;
-        const nuevoSaldo = currentUser.taxcoins + recompensa;
-        await _supabase.from('clientes').update({ taxcoins: nuevoSaldo }).eq('id', currentUser.id);
-        await _supabase.from('historial_tc').insert([{ cliente_id: currentUser.id, monto: recompensa, concepto: "Premio Viaje TaxMad" }]);
-        alert("¡Viaje Finalizado! +0.50 TC en tu hucha.");
-        location.reload();
-    }
-
-    // --- LÓGICA HUCHA Y TRANSF ---
+    // --- HUCHA Y TRANSFERENCIAS ---
     async function renderHucha() {
         document.getElementById('hucha-main-val').innerText = currentUser.taxcoins.toFixed(2) + " TC";
         const { data } = await _supabase.from('historial_tc').select('*').eq('cliente_id', currentUser.id).order('fecha', {ascending: false});
         const list = document.getElementById('lista-tc');
-        list.innerHTML = data.length ? '' : '<p class="text-center text-gray-400 text-xs py-10">Sin movimientos aún</p>';
-        data.forEach(m => {
+        list.innerHTML = data && data.length ? '' : '<p class="text-center text-gray-400 text-xs py-10">Sin movimientos</p>';
+        if(data) data.forEach(m => {
             const isPos = m.monto > 0;
             list.innerHTML += `<div class="movimiento-item">
                 <div class="flex items-center gap-3">
@@ -305,26 +298,21 @@
     }
 
     async function transferirTC() {
-        const uDest = prompt("Usuario del amigo:");
-        if(!uDest) return;
+        const uDest = prompt("Usuario destino:");
         const cant = parseFloat(prompt("Cantidad de TC:"));
         if(cant > currentUser.taxcoins) return alert("Saldo insuficiente");
 
         const { data: receptor } = await _supabase.from('clientes').select('*').eq('usuario', uDest).single();
-
         if(receptor) {
             await _supabase.from('clientes').update({ taxcoins: receptor.taxcoins + cant }).eq('id', receptor.id);
             await _supabase.from('clientes').update({ taxcoins: currentUser.taxcoins - cant }).eq('id', currentUser.id);
             await _supabase.from('historial_tc').insert([
                 { cliente_id: currentUser.id, monto: -cant, concepto: `Envío a @${uDest}` },
-                { cliente_id: receptor.id, monto: cant, concepto: `Recibido de @${currentUser.usuario}` }
+                { cliente_id: receptor.id, monto: cant, concepto: `De @${currentUser.usuario}` }
             ]);
-            alert("Transferencia enviada"); location.reload();
+            alert("Enviado"); location.reload();
         } else {
-            if(confirm("El usuario no existe. ¿Invitarlo por WhatsApp?")) {
-                const msg = `¡Hola! Te he enviado ${cant} Taxcoins. Regístrate aquí para cobrarlos: https://taxmad.es`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-            }
+            alert("No existe el usuario.");
         }
     }
 
@@ -335,6 +323,11 @@
         document.getElementById('reg-nom').value = currentUser.nombre;
         document.getElementById('reg-ape').value = currentUser.apellido;
         document.getElementById('reg-tel').value = currentUser.telefono;
+        if(currentUser.foto) {
+            document.getElementById('img-preview').src = currentUser.foto;
+            document.getElementById('img-preview').style.display = 'block';
+            document.getElementById('icon-cam').style.display = 'none';
+        }
     }
 </script>
 
