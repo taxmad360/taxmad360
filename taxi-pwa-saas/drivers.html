@@ -16,13 +16,20 @@
         .mobile-container { width: 100%; max-width: 414px; background: var(--dark); position: relative; display: flex; flex-direction: column; height: 100vh; }
         .lm-input { width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; outline: none; }
         .lm-btn-primary { background: linear-gradient(90deg, #38bdf8 0%, #4f46e5 100%); padding: 16px; border-radius: 12px; width: 100%; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; border: none; color: white; cursor: pointer; }
+        
+        /* Mapa */
+        #map { width: 100%; height: 250px; background: #0f172a; border-radius: 0 0 30px 30px; }
+        
+        /* Lista de Viajes */
         .job-card { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .address-box { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 10px; margin-bottom: 8px; font-size: 11px; display: flex; align-items: center; gap: 10px; }
-        .hidden { display: none !important; }
         
         /* Modal de Factura QR */
-        #modal-qr { position: absolute; inset: 0; background: rgba(0,26,61,0.95); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; }
+        #modal-qr { position: absolute; inset: 0; background: rgba(0,26,61,0.98); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; }
         #qrcode { background: white; padding: 15px; border-radius: 15px; margin: 20px 0; }
+        
+        .hidden { display: none !important; }
+        nav { z-index: 5000; }
     </style>
 </head>
 <body>
@@ -34,40 +41,52 @@
         <p class="text-[10px] font-bold tracking-[3px] text-sky-400 mb-10 uppercase">Driver Premium Panel</p>
         <input type="text" id="user-input" placeholder="Usuario" class="lm-input">
         <input type="password" id="pass-input" placeholder="Contraseña" class="lm-input">
-        <button onclick="intentarLogin()" id="btn-login" class="lm-btn-primary mt-4">ENTRAR AL SISTEMA</button>
+        <button onclick="intentarLogin()" id="btn-login" class="lm-btn-primary mt-4">ACCEDER</button>
     </div>
 
     <div id="main-app" class="hidden flex flex-col h-full relative">
         <header class="p-5 flex justify-between items-center bg-[#001a3d]/80 backdrop-blur-lg border-b border-white/5">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center font-bold text-black" id="avatar-initial">?</div>
+                <div class="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center font-bold text-black text-xl" id="avatar-initial">?</div>
                 <div>
-                    <p class="text-[9px] text-gray-400 uppercase font-black">Driver Activo</p>
+                    <p class="text-[9px] text-gray-400 uppercase font-black tracking-widest">Servicio Oficial</p>
                     <p class="text-sm font-bold" id="display-name">...</p>
                 </div>
             </div>
-            <div id="status-tag" class="bg-green-500 text-black text-[9px] font-black px-3 py-1 rounded-full">DISPONIBLE</div>
+            <div id="status-tag" class="bg-green-500 text-black text-[9px] font-black px-3 py-1 rounded-full">EN LÍNEA</div>
         </header>
 
+        <div id="map"></div>
+
         <main class="flex-grow p-4 overflow-y-auto" id="content-main">
+            <h3 class="text-[10px] font-black uppercase text-sky-400 mb-4 tracking-widest">Servicios Disponibles</h3>
             <div id="trip-list"></div>
         </main>
 
         <div id="modal-qr" class="hidden">
-            <i class="fa-solid fa-circle-check text-green-400 text-5xl mb-4"></i>
-            <h2 class="text-xl font-bold uppercase">Viaje Finalizado</h2>
-            <p class="text-xs text-gray-400 mt-2">Muestre este código al cliente para que descargue su factura</p>
-            
-            <div id="qrcode"></div>
-            
-            <p id="factura-num" class="text-[10px] font-bold text-sky-400 mb-6"></p>
-            <button onclick="cerrarFactura()" class="lm-btn-primary py-3">VOLVER AL PANEL</button>
+            <div class="bg-sky-500/10 p-6 rounded-3xl border border-sky-500/20 w-full">
+                <i class="fa-solid fa-file-invoice-dollar text-sky-400 text-5xl mb-4"></i>
+                <h2 class="text-xl font-bold uppercase mb-2">Factura Generada</h2>
+                <p class="text-xs text-gray-400">Pida al cliente que escanee el código para descargar su recibo oficial.</p>
+                
+                <div class="flex justify-center">
+                    <div id="qrcode"></div>
+                </div>
+                
+                <div class="text-left bg-black/30 p-4 rounded-xl mb-6 text-[10px] space-y-1">
+                    <p><span class="text-gray-500">ID FACTURA:</span> <span id="fact-id" class="text-white"></span></p>
+                    <p><span class="text-gray-500">LICENCIA:</span> <span id="fact-lic" class="text-white"></span></p>
+                    <p><span class="text-gray-500">CIF:</span> <span id="fact-cif" class="text-white"></span></p>
+                </div>
+
+                <button onclick="cerrarFactura()" class="lm-btn-primary py-3">CERRAR Y CONTINUAR</button>
+            </div>
         </div>
 
-        <nav class="h-20 bg-[#0a2551]/90 backdrop-blur-md flex justify-around items-center border-t border-white/5">
-            <div class="text-sky-400 text-center"><i class="fa-solid fa-map-location-dot text-xl"></i><p class="text-[9px] mt-1 font-bold">MAPA</p></div>
-            <div class="text-gray-500 text-center" onclick="cargarViajes()"><i class="fa-solid fa-list-check text-xl"></i><p class="text-[9px] mt-1 font-bold">VIAJES</p></div>
-            <div class="text-gray-500 text-center"><i class="fa-solid fa-user-tie text-xl"></i><p class="text-[9px] mt-1 font-bold">PERFIL</p></div>
+        <nav class="h-20 bg-[#0a2551]/95 backdrop-blur-md flex justify-around items-center border-t border-white/5">
+            <div class="text-sky-400 text-center"><i class="fa-solid fa-map-location-dot text-xl"></i><p class="text-[9px] mt-1 font-bold">PANEL</p></div>
+            <div class="text-gray-500 text-center" onclick="cargarViajes()"><i class="fa-solid fa-rotate text-xl"></i><p class="text-[9px] mt-1 font-bold">REFRESCAR</p></div>
+            <div class="text-gray-500 text-center"><i class="fa-solid fa-power-off text-xl"></i><p class="text-[9px] mt-1 font-bold">SALIR</p></div>
         </nav>
     </div>
 </div>
@@ -80,7 +99,8 @@
     const _supabase = supabase.createClient(S_URL, S_KEY);
 
     let currentDriver = null;
-    let mainInterval = null;
+    let map, driverMarker;
+    let clientMarker = null;
 
     async function intentarLogin() {
         const u = document.getElementById('user-input').value;
@@ -88,8 +108,8 @@
         
         const { data: d, error } = await _supabase.from('drivers').select('*').eq('usuario', u).single();
 
-        if (!d || d.password !== p) {
-            alert("Error de acceso");
+        if (error || !d || d.password !== p) {
+            alert("Credenciales inválidas");
             return;
         }
 
@@ -97,28 +117,54 @@
         document.getElementById('auth-screen').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
         document.getElementById('display-name').innerText = d.nombre;
-        document.getElementById('avatar-initial').innerText = d.nombre[0];
+        document.getElementById('avatar-initial').innerText = d.nombre[0].toUpperCase();
 
+        initMap();
         iniciarSistemaDriver();
     }
 
-    function iniciarSistemaDriver() {
-        // 1. Actualización GPS cada 5 min para el mapa del cliente
-        actualizarPosicionReferencia();
-        setInterval(actualizarPosicionReferencia, 300000); 
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: 40.41, lng: -3.70},
+            zoom: 14,
+            styles: [/* Estilo oscuro para el mapa */
+                {elementType: "geometry", stylers: [{color: "#242f3e"}]},
+                {elementType: "labels.text.fill", stylers: [{color: "#746855"}]},
+                {featureType: "road", elementType: "geometry", stylers: [{color: "#38414e"}]}
+            ],
+            disableDefaultUI: true
+        });
 
-        // 2. Realtime para nuevos viajes
-        _supabase.channel('cambios').on('postgres_changes', { event: '*', table: 'viajes' }, () => cargarViajes()).subscribe();
+        driverMarker = new google.maps.Marker({
+            map: map,
+            icon: {
+                url: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png',
+                scaledSize: new google.maps.Size(40, 40)
+            }
+        });
+    }
+
+    function iniciarSistemaDriver() {
+        // Actualización GPS cada 5 min (Ubicación de referencia para clientes)
+        actualizarReferenciaGPS();
+        setInterval(actualizarReferenciaGPS, 300000); 
+
+        // Escuchar nuevos viajes
+        _supabase.channel('viajes_driver').on('postgres_changes', { event: '*', table: 'viajes' }, () => cargarViajes()).subscribe();
         cargarViajes();
     }
 
-    async function actualizarPosicionReferencia() {
+    function actualizarReferenciaGPS() {
         navigator.geolocation.getCurrentPosition(async (pos) => {
+            const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            map.setCenter(coords);
+            driverMarker.setPosition(coords);
+
+            // Actualizar tabla DRIVERS para que el cliente nos vea cada 5 min
             await _supabase.from('drivers').update({
-                latitud: pos.coords.latitude.toString(),
-                longitud: pos.coords.longitude.toString(),
-                ultima_conexion: new Date().toISOString(),
-                estado: 'activo'
+                latitud: coords.lat.toString(),
+                longitud: coords.lng.toString(),
+                ultima_conexion: new Date().toISOString()
             }).eq('id', currentDriver.id);
         });
     }
@@ -130,31 +176,42 @@
             .order('created_at', { ascending: false });
 
         const container = document.getElementById('trip-list');
+        container.innerHTML = "";
+
         if (!data || data.length === 0) {
-            container.innerHTML = '<div class="text-center py-20 opacity-20"><i class="fa-solid fa-road text-5xl mb-4"></i><p>Esperando servicios...</p></div>';
+            container.innerHTML = '<div class="text-center py-10 opacity-30 text-xs font-bold uppercase">Sin avisos ahora</div>';
             return;
         }
 
-        container.innerHTML = data.map(trip => `
-            <div class="job-card">
+        data.map(trip => {
+            const card = document.createElement('div');
+            card.className = "job-card";
+            card.innerHTML = `
                 <div class="flex justify-between items-start mb-4">
-                    <span class="bg-sky-400 text-black text-[9px] font-black px-2 py-1 rounded">${trip.estado.toUpperCase()}</span>
-                    <span class="text-xl font-bold">${trip.precio > 0 ? trip.precio + '€' : 'TAXÍMETRO'}</span>
+                    <span class="bg-sky-500 text-black text-[8px] font-black px-2 py-1 rounded uppercase">${trip.estado}</span>
+                    <span class="text-xl font-bold">${trip.precio > 0 ? trip.precio + '€' : 'TARIFA TAXI'}</span>
                 </div>
-                <div class="address-box"><i class="fa-solid fa-circle text-sky-400 text-[8px]"></i> ${trip.origen}</div>
-                <div class="address-box"><i class="fa-solid fa-location-dot text-gray-400 text-[8px]"></i> ${trip.destino}</div>
-                <div class="text-[10px] text-gray-400 mb-4 px-2">Cliente: ${trip.cliente_nombre}</div>
-                ${renderBotones(trip)}
-            </div>
-        `).join('');
+                <div class="address-box"><i class="fa-solid fa-circle text-sky-400"></i> ${trip.origen}</div>
+                <div class="address-box"><i class="fa-solid fa-location-dot text-gray-400"></i> ${trip.destino}</div>
+                <p class="text-[10px] text-gray-500 mb-4 px-1">Cliente: ${trip.cliente_nombre}</p>
+                <div id="btn-container-${trip.id}"></div>
+            `;
+            container.appendChild(card);
+            renderBotonera(trip);
+        });
     }
 
-    function renderBotones(trip) {
-        if (trip.estado === 'pendiente') return `<button onclick="cambiarEstado('${trip.id}', 'aceptado')" class="lm-btn-primary py-3 text-xs">ACEPTAR VIAJE</button>`;
-        if (trip.estado === 'aceptado') return `<button onclick="cambiarEstado('${trip.id}', 'en_punto')" class="lm-btn-primary py-3 text-xs" style="background:green">HE LLEGADO</button>`;
-        if (trip.estado === 'en_punto') return `<button onclick="cambiarEstado('${trip.id}', 'en_curso')" class="lm-btn-primary py-3 text-xs" style="background:orange">INICIAR TRAYECTO</button>`;
-        if (trip.estado === 'en_curso') return `<button onclick="finalizarViaje('${trip.id}')" class="lm-btn-primary py-3 text-xs" style="background:red">FINALIZAR Y FACTURAR</button>`;
-        return "";
+    function renderBotonera(trip) {
+        const cont = document.getElementById(`btn-container-${trip.id}`);
+        if (trip.estado === 'pendiente') {
+            cont.innerHTML = `<button onclick="cambiarEstado('${trip.id}', 'aceptado')" class="lm-btn-primary py-3 text-xs w-full">ACEPTAR SERVICIO</button>`;
+        } else if (trip.estado === 'aceptado') {
+            cont.innerHTML = `<button onclick="cambiarEstado('${trip.id}', 'en_punto')" class="lm-btn-primary py-3 text-xs w-full bg-emerald-500">HE LLEGADO AL PUNTO</button>`;
+        } else if (trip.estado === 'en_punto') {
+            cont.innerHTML = `<button onclick="cambiarEstado('${trip.id}', 'en_curso')" class="lm-btn-primary py-3 text-xs w-full bg-amber-500">INICIAR VIAJE</button>`;
+        } else if (trip.estado === 'en_curso') {
+            cont.innerHTML = `<button onclick="finalizarYFacturar('${trip.id}')" class="lm-btn-primary py-3 text-xs w-full bg-rose-600">FINALIZAR Y QR FACTURA</button>`;
+        }
     }
 
     async function cambiarEstado(id, nuevo) {
@@ -162,43 +219,40 @@
         cargarViajes();
     }
 
-    async function finalizarViaje(id) {
-        // 1. Marcar como finalizado
+    async function finalizarYFacturar(id) {
         const { data: trip } = await _supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id).select().single();
         
-        // 2. Generar Factura (Simulada mediante URL con parámetros para que el cliente la lea)
-        // En un caso real, esto iría a una página factura.html
-        const numFactura = "INV-" + Math.floor(Math.random() * 999999);
-        const fechaHora = new Date().toLocaleString();
+        const numFactura = "TX-" + Math.floor(100000 + Math.random() * 900000);
         
-        const datosFactura = {
-            n: trip.cliente_nombre,
-            o: trip.origen,
-            d: trip.destino,
-            f: fechaHora,
-            cif: currentDriver.cif || "B-12345678",
-            owner: currentDriver.nombre_dueno || currentDriver.nombre,
-            lic: currentDriver.num_licencia || "MAD-000",
+        // Datos Factura requeridos
+        const info = {
+            cliente: trip.cliente_nombre,
+            origen: trip.origen,
+            destino: trip.destino,
+            fecha: new Date().toLocaleString(),
+            cif: currentDriver.cif || "CIF-NO-DISP",
+            dueno: currentDriver.nombre_dueno || currentDriver.nombre,
+            licencia: currentDriver.num_licencia || "MAD-000",
             tel: currentDriver.telefono || "600000000",
             id: numFactura,
-            p: trip.precio > 0 ? trip.precio : "Tarifa oficial"
+            importe: trip.precio > 0 ? trip.precio + "€" : "S/M"
         };
 
-        // Convertimos a Base64 para pasar por URL de forma "limpia"
-        const encodedData = btoa(unescape(encodeURIComponent(JSON.stringify(datosFactura))));
-        const urlFactura = `https://tupagina.com/factura.html?data=${encodedData}`;
+        // Generar URL para el QR (Codificada en Base64 para que el cliente la reciba)
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(info))));
+        const urlFinal = `https://tuweb.com/factura.html?v=${encoded}`;
 
-        // 3. Mostrar QR
+        // Mostrar Interfaz QR
         document.getElementById('modal-qr').classList.remove('hidden');
-        document.getElementById('factura-num').innerText = "FACTURA: " + numFactura;
-        
-        document.getElementById('qrcode').innerHTML = ""; // Limpiar anterior
+        document.getElementById('fact-id').innerText = numFactura;
+        document.getElementById('fact-lic').innerText = info.licencia;
+        document.getElementById('fact-cif').innerText = info.cif;
+
+        document.getElementById('qrcode').innerHTML = ""; // Limpiar
         new QRCode(document.getElementById("qrcode"), {
-            text: urlFactura,
-            width: 200,
-            height: 200,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
+            text: urlFinal,
+            width: 180,
+            height: 180
         });
     }
 
@@ -207,5 +261,7 @@
         cargarViajes();
     }
 </script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places" async defer></script>
 </body>
 </html>
