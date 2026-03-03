@@ -12,26 +12,38 @@
 
     <style>
         :root { --blue: #00B5FF; --dark: #001a3d; --card: #0a2551; }
-        body { background: var(--dark); font-family: 'Montserrat', sans-serif; color: white; margin: 0; height: 100vh; display: flex; justify-content: center; overflow: hidden; }
-        .mobile-container { width: 100%; max-width: 414px; background: var(--dark); position: relative; display: flex; flex-direction: column; height: 100vh; }
+        body { background: var(--dark); font-family: 'Montserrat', sans-serif; color: white; margin: 0; height: 100vh; overflow: hidden; }
+        .mobile-container { width: 100%; max-width: 414px; margin: 0 auto; background: var(--dark); position: relative; display: flex; flex-direction: column; height: 100vh; }
         
-        .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 100px; }
+        /* Sistema de pestañas */
+        .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 90px; }
         .screen.active { display: flex; }
 
         /* Botón On/Off */
-        .status-toggle { transition: all 0.3s ease; font-weight: 800; font-size: 10px; padding: 6px 16px; border-radius: 99px; cursor: pointer; border: none; }
-        .status-off { background: #475569; color: #cbd5e1; }
-        .status-on { background: #22c55e; color: #052e16; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+        .status-toggle { transition: all 0.3s; font-weight: 800; font-size: 10px; padding: 8px 16px; border-radius: 99px; cursor: pointer; border: none; text-transform: uppercase; }
+        .status-off { background: #334155; color: #94a3b8; }
+        .status-on { background: #22c55e; color: #052e16; box-shadow: 0 0 15px rgba(34, 197, 94, 0.3); }
 
-        #map { width: 100%; height: 280px; background: #eee; }
+        #map { width: 100%; height: 280px; min-height: 280px; background: #e5e7eb; }
         
-        .job-card { background: var(--card); padding: 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; }
-        .nav-btn { color: #64748b; cursor: pointer; text-align: center; flex: 1; transition: 0.2s; }
+        .nav-btn { color: #64748b; cursor: pointer; text-align: center; flex: 1; transition: 0.2s; padding: 10px 0; }
         .nav-btn.active { color: var(--blue); }
 
-        /* Modal QR */
-        #modal-qr { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        #qrcode { background: white; padding: 15px; border-radius: 10px; }
+        /* Modal QR - Corregido para que no bloquee el login */
+        #modal-qr { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.95); 
+            z-index: 10000; 
+            display: none; /* Oculto por defecto */
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 20px; 
+        }
+        #qrcode { background: white; padding: 15px; border-radius: 10px; margin: 20px 0; }
+        
+        .lm-input { width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: white; outline: none; }
     </style>
 </head>
 <body>
@@ -40,62 +52,74 @@
     
     <div id="auth-screen" class="screen active justify-center p-10 text-center">
         <h1 class="text-4xl font-black mb-1">Tax<span style="color:var(--blue)">Mad</span></h1>
-        <p class="text-[10px] font-bold tracking-[3px] text-sky-400 mb-10 uppercase">Driver Panel</p>
-        <input type="text" id="user-input" placeholder="Usuario" class="w-full p-4 mb-3 rounded-xl bg-black/30 border border-white/10 outline-none">
-        <input type="password" id="pass-input" placeholder="Contraseña" class="w-full p-4 mb-6 rounded-xl bg-black/30 border border-white/10 outline-none">
-        <button onclick="intentarLogin()" class="w-full bg-sky-500 p-4 rounded-xl font-black italic">ENTRAR</button>
+        <p class="text-[10px] font-bold tracking-[4px] text-sky-400 mb-12 uppercase">Driver Panel</p>
+        
+        <div class="text-left">
+            <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase">Usuario</label>
+            <input type="text" id="user-input" class="lm-input" placeholder="Ej: driver01">
+            
+            <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase">Contraseña</label>
+            <input type="password" id="pass-input" class="lm-input" placeholder="••••••••">
+        </div>
+
+        <button onclick="intentarLogin()" class="w-full bg-sky-500 p-5 rounded-2xl font-black italic mt-4 shadow-lg shadow-sky-500/20 active:scale-95 transition-transform">
+            ENTRAR AL PANEL
+        </button>
     </div>
 
-    <div id="main-app" class="h-full flex-col hidden">
+    <div id="main-app" class="hidden flex-col h-full w-full">
         
-        <header class="p-4 flex justify-between items-center bg-[#001a3d] border-b border-white/5">
+        <header class="p-4 flex justify-between items-center bg-[#001a3d] border-b border-white/10">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center font-bold text-black" id="avatar-init">?</div>
+                <div class="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center font-bold text-black text-lg" id="avatar-init">?</div>
                 <div>
-                    <p class="text-[8px] text-gray-500 font-black uppercase">Taxista Premium</p>
-                    <p class="text-xs font-bold" id="header-name">...</p>
+                    <p class="text-[8px] text-gray-500 font-black uppercase tracking-tighter">Servicio Oficial</p>
+                    <p class="text-xs font-bold" id="header-name">Cargando...</p>
                 </div>
             </div>
-            <button id="btn-status" onclick="toggleStatus()" class="status-toggle status-off">DESCONECTADO</button>
+            <button id="btn-status" onclick="toggleStatus()" class="status-toggle status-off">OFFLINE</button>
         </header>
 
         <div id="scr-panel" class="screen">
             <div id="map"></div>
-            <div class="p-4">
-                <h3 class="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-4">Servicios en curso/entrantes</h3>
-                <div id="active-trips"></div>
+            <div class="p-5">
+                <h3 class="text-[10px] font-black text-sky-400 uppercase tracking-widest mb-4">Servicios Activos</h3>
+                <div id="active-trips" class="space-y-3"></div>
             </div>
         </div>
 
-        <div id="scr-viajes" class="screen p-4">
+        <div id="scr-viajes" class="screen p-5">
             <h2 class="text-xl font-black italic mb-6">Mis <span class="text-sky-500">Servicios</span></h2>
-            <div id="history-list"></div>
+            <div id="history-list" class="space-y-3"></div>
         </div>
 
         <div id="scr-perfil" class="screen p-6">
             <h2 class="text-xl font-black italic mb-6">Mi <span class="text-sky-500">Perfil</span></h2>
-            <div class="bg-white/5 p-6 rounded-3xl space-y-4 border border-white/5">
-                <div class="border-b border-white/5 pb-2">
-                    <p class="text-[9px] text-gray-500 font-bold uppercase">Nombre Completo</p>
-                    <p class="font-bold" id="prof-full-name">...</p>
+            <div class="bg-white/5 p-6 rounded-3xl space-y-5 border border-white/5">
+                <div>
+                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Nombre y Apellidos</p>
+                    <p class="font-bold text-sm" id="prof-full-name">---</p>
                 </div>
-                <div class="border-b border-white/5 pb-2">
-                    <p class="text-[9px] text-gray-500 font-bold uppercase">Vehículo / Matrícula</p>
-                    <p class="font-bold" id="prof-car">...</p>
+                <div>
+                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Vehículo y Matrícula</p>
+                    <p class="font-bold text-sm" id="prof-car">---</p>
                 </div>
-                <div class="border-b border-white/5 pb-2">
-                    <p class="text-[9px] text-gray-500 font-bold uppercase">Licencia Taxi</p>
-                    <p class="font-bold text-sky-400" id="prof-lic">...</p>
+                <div>
+                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Licencia Municipal</p>
+                    <p class="font-bold text-sm text-sky-400" id="prof-lic">---</p>
                 </div>
-                <div class="pb-2">
-                    <p class="text-[9px] text-gray-500 font-bold uppercase">Titular de Licencia</p>
-                    <p class="font-bold" id="prof-owner">...</p>
+                <div>
+                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Titular de Licencia</p>
+                    <p class="font-bold text-sm" id="prof-owner">---</p>
                 </div>
             </div>
-            <button onclick="location.reload()" class="w-full mt-10 text-red-400 font-bold text-[10px] uppercase tracking-widest"><i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión</button>
+            
+            <button onclick="location.reload()" class="w-full mt-12 bg-rose-500/10 text-rose-500 p-4 rounded-xl font-bold text-[10px] uppercase tracking-widest border border-rose-500/20">
+                <i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión
+            </button>
         </div>
 
-        <nav class="fixed bottom-0 w-full max-width-[414px] h-20 bg-[#0a2551] flex justify-around items-center border-t border-white/5">
+        <nav class="absolute bottom-0 w-full h-20 bg-[#0a2551] flex justify-around items-center border-t border-white/10 px-4">
             <div onclick="showTab('panel')" id="n-panel" class="nav-btn active">
                 <i class="fa-solid fa-house-chimney text-xl"></i>
                 <p class="text-[9px] mt-1 font-bold">PANEL</p>
@@ -111,10 +135,15 @@
         </nav>
     </div>
 
-    <div id="modal-qr" class="hidden">
-        <div id="qrcode"></div>
-        <p class="text-white font-bold mt-4 mb-6 uppercase text-xs" id="qr-info-txt">Factura</p>
-        <button onclick="document.getElementById('modal-qr').classList.add('hidden')" class="bg-white text-black px-8 py-3 rounded-full font-black text-xs">CERRAR</button>
+    <div id="modal-qr">
+        <div class="bg-white/10 p-8 rounded-3xl border border-white/10 w-full max-w-[320px] text-center">
+            <h3 class="text-sky-400 font-black text-sm uppercase italic">Factura Digital</h3>
+            <div id="qrcode" class="flex justify-center"></div>
+            <p class="text-[10px] text-gray-400 mb-6 uppercase font-bold" id="qr-info-txt">TX-000000</p>
+            <button onclick="document.getElementById('modal-qr').style.display = 'none'" class="w-full bg-white text-black py-4 rounded-2xl font-black text-xs uppercase shadow-xl">
+                CERRAR
+            </button>
+        </div>
     </div>
 
 </div>
@@ -131,18 +160,22 @@
     async function intentarLogin() {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
-        const { data: d } = await _supabase.from('drivers').select('*').eq('usuario', u).single();
+        
+        if(!u || !p) return alert("Rellena todos los campos");
+
+        const { data: d, error } = await _supabase.from('drivers').select('*').eq('usuario', u).single();
 
         if (d && d.password === p) {
             currentDriver = d;
             document.getElementById('auth-screen').classList.remove('active');
-            document.getElementById('main-app').style.display = 'flex';
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('flex');
             
-            // Llenar Perfil
+            // Datos Perfil
             document.getElementById('header-name').innerText = d.nombre;
             document.getElementById('avatar-init').innerText = d.nombre[0].toUpperCase();
             document.getElementById('prof-full-name').innerText = `${d.nombre} ${d.apellidos || ''}`;
-            document.getElementById('prof-car').innerText = `${d.modelo_coche || 'N/A'} - ${d.matricula || '---'}`;
+            document.getElementById('prof-car').innerText = `${d.modelo_coche || 'N/A'} [ ${d.matricula || '---'} ]`;
             document.getElementById('prof-lic').innerText = d.num_licencia || 'MAD-000';
             document.getElementById('prof-owner').innerText = d.nombre_dueno || d.nombre;
 
@@ -150,18 +183,20 @@
             initMap();
             escucharCambios();
         } else {
-            alert("Acceso denegado");
+            alert("Usuario o contraseña incorrectos");
         }
     }
 
     function initMap() {
-        // Colores por defecto de Google Maps
         map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: 40.41, lng: -3.70},
+            center: {lat: 40.4168, lng: -3.7038},
             zoom: 15,
             disableDefaultUI: true
         });
-        marker = new google.maps.Marker({ map: map, icon: { url: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png', scaledSize: new google.maps.Size(40,40) } });
+        marker = new google.maps.Marker({ 
+            map: map, 
+            icon: { url: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png', scaledSize: new google.maps.Size(40,40) } 
+        });
     }
 
     function toggleStatus() {
@@ -172,7 +207,7 @@
             btn.className = "status-toggle status-on";
             iniciarGPS();
         } else {
-            btn.innerText = "DESCONECTADO";
+            btn.innerText = "OFFLINE";
             btn.className = "status-toggle status-off";
             detenerGPS();
         }
@@ -183,9 +218,7 @@
         window.gpsInterval = setInterval(actualizarPos, 300000); // 5 min
     }
 
-    function detenerGPS() {
-        clearInterval(window.gpsInterval);
-    }
+    function detenerGPS() { clearInterval(window.gpsInterval); }
 
     function actualizarPos() {
         navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -209,44 +242,54 @@
         const { data } = await _supabase.from('viajes').select('*').in('estado', ['pendiente','aceptado','en_punto','en_curso']).order('created_at',{ascending:false});
         const cont = document.getElementById('active-trips');
         cont.innerHTML = data.length ? data.map(t => `
-            <div class="job-card">
-                <p class="text-sky-400 font-black text-[9px] mb-2">${t.estado.toUpperCase()}</p>
-                <p class="text-xs font-bold mb-1 italic">${t.origen}</p>
-                <p class="text-[10px] text-gray-400 mb-4">${t.destino}</p>
+            <div class="bg-white/5 p-4 rounded-2xl border border-white/5 shadow-xl">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="bg-sky-500 text-black text-[8px] font-black px-2 py-1 rounded uppercase">${t.estado}</span>
+                    <span class="text-lg font-bold">${t.precio}€</span>
+                </div>
+                <p class="text-xs font-bold mb-1"><i class="fa-solid fa-circle text-sky-400 mr-2 text-[8px]"></i>${t.origen}</p>
+                <p class="text-xs text-gray-400 mb-4"><i class="fa-solid fa-location-dot text-gray-500 mr-2 text-[8px]"></i>${t.destino}</p>
                 ${renderBotones(t)}
             </div>
-        `).join('') : '<p class="text-center opacity-20 py-10">Buscando servicios...</p>';
+        `).join('') : '<div class="text-center py-10 opacity-20 font-bold text-xs uppercase">Sin servicios ahora</div>';
     }
 
     function renderBotones(t) {
-        if(t.estado === 'pendiente') return `<button onclick="updateTrip('${t.id}','aceptado')" class="w-full bg-sky-500 p-3 rounded-lg font-bold text-xs">ACEPTAR</button>`;
-        if(t.estado === 'aceptado') return `<button onclick="updateTrip('${t.id}','en_punto')" class="w-full bg-emerald-500 p-3 rounded-lg font-bold text-xs">LLEGUÉ</button>`;
-        if(t.estado === 'en_punto') return `<button onclick="updateTrip('${t.id}','en_curso')" class="w-full bg-amber-500 p-3 rounded-lg font-bold text-xs">INICIAR</button>`;
-        if(t.estado === 'en_curso') return `<button onclick="finalizarViaje('${t.id}')" class="w-full bg-rose-500 p-3 rounded-lg font-bold text-xs">FINALIZAR</button>`;
+        if(t.estado === 'pendiente') return `<button onclick="updateTrip('${t.id}','aceptado')" class="w-full bg-sky-500 p-3 rounded-xl font-bold text-xs shadow-lg">ACEPTAR</button>`;
+        if(t.estado === 'aceptado') return `<button onclick="updateTrip('${t.id}','en_punto')" class="w-full bg-emerald-500 p-3 rounded-xl font-bold text-xs shadow-lg">HE LLEGADO</button>`;
+        if(t.estado === 'en_punto') return `<button onclick="updateTrip('${t.id}','en_curso')" class="w-full bg-amber-500 p-3 rounded-xl font-bold text-xs shadow-lg">INICIAR VIAJE</button>`;
+        if(t.estado === 'en_curso') return `<button onclick="finalizarViaje('${t.id}')" class="w-full bg-rose-500 p-3 rounded-xl font-bold text-xs shadow-lg">FINALIZAR Y QR</button>`;
     }
 
     async function cargarHistorial() {
         const { data } = await _supabase.from('viajes').select('*').eq('estado','finalizado').eq('driver_id', currentDriver.id).order('created_at',{ascending:false});
         document.getElementById('history-list').innerHTML = data.map(t => `
-            <div class="bg-white/5 p-4 rounded-2xl mb-3 flex justify-between items-center border border-white/5">
+            <div class="bg-white/5 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
                 <div class="max-w-[70%]">
-                    <p class="text-[9px] text-gray-500 font-bold">${new Date(t.created_at).toLocaleDateString()}</p>
-                    <p class="text-xs font-bold truncate">${t.destino}</p>
+                    <p class="text-[8px] text-gray-500 font-bold mb-1">${new Date(t.created_at).toLocaleString()}</p>
+                    <p class="text-[11px] font-bold truncate">${t.destino}</p>
                     <p class="text-sky-400 font-black text-sm">${t.precio}€</p>
                 </div>
-                <button onclick="verQR('${t.id}')" class="bg-sky-500/20 text-sky-400 p-3 rounded-xl"><i class="fa-solid fa-qrcode text-xl"></i></button>
+                <button onclick="verQR('${t.id}')" class="bg-sky-500/10 text-sky-400 p-3 rounded-xl active:bg-sky-500 active:text-black transition-colors"><i class="fa-solid fa-qrcode text-xl"></i></button>
             </div>
         `).join('');
     }
 
     async function verQR(id) {
         const { data: t } = await _supabase.from('viajes').select('*').eq('id', id).single();
-        const info = { cliente: t.cliente_nombre, origen: t.origen, destino: t.destino, importe: t.precio, cif: currentDriver.cif, lic: currentDriver.num_licencia };
+        const info = { cli: t.cliente_nombre, org: t.origen, des: t.destino, eur: t.precio, cif: currentDriver.cif, lic: currentDriver.num_licencia };
         const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(info))));
         
-        document.getElementById('modal-qr').classList.remove('hidden');
+        document.getElementById('modal-qr').style.display = 'flex';
+        document.getElementById('qr-info-txt').innerText = "RECIBO: " + id.split('-')[0].toUpperCase();
         document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: `https://tuweb.com/factura.html?v=${encoded}`, width: 200, height: 200 });
+        new QRCode(document.getElementById("qrcode"), { 
+            text: `https://tuweb.com/factura.html?v=${encoded}`, 
+            width: 180, 
+            height: 180,
+            colorDark : "#000000",
+            colorLight : "#ffffff"
+        });
     }
 
     async function updateTrip(id, status) {
@@ -261,7 +304,7 @@
     }
 
     function escucharCambios() {
-        _supabase.channel('any').on('postgres_changes', { event: '*', table: 'viajes' }, () => {
+        _supabase.channel('viajes_live').on('postgres_changes', { event: '*', table: 'viajes' }, () => {
             cargarActivos();
             if(document.getElementById('scr-viajes').classList.contains('active')) cargarHistorial();
         }).subscribe();
