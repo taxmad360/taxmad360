@@ -19,9 +19,8 @@
         .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 100px; }
         .screen.active { display: flex; }
 
-        /* Ajuste de Auth Screen para que no tape el Nav si está logueado */
         #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: var(--dark); color: white; z-index: 5000; text-align: center; }
-        #auth-screen.as-profile { z-index: 3000; padding-bottom: 120px; } /* Menor z-index para perfil */
+        #auth-screen.as-profile { z-index: 3000; padding-bottom: 120px; }
 
         .input-auth { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 14px; }
         
@@ -260,7 +259,6 @@
         if(!o || !d || !f || !h) return alert("Faltan datos");
 
         const fechaReserva = new Date(`${f}T${h}`);
-        if((fechaReserva - new Date()) / 60000 < 30) return alert("Margen mínimo: 30 min");
 
         if(!ultimoCalculo) {
             directionsService.route({ origin: o, destination: d, travelMode: 'DRIVING' }, (res, status) => {
@@ -273,11 +271,28 @@
                 }
             });
         } else {
+            // CAMBIO CLAVE: Estado 'pendiente' para que el conductor lo vea
             const { error } = await _supabase.from('viajes').insert([{
-                cliente_id: currentUser.id, origen: o, destino: d, precio: parseFloat(ultimoCalculo),
-                estado: 'reservado', fecha_reserva: fechaReserva.toISOString()
+                cliente_id: currentUser.id, 
+                cliente_nombre: currentUser.nombre, // Añadido para el panel conductor
+                origen: o, 
+                destino: d, 
+                precio: parseFloat(ultimoCalculo),
+                estado: 'pendiente', 
+                fecha_reserva: fechaReserva.toISOString()
             }]);
-            if(!error) { alert("Reserva OK"); ultimoCalculo = null; showTab('hucha'); }
+            
+            if(!error) { 
+                alert("Reserva confirmada. Buscando conductor..."); 
+                ultimoCalculo = null;
+                document.getElementById('info-resumen').classList.add('hidden');
+                document.getElementById('btnAction').innerText = "CALCULAR PRECIO";
+                document.getElementById('origin').value = "";
+                document.getElementById('destination').value = "";
+                showTab('hucha'); 
+            } else {
+                alert("Error al reservar: " + error.message);
+            }
         }
     }
 
@@ -285,7 +300,6 @@
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         
-        // Resetear estado del Auth Screen
         const auth = document.getElementById('auth-screen');
         auth.classList.add('hidden');
         auth.classList.remove('as-profile');
@@ -314,13 +328,16 @@
         const container = document.getElementById('lista-viajes');
         if(!data || data.length === 0) { container.innerHTML = "<p class='text-center opacity-40 py-10'>Sin viajes</p>"; return; }
         container.innerHTML = data.map(v => `
-            <div class="trip-item">
+            <div class="trip-item shadow-sm">
                 <div class="flex justify-between mb-2">
                     <span class="text-[10px] font-bold text-sky-500">${new Date(v.fecha_reserva).toLocaleString()}</span>
-                    <span class="text-xs font-black">${v.precio.toFixed(2)}€</span>
+                    <span class="bg-gray-100 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">${v.estado}</span>
                 </div>
-                <p class="text-[11px] truncate opacity-70">${v.origen}</p>
-                <p class="text-[11px] truncate opacity-70">${v.destino}</p>
+                <p class="text-[11px] truncate font-bold"><i class="fa-solid fa-circle text-sky-400 mr-1 text-[8px]"></i> ${v.origen}</p>
+                <p class="text-[11px] truncate font-bold"><i class="fa-solid fa-location-dot text-red-400 mr-1 text-[8px]"></i> ${v.destino}</p>
+                <div class="mt-2 pt-2 border-t border-dashed flex justify-between items-center">
+                    <span class="text-xs font-black text-slate-800">${v.precio.toFixed(2)}€</span>
+                </div>
             </div>
         `).join('');
     }
