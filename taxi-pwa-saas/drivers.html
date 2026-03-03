@@ -11,19 +11,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        :root { --blue: #00B5FF; --dark: #001a3d; --card: #0a2551; }
+        :root { --blue: #00B5FF; --dark: #001a3d; }
         body { background: var(--dark); font-family: 'Montserrat', sans-serif; color: white; margin: 0; height: 100vh; overflow: hidden; }
         .mobile-container { width: 100%; max-width: 414px; margin: 0 auto; background: var(--dark); position: relative; display: flex; flex-direction: column; height: 100vh; }
         .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 90px; }
         .screen.active { display: flex; }
+        
+        /* Botón de Estado */
         .status-toggle { transition: all 0.3s; font-weight: 800; font-size: 10px; padding: 8px 16px; border-radius: 99px; cursor: pointer; border: none; text-transform: uppercase; }
         .status-off { background: #334155; color: #94a3b8; }
         .status-on { background: #22c55e; color: #052e16; box-shadow: 0 0 15px rgba(34, 197, 94, 0.3); }
-        #map { width: 100%; height: 280px; min-height: 280px; background: #1a1a1a; }
+        
+        #map { width: 100%; height: 280px; min-height: 280px; background: #e5e7eb; }
         .nav-btn { color: #64748b; cursor: pointer; text-align: center; flex: 1; transition: 0.2s; padding: 10px 0; }
         .nav-btn.active { color: var(--blue); }
-        #modal-qr { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        #qrcode { background: white; padding: 15px; border-radius: 10px; margin: 20px 0; }
+        
+        /* Indicador Vivo */
+        #status-indicator { display: none; }
+        .vivo-active { display: flex !important; }
+        
         .lm-input { width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: white; outline: none; }
     </style>
 </head>
@@ -35,21 +41,19 @@
         <h1 class="text-4xl font-black mb-1 italic">Tax<span style="color:var(--blue)">Mad</span></h1>
         <p class="text-[10px] font-bold tracking-[4px] text-sky-400 mb-12 uppercase">Driver Terminal</p>
         <div class="text-left">
-            <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase">Usuario de Conductor</label>
-            <input type="text" id="user-input" class="lm-input" placeholder="Ej: driver01">
-            <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase">Contraseña</label>
+            <input type="text" id="user-input" class="lm-input" placeholder="Usuario">
             <input type="password" id="pass-input" class="lm-input" placeholder="••••••••">
         </div>
-        <button onclick="intentarLogin()" class="w-full bg-sky-500 p-5 rounded-2xl font-black italic mt-4 shadow-lg shadow-sky-500/20 active:scale-95 transition-transform text-black uppercase">Conectar al Sistema</button>
+        <button onclick="intentarLogin()" class="w-full bg-sky-500 p-5 rounded-2xl font-black text-black">CONECTAR</button>
     </div>
 
     <div id="main-app" class="hidden flex-col h-full w-full">
         <header class="p-4 flex justify-between items-center bg-[#001a3d] border-b border-white/10">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center font-bold text-black text-lg" id="avatar-init">?</div>
+                <div class="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center font-bold text-black" id="avatar-init">?</div>
                 <div>
-                    <p class="text-[8px] text-gray-500 font-black uppercase tracking-tighter">Servicio Oficial</p>
-                    <p class="text-xs font-bold" id="header-name">Cargando...</p>
+                    <p class="text-[8px] text-gray-500 font-black uppercase">Servicio Oficial</p>
+                    <p class="text-xs font-bold" id="header-name">...</p>
                 </div>
             </div>
             <button id="btn-status" onclick="toggleStatus()" class="status-toggle status-off">OFFLINE</button>
@@ -59,48 +63,19 @@
             <div id="map"></div>
             <div class="p-5">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-[10px] font-black text-sky-400 uppercase tracking-widest">Servicios en Tiempo Real</h3>
-                    <span class="text-[9px] text-green-500 animate-pulse font-bold">● VIVO</span>
+                    <h3 class="text-[10px] font-black text-sky-400 uppercase tracking-widest">Servicios Cercanos</h3>
+                    <span id="status-indicator" class="text-[9px] text-green-500 animate-pulse font-bold items-center gap-1">
+                        ● VIVO
+                    </span>
                 </div>
                 <div id="active-trips" class="space-y-3"></div>
             </div>
         </div>
 
-        <div id="scr-viajes" class="screen p-5">
-            <h2 class="text-xl font-black italic mb-6">Mis <span class="text-sky-500">Servicios</span></h2>
-            <div id="history-list" class="space-y-3"></div>
-        </div>
-
-        <div id="scr-perfil" class="screen p-6">
-            <h2 class="text-xl font-black italic mb-6">Mi <span class="text-sky-500">Perfil</span></h2>
-            <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="bg-gradient-to-br from-sky-500 to-blue-700 p-4 rounded-2xl shadow-lg">
-                    <p class="text-[8px] font-black uppercase text-white/70">Saldo Generado</p>
-                    <p class="text-2xl font-black italic" id="stats-total">0€</p>
-                </div>
-                <div class="bg-white/10 border border-white/10 p-4 rounded-2xl text-right">
-                    <p class="text-[8px] font-black uppercase text-rose-400">Deuda (10%)</p>
-                    <p class="text-2xl font-black italic text-rose-500" id="stats-comision">0€</p>
-                </div>
-            </div>
-            <div id="profile-details-container" class="bg-white/5 p-6 rounded-3xl space-y-5 border border-white/5"></div>
-            <button onclick="location.reload()" class="w-full mt-12 bg-rose-500/10 text-rose-500 p-4 rounded-xl font-bold text-[10px] uppercase tracking-widest border border-rose-500/20">Cerrar Sesión</button>
-        </div>
-
-        <nav class="absolute bottom-0 w-full h-20 bg-[#0a2551] flex justify-around items-center border-t border-white/10 px-4">
-            <div onclick="showTab('panel')" id="n-panel" class="nav-btn active"><i class="fa-solid fa-house-chimney text-xl"></i><p class="text-[9px] mt-1 font-bold">PANEL</p></div>
-            <div onclick="showTab('viajes')" id="n-viajes" class="nav-btn"><i class="fa-solid fa-route text-xl"></i><p class="text-[9px] mt-1 font-bold">VIAJES</p></div>
-            <div onclick="showTab('perfil')" id="n-perfil" class="nav-btn"><i class="fa-solid fa-address-card text-xl"></i><p class="text-[9px] mt-1 font-bold">PERFIL</p></div>
+        <nav class="absolute bottom-0 w-full h-20 bg-[#0a2551] flex justify-around items-center border-t border-white/10">
+            <div onclick="showTab('panel')" class="nav-btn active"><i class="fa-solid fa-house-chimney text-xl"></i><p class="text-[9px] mt-1">PANEL</p></div>
+            <div onclick="showTab('perfil')" class="nav-btn"><i class="fa-solid fa-user text-xl"></i><p class="text-[9px] mt-1">PERFIL</p></div>
         </nav>
-    </div>
-
-    <div id="modal-qr">
-        <div class="bg-[#0a2551] p-8 rounded-3xl border border-white/10 w-full max-w-[320px] text-center">
-            <h3 class="text-sky-400 font-black text-sm uppercase italic">Factura Digital</h3>
-            <div id="qrcode" class="flex justify-center"></div>
-            <p class="text-[10px] text-gray-400 mb-6 uppercase font-bold" id="qr-info-txt">TX-VIAJE-FINALIZADO</p>
-            <button onclick="document.getElementById('modal-qr').style.display = 'none'" class="w-full bg-white text-black py-4 rounded-2xl font-black text-xs uppercase shadow-xl">CERRAR</button>
-        </div>
     </div>
 </div>
 
@@ -110,64 +85,26 @@
     const _supabase = supabase.createClient(S_URL, S_KEY);
 
     let currentDriver = null;
-    let map, marker;
+    let map, marker, gpsInterval, viajesChannel;
     let isConnected = false;
-    let gpsInterval = null;
 
     async function intentarLogin() {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
-        if(!u || !p) return alert("Rellena todos los campos");
-
-        const { data: d, error } = await _supabase.from('drivers').select('*').eq('usuario', u).single();
+        const { data: d } = await _supabase.from('drivers').select('*').eq('usuario', u).single();
         
         if (d && d.password === p) {
-            if(d.baneado) {
-                alert("ACCESO DENEGADO: Tu cuenta ha sido bloqueada.");
-                return;
-            }
-
             currentDriver = d;
             document.getElementById('auth-screen').classList.remove('active');
             document.getElementById('main-app').classList.replace('hidden', 'flex');
             document.getElementById('header-name').innerText = d.nombre;
-            document.getElementById('avatar-init').innerText = d.nombre[0].toUpperCase();
-            document.getElementById('profile-details-container').innerHTML = `
-                <div><p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Nombre</p><p class="font-bold text-sm">${d.nombre}</p></div>
-                <div><p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Vehículo</p><p class="font-bold text-sm">${d.marca_v || d.modelo_coche} - ${d.matricula}</p></div>
-                <div><p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Licencia</p><p class="font-bold text-sm text-sky-400">${d.num_licencia || 'LIC-OFICIAL'}</p></div>
-            `;
-
-            showTab('panel');
             initMap();
-            escucharCambiosMaster();
-        } else {
-            alert("Credenciales incorrectas");
-        }
-    }
-
-    function escucharCambiosMaster() {
-        _supabase.channel('viajes_live').on('postgres_changes', { event: '*', table: 'viajes' }, () => {
-            cargarActivos();
-            if(document.getElementById('scr-viajes').classList.contains('active')) cargarHistorial();
-        }).subscribe();
-
-        _supabase.channel('seguridad').on('postgres_changes', { 
-            event: 'UPDATE', 
-            table: 'drivers', 
-            filter: `id=eq.${currentDriver.id}` 
-        }, (payload) => {
-            if(payload.new.baneado) {
-                alert("¡ATENCIÓN! Tu licencia ha sido revocada.");
-                location.reload();
-            }
-        }).subscribe();
+        } else { alert("Error"); }
     }
 
     function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: 40.4168, lng: -3.7038}, zoom: 16, disableDefaultUI: true,
-            styles: [{ "stylers": [{ "hue": "#2c3e50" }, { "saturation": 250 }] }]
+            center: {lat: 40.4168, lng: -3.7038}, zoom: 16, disableDefaultUI: true
         });
         marker = new google.maps.Marker({ 
             map: map, 
@@ -178,114 +115,65 @@
     function toggleStatus() {
         isConnected = !isConnected;
         const btn = document.getElementById('btn-status');
-        btn.innerText = isConnected ? "CONECTADO" : "OFFLINE";
-        btn.className = isConnected ? "status-toggle status-on" : "status-toggle status-off";
-        if(isConnected) iniciarGPS(); else detenerGPS();
+        const vivo = document.getElementById('status-indicator');
+        
+        if(isConnected) {
+            btn.innerText = "CONECTADO";
+            btn.className = "status-toggle status-on";
+            vivo.classList.add('vivo-active');
+            iniciarServicios();
+        } else {
+            btn.innerText = "OFFLINE";
+            btn.className = "status-toggle status-off";
+            vivo.classList.remove('vivo-active');
+            detenerServicios();
+        }
     }
 
-    function iniciarGPS() { 
-        actualizarPos(); 
-        // Actualización cada 5 minutos (300,000 milisegundos)
-        gpsInterval = setInterval(actualizarPos, 300000); 
+    function iniciarServicios() {
+        // 1. Iniciar GPS cada 5 min
+        actualizarPos();
+        gpsInterval = setInterval(actualizarPos, 300000);
+
+        // 2. Activar modo "VIVO" (Realtime)
+        viajesChannel = _supabase.channel('viajes_live')
+            .on('postgres_changes', { event: '*', table: 'viajes' }, () => {
+                cargarActivos();
+            })
+            .subscribe();
+        
+        cargarActivos();
     }
 
-    function detenerGPS() { 
-        if(gpsInterval) clearInterval(gpsInterval); 
+    function detenerServicios() {
+        if(gpsInterval) clearInterval(gpsInterval);
+        if(viajesChannel) _supabase.removeChannel(viajesChannel);
+        document.getElementById('active-trips').innerHTML = '<p class="text-center opacity-30 text-xs py-10">MODO OFFLINE - CONÉCTATE PARA RECIBIR VIAJES</p>';
     }
 
-    function actualizarPos() {
-        if (!navigator.geolocation) return;
+    async function actualizarPos() {
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            // Actualizar Mapa y Marcador
-            if(map) { map.panTo(p); marker.setPosition(p); }
-            // Guardar en Supabase
-            await _supabase.from('drivers').update({ 
-                latitud: p.lat.toString(), 
-                longitud: p.lng.toString() 
-            }).eq('id', currentDriver.id);
-        }, null, { enableHighAccuracy: true });
+            map.panTo(p); marker.setPosition(p);
+            await _supabase.from('drivers').update({ latitud: p.lat.toString(), longitud: p.lng.toString() }).eq('id', currentDriver.id);
+        });
+    }
+
+    async function cargarActivos() {
+        if(!isConnected) return;
+        const { data } = await _supabase.from('viajes').select('*').in('estado', ['pendiente','aceptado','en_curso']);
+        const cont = document.getElementById('active-trips');
+        cont.innerHTML = data.length ? data.map(t => `
+            <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <div class="flex justify-between"><span class="text-sky-400 font-bold">${t.precio}€</span></div>
+                <p class="text-xs mt-1">${t.origen} → ${t.destino}</p>
+            </div>
+        `).join('') : '<p class="text-center opacity-30 text-xs py-10">ESPERANDO NUEVOS VIAJES...</p>';
     }
 
     function showTab(tab) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`scr-${tab}`).classList.add('active');
-        document.getElementById(`n-${tab}`).classList.add('active');
-        if(tab === 'viajes') cargarHistorial();
-        if(tab === 'panel') cargarActivos();
-        if(tab === 'perfil') calcularSaldo();
-    }
-
-    async function calcularSaldo() {
-        const { data } = await _supabase.from('viajes').select('precio').eq('driver_id', currentDriver.id).eq('estado', 'finalizado');
-        if (data) {
-            let total = data.reduce((sum, t) => sum + (parseFloat(t.precio) || 0), 0);
-            document.getElementById('stats-total').innerText = total.toFixed(2) + "€";
-            document.getElementById('stats-comision').innerText = (total * 0.1).toFixed(2) + "€";
-        }
-    }
-
-    async function cargarActivos() {
-        const { data } = await _supabase.from('viajes').select('*').in('estado', ['pendiente','aceptado','en_punto','en_curso']).order('created_at',{ascending:false});
-        const cont = document.getElementById('active-trips');
-        cont.innerHTML = data.length ? data.map(t => `
-            <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
-                <div class="flex justify-between items-start mb-3">
-                    <span class="bg-sky-500 text-black text-[8px] font-black px-2 py-1 rounded uppercase">${t.estado}</span>
-                    <span class="text-lg font-bold">${t.precio}€</span>
-                </div>
-                <p class="text-xs font-bold mb-1 italic">${t.origen}</p>
-                <p class="text-xs text-gray-400 mb-4">${t.destino}</p>
-                ${renderBotones(t)}
-            </div>
-        `).join('') : '<div class="text-center py-10 opacity-20 text-[10px] font-bold uppercase">Buscando servicios...</div>';
-    }
-
-    function renderBotones(t) {
-        if(t.estado === 'pendiente') return `<button onclick="updateTrip('${t.id}','aceptado')" class="w-full bg-sky-500 p-3 rounded-xl font-bold text-xs text-black">ACEPTAR</button>`;
-        if(t.estado === 'aceptado') return `<button onclick="updateTrip('${t.id}','en_punto')" class="w-full bg-emerald-500 p-3 rounded-xl font-bold text-xs text-black">LLEGADO</button>`;
-        if(t.estado === 'en_punto') return `<button onclick="updateTrip('${t.id}','en_curso')" class="w-full bg-amber-500 p-3 rounded-xl font-bold text-xs text-black">INICIAR VIAJE</button>`;
-        if(t.estado === 'en_curso') return `<button onclick="finalizarViaje('${t.id}')" class="w-full bg-rose-500 p-3 rounded-xl font-bold text-xs text-white">FINALIZAR</button>`;
-    }
-
-    async function updateTrip(id, status) { 
-        await _supabase.from('viajes').update({ estado: status, driver_id: currentDriver.id }).eq('id', id); 
-        cargarActivos(); 
-    }
-
-    async function finalizarViaje(id) { 
-        await _supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id); 
-        const { data: trip } = await _supabase.from('viajes').select('precio').eq('id', id).single();
-        const comisionAdd = parseFloat(trip.precio) * 0.10;
-        const { data: drv } = await _supabase.from('drivers').select('comision_pendiente_10').eq('id', currentDriver.id).single();
-        const nuevaDeuda = (drv.comision_pendiente_10 || 0) + comisionAdd;
-        await _supabase.from('drivers').update({ comision_pendiente_10: nuevaDeuda }).eq('id', currentDriver.id);
-        verQR(id); 
-        cargarActivos(); 
-    }
-
-    async function verQR(id) {
-        const { data: t } = await _supabase.from('viajes').select('*').eq('id', id).single();
-        const info = { cli: t.cliente_nombre, org: t.origen, des: t.destino, eur: t.precio, lic: currentDriver.num_licencia };
-        const encoded = btoa(JSON.stringify(info));
-        document.getElementById('modal-qr').style.display = 'flex';
-        document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: `https://taxmad.pro/invoice?v=${encoded}`, width: 180, height: 180 });
-    }
-
-    async function cargarHistorial() {
-        const { data } = await _supabase.from('viajes').select('*').eq('estado','finalizado').eq('driver_id', currentDriver.id).order('created_at',{ascending:false});
-        document.getElementById('history-list').innerHTML = data.map(t => `
-            <div class="bg-white/5 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
-                <div class="max-w-[70%]">
-                    <p class="text-[8px] text-gray-500 font-bold uppercase">${new Date(t.created_at).toLocaleDateString()}</p>
-                    <p class="text-[11px] font-bold truncate">${t.destino}</p>
-                    <p class="text-sky-400 font-black text-sm">${t.precio}€</p>
-                </div>
-                <button onclick="verQR('${t.id}')" class="bg-sky-500/10 text-sky-400 p-3 rounded-xl"><i class="fa-solid fa-qrcode"></i></button>
-            </div>
-        `).join('');
     }
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA" async defer></script>
