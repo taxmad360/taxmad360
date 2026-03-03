@@ -3,51 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LiveMad Admin – Demo de Pruebas</title>
+    <title>TaxMad Admin – Control de Flota</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { background: #001a3d; color: white; font-family: 'Montserrat', sans-serif; }
-        .card-admin { background: #0a2551; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; }
-        .lm-input { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; color: white; width: 100%; outline: none; }
+        body { background: #001229; color: white; font-family: 'Montserrat', sans-serif; }
+        .card-admin { background: #0a2551; border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; }
+        .lm-input { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; color: white; width: 100%; outline: none; font-size: 13px; }
+        .tab-btn { padding: 12px; font-weight: bold; font-size: 12px; border-bottom: 2px solid transparent; color: #64748b; transition: 0.3s; }
+        .tab-btn.active { color: #00B5FF; border-bottom-color: #00B5FF; }
+        .status-banned { border-left: 4px solid #f43f5e !important; opacity: 0.7; }
         .hidden { display: none !important; }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 md:p-8">
 
     <div id="admin-login-screen" class="flex flex-col items-center justify-center h-screen">
-        <div class="card-admin w-full max-w-md text-center">
-            <h1 class="text-3xl font-black mb-6">LiveMad <span class="text-sky-400">ADMIN</span></h1>
+        <div class="card-admin w-full max-w-md text-center shadow-2xl">
+            <h1 class="text-3xl font-black mb-2">Tax<span class="text-sky-400">Mad</span></h1>
+            <p class="text-[10px] tracking-[4px] text-gray-400 mb-8 uppercase font-bold">Panel de Control Maestro</p>
             <div class="space-y-4">
                 <input type="text" id="admin-user" placeholder="Usuario Administrador" class="lm-input">
                 <input type="password" id="admin-pass" placeholder="Contraseña Maestra" class="lm-input">
-                <button onclick="loginAdmin()" class="w-full bg-sky-500 py-3 rounded-xl font-bold text-black uppercase">Entrar al Panel</button>
+                <button onclick="loginAdmin()" class="w-full bg-sky-500 py-4 rounded-xl font-black text-black uppercase hover:bg-sky-400 transition-all">ACCEDER AL COMANDO</button>
             </div>
         </div>
     </div>
 
-    <div id="admin-panel" class="max-w-4xl mx-auto hidden">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl font-black">Control de Flota</h1>
-            <button onclick="location.reload()" class="text-xs bg-white/10 px-4 py-2 rounded-lg">Cerrar Sesión</button>
+    <div id="admin-panel" class="max-w-6xl mx-auto hidden">
+        <header class="flex justify-between items-center mb-8 bg-[#0a2551] p-6 rounded-2xl">
+            <div>
+                <h1 class="text-2xl font-black italic">COMANDO <span class="text-sky-400">CENTRAL</span></h1>
+                <p class="text-[9px] font-bold text-gray-500 uppercase">Estado del sistema: <span class="text-green-500">Online</span></p>
+            </div>
+            <button onclick="location.reload()" class="bg-rose-500/10 text-rose-500 px-4 py-2 rounded-lg font-bold text-xs uppercase border border-rose-500/20">Salir</button>
+        </header>
+
+        <div class="flex gap-6 mb-8 border-b border-white/5">
+            <button onclick="switchTab('drivers')" id="btn-drivers" class="tab-btn active uppercase tracking-widest">Conductores</button>
+            <button onclick="switchTab('servicios')" id="btn-servicios" class="tab-btn uppercase tracking-widest">Asignar Servicios</button>
+            <button onclick="switchTab('clientes')" id="btn-clientes" class="tab-btn uppercase tracking-widest">Clientes / IMEI</button>
         </div>
 
-        <div class="card-admin mb-8">
-            <h3 class="text-sky-400 font-bold mb-4 uppercase text-xs">Registrar Nuevo Conductor</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input type="text" id="new-nombre" placeholder="Nombre Conductor" class="lm-input">
-                <input type="text" id="new-usuario" placeholder="Usuario Login" class="lm-input">
-                <input type="password" id="new-pass" placeholder="Contraseña" class="lm-input">
-                <input type="text" id="new-tel" placeholder="Teléfono" class="lm-input">
-                <input type="text" id="new-coche" placeholder="Marca/Modelo" class="lm-input">
-                <input type="text" id="new-placa" placeholder="Matrícula" class="lm-input">
+        <div id="sec-drivers" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="card-admin h-fit">
+                    <h3 class="text-sky-400 font-black mb-6 uppercase text-xs tracking-tighter"><i class="fa-solid fa-user-plus mr-2"></i>Alta de Conductor</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="new-nombre" placeholder="Nombre y Apellidos" class="lm-input">
+                        <input type="text" id="new-usuario" placeholder="Usuario Login" class="lm-input">
+                        <input type="password" id="new-pass" placeholder="Contraseña" class="lm-input">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="new-coche" placeholder="Modelo Vehículo" class="lm-input">
+                            <input type="text" id="new-placa" placeholder="Matrícula" class="lm-input">
+                        </div>
+                        <input type="text" id="new-lic" placeholder="Número Licencia Taxi" class="lm-input">
+                        <input type="text" id="new-imei" placeholder="IMEI Dispositivo (Bloqueo)" class="lm-input">
+                        <button onclick="crearConductor()" class="w-full bg-green-500 py-3 rounded-xl font-black text-black uppercase mt-4">Registrar</button>
+                    </div>
+                </div>
+                <div class="lg:col-span-2">
+                    <div id="lista-conductores" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
             </div>
-            <button onclick="crearConductor()" class="mt-4 w-full bg-green-500 py-3 rounded-xl font-bold text-black uppercase">Guardar en Base de Datos</button>
         </div>
 
-        <div id="lista-conductores" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div id="sec-servicios" class="tab-content hidden">
+            <div class="card-admin max-w-2xl mx-auto">
+                <h2 class="text-xl font-black mb-6 italic text-sky-400">Crear Servicio Manual</h2>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-2">Dirección Origen</label>
+                            <input type="text" id="man-origen" class="lm-input" placeholder="Ej: Calle Gran Via 1">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-2">Dirección Destino</label>
+                            <input type="text" id="man-destino" class="lm-input" placeholder="Ej: Aeropuerto T4">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-2">Importe (€)</label>
+                            <input type="number" id="man-precio" class="lm-input" placeholder="25.00">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase ml-2">Asignar a ID Conductor</label>
+                            <input type="text" id="man-driver-id" class="lm-input" placeholder="Pegar ID del conductor">
+                        </div>
+                    </div>
+                    <button onclick="crearServicioManual()" class="w-full bg-sky-500 py-4 rounded-xl font-black text-black uppercase shadow-lg shadow-sky-500/20">ENVIAR SERVICIO AL CONDUCTOR</button>
+                </div>
             </div>
+        </div>
+
+        <div id="sec-clientes" class="tab-content hidden">
+             <div class="card-admin border-dashed border-2 border-white/10 text-center py-10">
+                <p class="text-gray-400 font-bold">Módulo de control de IMEI y Clientes</p>
+                <div id="lista-clientes" class="mt-6 space-y-2 max-w-lg mx-auto"></div>
+             </div>
+        </div>
     </div>
 
     <script>
@@ -55,75 +112,97 @@
         const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHRudmJsb2xocWlwc2NweGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NzQxNzIsImV4cCI6MjA4ODA1MDE3Mn0.xO19SVN8gowDATLWDEpyakcZXbdGg2Iex8C-ZEWL2dM';
         const _sp = supabase.createClient(S_URL, S_KEY);
 
-        // LOGIN DE PRUEBA
         function loginAdmin() {
             const u = document.getElementById('admin-user').value;
             const p = document.getElementById('admin-pass').value;
-
             if(u === 'superadmin' && p === 'madrid2026') {
                 document.getElementById('admin-login-screen').classList.add('hidden');
                 document.getElementById('admin-panel').classList.remove('hidden');
                 cargarDrivers();
-            } else {
-                alert("Credenciales de administrador incorrectas");
-            }
+            } else { alert("Error de acceso"); }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('sec-' + tab).classList.remove('hidden');
+            document.getElementById('btn-' + tab).classList.add('active');
         }
 
         async function crearConductor() {
-            const btn = event.target;
-            btn.innerText = "PROCESANDO...";
-            btn.disabled = true;
-
             const datos = {
                 nombre: document.getElementById('new-nombre').value,
                 usuario: document.getElementById('new-usuario').value,
                 password: document.getElementById('new-pass').value,
-                telefono: document.getElementById('new-tel').value,
-                marca_v: document.getElementById('new-coche').value,
+                modelo_coche: document.getElementById('new-coche').value,
                 matricula: document.getElementById('new-placa').value,
-                total_dinero_generado: 0,
+                num_licencia: document.getElementById('new-lic').value,
+                imei: document.getElementById('new-imei').value,
+                baneado: false,
                 comision_pendiente_10: 0
             };
-
             const { error } = await _sp.from('drivers').insert([datos]);
-
-            if(error) {
-                alert("Error: " + error.message);
-                btn.innerText = "REINTENTAR";
-                btn.disabled = false;
-            } else {
-                alert("¡Conductor registrado!");
-                location.reload();
-            }
+            if(error) alert("Error: " + error.message);
+            else { alert("Conductor Registrado"); cargarDrivers(); }
         }
 
         async function cargarDrivers() {
-            const { data, error } = await _sp.from('drivers').select('*');
-            if(error) return;
-
+            const { data } = await _sp.from('drivers').select('*');
             const lista = document.getElementById('lista-conductores');
             lista.innerHTML = data.map(d => `
-                <div class="card-admin border border-white/5">
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-bold">${d.nombre}</h4>
-                        <span class="text-[10px] bg-sky-500/20 text-sky-400 px-2 py-1 rounded">ID: ${d.id.slice(0,5)}</span>
-                    </div>
-                    <p class="text-[11px] text-gray-400">Usuario: ${d.usuario} | Tel: ${d.telefono}</p>
-                    <div class="mt-4 pt-4 border-t border-white/10 flex justify-between">
+                <div class="card-admin ${d.baneado ? 'status-banned' : ''}">
+                    <div class="flex justify-between items-start mb-4">
                         <div>
-                            <p class="text-[9px] uppercase text-gray-500">Deuda 10%</p>
-                            <p class="text-xl font-black text-orange-400">${d.comision_pendiente_10}€</p>
+                            <h4 class="font-black text-sm">${d.nombre} ${d.baneado ? '<span class="text-rose-500 text-[8px] border border-rose-500 px-1 ml-2 uppercase">Bloqueado</span>' : ''}</h4>
+                            <p class="text-[9px] text-gray-400">ID: ${d.id}</p>
                         </div>
-                        <button onclick="resetDeuda('${d.id}')" class="text-[10px] bg-green-500 text-black px-3 py-1 rounded font-bold self-end">PAGADO</button>
+                        <button onclick="toggleBloqueo('${d.id}', ${d.baneado})" class="${d.baneado ? 'text-green-400' : 'text-rose-500'} text-xs font-bold uppercase">
+                            ${d.baneado ? 'Desbloquear' : 'Bloquear'}
+                        </button>
+                    </div>
+                    <div class="flex justify-between border-t border-white/5 pt-4">
+                        <div>
+                            <p class="text-[8px] text-gray-500 uppercase">Deuda</p>
+                            <p class="text-xl font-black ${d.comision_pendiente_10 > 0 ? 'text-orange-400' : 'text-gray-500'}">${d.comision_pendiente_10}€</p>
+                        </div>
+                        <button onclick="resetDeuda('${d.id}')" class="bg-sky-500 text-black px-4 py-1 rounded-lg font-black text-[9px] self-end uppercase">Saldar</button>
                     </div>
                 </div>
             `).join('');
+        }
+
+        async function toggleBloqueo(id, statusActual) {
+            if(!confirm("¿Confirmar cambio de estado de acceso?")) return;
+            await _sp.from('drivers').update({ baneado: !statusActual }).eq('id', id);
+            cargarDrivers();
         }
 
         async function resetDeuda(id) {
             await _sp.from('drivers').update({ comision_pendiente_10: 0 }).eq('id', id);
             cargarDrivers();
         }
+
+        async function crearServicioManual() {
+            const org = document.getElementById('man-origen').value;
+            const des = document.getElementById('man-destino').value;
+            const prc = document.getElementById('man-precio').value;
+            const did = document.getElementById('man-driver-id').value;
+
+            if(!did) return alert("Debes asignar un ID de conductor");
+
+            const { error } = await _sp.from('viajes').insert([{
+                origen: org,
+                destino: des,
+                precio: prc,
+                driver_id: did,
+                estado: 'aceptado', // Se asigna directamente como aceptado
+                cliente_nombre: "ADMIN_MANUAL"
+            }]);
+
+            if(error) alert("Error: " + error.message);
+            else { alert("¡Servicio enviado al conductor!"); }
+        }
+
     </script>
 </body>
 </html>
