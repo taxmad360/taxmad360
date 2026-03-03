@@ -19,7 +19,6 @@
         #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: #001a3d; color: white; z-index: 5000; text-align: center; overflow-y: auto; }
         .input-auth { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 14px; }
         
-        /* Selector de Foto Circular */
         .photo-picker { width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px dashed var(--blue); margin: 0 auto 20px; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .photo-picker img { width: 100%; height: 100%; object-fit: cover; display: none; }
         .photo-picker i { font-size: 24px; color: var(--blue); }
@@ -37,23 +36,26 @@
         .input-group i { position: absolute; right: 15px; top: 32px; color: var(--blue); font-size: 16px; }
 
         #map { width: 100%; height: 200px; background: #f0f0f0; border-radius: 15px; margin: 10px 0; }
-        
         .taxcoin-card { background: linear-gradient(135deg, #001a3d 0%, #112F5C 100%); margin: 10px 20px; padding: 15px; border-radius: 20px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 20px rgba(0,181,255,0.2); }
         .tc-val { font-size: 22px; font-weight: 900; color: var(--blue); }
 
         .info-card { background: #f9fafb; margin: 10px 20px; padding: 15px; border-radius: 15px; border: 1px solid #eee; display: none; }
         .price-val { font-size: 28px; font-weight: 800; color: var(--dark); text-align: center; display: block; }
-        .tarifa-badge { font-size: 10px; background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; font-weight: 700; margin-bottom: 5px; display: inline-block; }
-
-        .btn-main { background: linear-gradient(90deg, #38bdf8 0%, #4f46e5 100%); color: white; padding: 16px; border-radius: 14px; width: 90%; margin: 10px auto; font-weight: 800; text-align: center; cursor: pointer; border: none; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        .movimiento-item { background: white; margin: 8px 20px; padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; }
-        .nav-btn { cursor: pointer; transition: 0.3s; color: #9ca3af; }
-        .nav-btn.active { color: #00B5FF; }
-
+        .btn-main { background: linear-gradient(90deg, #38bdf8 0%, #4f46e5 100%); color: white; padding: 16px; border-radius: 14px; width: 90%; margin: 10px auto; font-weight: 800; text-align: center; cursor: pointer; border: none; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Widget de Viaje Activo */
         #active-trip-widget { display: none; position: absolute; bottom: 90px; left: 15px; right: 15px; background: #001a3d; border-radius: 20px; padding: 15px; z-index: 2000; color: white; border: 1px solid rgba(0,181,255,0.3); }
+
+        /* Modal de Chat Moderno */
+        #chat-modal { display: none; position: fixed; inset: 0; background: white; z-index: 6000; flex-direction: column; }
+        #chat-messages { flex: 1; overflow-y: auto; padding: 20px; background: #f8fafc; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 12px 16px; border-radius: 18px; font-size: 13px; max-width: 80%; line-height: 1.4; }
+        .msg-me { align-self: flex-end; background: var(--blue); color: white; border-bottom-right-radius: 4px; }
+        .msg-them { align-self: flex-start; background: #e2e8f0; color: var(--dark); border-bottom-left-radius: 4px; }
+        
         .hidden { display: none !important; }
+        .nav-btn.active { color: var(--blue); }
     </style>
 </head>
 <body>
@@ -62,7 +64,6 @@
     
     <div id="auth-screen">
         <div style="font-size: 35px; font-weight: 900; margin-bottom: 30px;">Tax<span style="color:var(--blue)">Mad</span></div>
-        
         <div id="login-box">
             <input type="text" id="user-login" placeholder="Usuario" class="input-auth">
             <input type="password" id="pass-login" placeholder="Contraseña" class="input-auth">
@@ -72,13 +73,11 @@
 
         <div id="register-box" class="hidden">
             <h2 id="form-title" class="mb-4 font-bold">Crear Cuenta</h2>
-            
             <input type="file" id="reg-foto-input" accept="image/*" class="hidden" onchange="previewImagen(this)">
             <div class="photo-picker" onclick="document.getElementById('reg-foto-input').click()">
                 <i class="fa-solid fa-camera" id="icon-cam"></i>
                 <img id="img-preview" src="">
             </div>
-
             <div class="grid grid-cols-2 gap-2">
                 <input type="text" id="reg-nom" placeholder="Nombre" class="input-auth">
                 <input type="text" id="reg-ape" placeholder="Apellido" class="input-auth">
@@ -88,7 +87,7 @@
             <input type="password" id="reg-pass2" placeholder="Confirmar" class="input-auth">
             <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-auth">
             <button id="btn-registro" onclick="registrarUsuario()" class="btn-main" style="width: 100%;">GUARDAR</button>
-            <p class="mt-4 text-xs text-gray-400" onclick="toggleAuth('login')">Volver al Login</p>
+            <p class="mt-4 text-xs text-gray-400 cursor-pointer" onclick="toggleAuth('login')">Volver al Login</p>
         </div>
     </div>
 
@@ -101,7 +100,7 @@
                     <h2 id="u-name" style="font-size: 13px; font-weight: 700;">---</h2>
                 </div>
             </div>
-            <div class="logo-txt text-right">Tax<span>Mad</span></div>
+            <div class="logo-txt">Tax<span>Mad</span></div>
         </header>
 
         <div class="taxcoin-card">
@@ -109,24 +108,16 @@
                 <p class="text-[9px] font-black opacity-60 uppercase">Saldo Taxcoins</p>
                 <p class="tc-val"><span id="u-tc">0.00</span> <small class="text-xs">TC</small></p>
             </div>
-            <button onclick="showTab('hucha')" class="bg-white/10 p-2 px-4 rounded-xl text-[10px] font-bold border border-white/20">
-                <i class="fa-solid fa-wallet mr-1"></i> MI HUCHA
-            </button>
+            <button onclick="showTab('hucha')" class="bg-white/10 p-2 px-4 rounded-xl text-[10px] font-bold border border-white/20">MI HUCHA</button>
         </div>
 
         <div class="form-content">
-            <div class="input-group"><label>Recogida</label><input type="text" id="origin" placeholder="¿Dónde recogemos?"><i class="fa-solid fa-location-dot"></i></div>
-            <div class="input-group"><label>Destino</label><input type="text" id="destination" placeholder="¿A dónde vas?"><i class="fa-solid fa-flag-checkered"></i></div>
-            <div class="input-group"><label>Reserva</label><input type="datetime-local" id="fechaHora"><i class="fa-solid fa-clock"></i></div>
-            
+            <div class="input-group"><label>Recogida</label><input type="text" id="origin" placeholder="Origen"><i class="fa-solid fa-location-dot"></i></div>
+            <div class="input-group"><label>Destino</label><input type="text" id="destination" placeholder="Destino"><i class="fa-solid fa-flag-checkered"></i></div>
             <div id="map"></div>
-
             <div id="info-resumen" class="info-card">
-                <div class="tarifa-badge">RESERVA PREMIUM</div>
                 <span id="precio-txt" class="price-val">0.00€</span>
-                <p class="text-[9px] text-center text-sky-500 font-bold mt-1 italic">+ 0.50 TC de regalo al finalizar</p>
             </div>
-
             <button id="btnAction" class="btn-main" onclick="procesarViaje()">CALCULAR PRECIO</button>
         </div>
     </div>
@@ -134,14 +125,36 @@
     <div id="hucha-screen">
         <div class="p-6">
             <h1 class="text-2xl font-black italic">Mi Hucha <span class="text-sky-500">TC</span></h1>
-            <div class="mt-6 bg-gradient-to-br from-gray-900 to-blue-900 p-6 rounded-3xl text-white shadow-2xl relative overflow-hidden">
-                <div class="absolute -right-4 -top-4 opacity-10 text-8xl rotate-12"><i class="fa-solid fa-coins"></i></div>
-                <p class="text-[10px] font-bold opacity-60 uppercase tracking-widest">Saldo Disponible</p>
-                <h2 class="text-4xl font-black mt-1" id="hucha-main-val">0.00 <small class="text-lg">TC</small></h2>
-                <button onclick="transferirTC()" class="w-full mt-6 py-3 bg-sky-500 rounded-xl font-bold text-sm shadow-lg border-b-4 border-sky-700 active:border-0">ENVIAR TC A UN AMIGO</button>
+            <div id="lista-tc" class="mt-4 space-y-2"></div>
+        </div>
+    </div>
+
+    <div id="active-trip-widget">
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex gap-3 items-center">
+                <div class="w-10 h-10 bg-sky-400 rounded-lg flex items-center justify-center font-black" id="dr-icon">T</div>
+                <div>
+                    <div id="dr-name" class="text-sm font-bold">Buscando...</div>
+                    <div id="dr-vehicle" class="text-[9px] text-sky-400 font-bold uppercase">En camino</div>
+                </div>
             </div>
-            <h3 class="mt-8 mb-4 px-2 text-xs font-black text-gray-400 uppercase italic tracking-widest">Actividad Reciente</h3>
-            <div id="lista-tc" class="space-y-1"></div>
+            <div id="timer" class="text-lg font-black text-sky-400">05:00</div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="llamarSeguro()" class="flex-1 bg-white/5 p-3 rounded-xl text-center text-[10px] font-bold border border-white/10 italic"><i class="fa-solid fa-phone mr-2"></i>Llamar</button>
+            <button onclick="abrirChat()" class="flex-1 bg-white/5 p-3 rounded-xl text-center text-[10px] font-bold border border-white/10 italic"><i class="fa-solid fa-comment mr-2"></i>Chat</button>
+        </div>
+    </div>
+
+    <div id="chat-modal">
+        <div class="p-4 border-bottom flex items-center gap-4 bg-white sticky top-0 shadow-sm">
+            <button onclick="cerrarChat()"><i class="fa-solid fa-arrow-left"></i></button>
+            <span class="font-bold" id="chat-title">Chat con Conductor</span>
+        </div>
+        <div id="chat-messages"></div>
+        <div class="p-4 border-t flex gap-2 bg-white">
+            <input type="text" id="chat-input" placeholder="Escribe un mensaje..." class="flex-1 p-3 bg-gray-100 rounded-full outline-none text-sm">
+            <button onclick="enviarMensaje()" class="bg-sky-500 text-white w-12 h-12 rounded-full shadow-lg"><i class="fa-solid fa-paper-plane"></i></button>
         </div>
     </div>
 
@@ -152,14 +165,16 @@
     </nav>
 </div>
 
+
+
 <script>
     const S_URL = 'https://wdxtnvblolhqipscpxer.supabase.co';
     const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHRudmJsb2xocWlwc2NweGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NzQxNzIsImV4cCI6MjA4ODA1MDE3Mn0.xO19SVN8gowDATLWDEpyakcZXbdGg2Iex8C-ZEWL2dM';
     const _supabase = supabase.createClient(S_URL, S_KEY);
 
-    let map, directionsRenderer, directionsService, currentUser = null, ultimoCalculo = null;
+    let currentUser = null, ultimoCalculo = null, activeViajeId = null, driverPhone = null;
 
-    // --- MANEJO DE FOTO ---
+    // --- FOTOS ---
     function previewImagen(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -175,78 +190,56 @@
     async function subirFoto(file, usuario) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${usuario}-${Date.now()}.${fileExt}`;
-        const { data, error } = await _supabase.storage.from('avatars').upload(fileName, file);
+        const { error } = await _supabase.storage.from('avatars').upload(fileName, file);
         if (error) return null;
         const { data: { publicUrl } } = _supabase.storage.from('avatars').getPublicUrl(fileName);
         return publicUrl;
     }
 
-    // --- NAVEGACIÓN ---
-    function showTab(tab) {
-        document.getElementById('main-app').style.display = tab === 'home' ? 'flex' : 'none';
-        document.getElementById('hucha-screen').style.display = tab === 'hucha' ? 'flex' : 'none';
-        document.getElementById('n-home').classList.toggle('active', tab === 'home');
-        document.getElementById('n-hucha').classList.toggle('active', tab === 'hucha');
-        if(tab === 'hucha') renderHucha();
-    }
-
-    function toggleAuth(view) {
-        document.getElementById('login-box').classList.add('hidden');
-        document.getElementById('register-box').classList.add('hidden');
-        document.getElementById(view + '-box').classList.remove('hidden');
-    }
-
-    // --- REGISTRO Y LOGIN ---
+    // --- AUTH ---
     async function registrarUsuario() {
-        const btn = document.getElementById('btn-registro');
         const u = document.getElementById('reg-user').value;
         const p = document.getElementById('reg-pass').value;
         const fotoFile = document.getElementById('reg-foto-input').files[0];
-
         if(!u || !p) return alert("Faltan datos");
-        if(p !== document.getElementById('reg-pass2').value) return alert("Passwords no coinciden");
-
-        btn.innerText = "PROCESANDO...";
-        btn.disabled = true;
 
         let urlFoto = currentUser?.foto || `https://ui-avatars.com/api/?name=${u}`;
         if (fotoFile) {
-            const subida = await subirFoto(fotoFile, u);
-            if (subida) urlFoto = subida;
+            const res = await subirFoto(fotoFile, u);
+            if(res) urlFoto = res;
         }
 
-        const datos = {
-            nombre: document.getElementById('reg-nom').value,
+        const datos = { 
+            nombre: document.getElementById('reg-nom').value, 
             apellido: document.getElementById('reg-ape').value,
-            usuario: u, password: p,
-            telefono: document.getElementById('reg-tel').value,
-            foto: urlFoto, taxcoins: currentUser ? currentUser.taxcoins : 0
+            usuario: u, password: p, 
+            telefono: document.getElementById('reg-tel').value, 
+            foto: urlFoto, taxcoins: 0 
         };
 
         const { error } = await _supabase.from('clientes').upsert([datos], {onConflict: 'usuario'});
-        if(!error) { alert("¡Guardado!"); location.reload(); } else { alert("Error"); btn.disabled = false; btn.innerText = "GUARDAR"; }
+        if(!error) location.reload();
     }
 
     async function intentarAcceso() {
         const u = document.getElementById('user-login').value;
         const p = document.getElementById('pass-login').value;
         const { data } = await _supabase.from('clientes').select('*').eq('usuario', u).single();
-
         if (data && data.password === p) {
             currentUser = data;
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('main-app').style.display = 'flex';
-            document.getElementById('u-name').innerText = `${data.nombre} ${data.apellido}`;
-            document.getElementById('u-tc').innerText = data.taxcoins.toFixed(2);
-            document.getElementById('u-img').src = data.foto || `https://ui-avatars.com/api/?name=${data.nombre}`;
+            document.getElementById('u-name').innerText = data.nombre;
+            document.getElementById('u-img').src = data.foto;
             initMap();
-        } else { alert("Credenciales incorrectas"); }
+        } else alert("Error");
     }
 
-    // --- LÓGICA DE VIAJES ---
+    // --- MAPAS & VIAJE ---
+    let directionsService, directionsRenderer, map;
     function initMap() {
         directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: "#00B5FF", strokeWeight: 6 }});
+        directionsRenderer = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: "#00B5FF", strokeWeight: 5 }});
         map = new google.maps.Map(document.getElementById('map'), { center: {lat: 40.41, lng: -3.70}, zoom: 14, disableDefaultUI: true });
         directionsRenderer.setMap(map);
         new google.maps.places.Autocomplete(document.getElementById('origin'));
@@ -254,81 +247,85 @@
     }
 
     async function procesarViaje() {
-        const btn = document.getElementById('btnAction');
         const o = document.getElementById('origin').value;
         const d = document.getElementById('destination').value;
-
-        if (!ultimoCalculo) {
-            btn.innerText = "CALCULANDO...";
+        if(!ultimoCalculo) {
             directionsService.route({ origin: o, destination: d, travelMode: 'DRIVING' }, (res, status) => {
                 if(status === 'OK') {
                     directionsRenderer.setDirections(res);
-                    const total = (6 + (res.routes[0].legs[0].distance.value/1000 * 1.45)).toFixed(2);
-                    ultimoCalculo = { o, d, p: total };
-                    document.getElementById('precio-txt').innerText = total + "€";
+                    const precio = (6 + (res.routes[0].legs[0].distance.value/1000 * 1.5)).toFixed(2);
+                    ultimoCalculo = precio;
+                    document.getElementById('precio-txt').innerText = precio + "€";
                     document.getElementById('info-resumen').style.display = 'block';
-                    btn.innerText = "CONFIRMAR RESERVA";
+                    document.getElementById('btnAction').innerText = "CONFIRMAR";
                 }
             });
         } else {
-            const { data } = await _supabase.from('viajes').insert([{
+            const { data } = await _supabase.from('viajes').insert([{ 
                 cliente_id: currentUser.id, cliente_nombre: currentUser.nombre,
-                origen: o, destino: d, precio: parseFloat(ultimoCalculo.p), estado: 'pendiente'
+                origen: o, destino: d, precio: parseFloat(ultimoCalculo), estado: 'pendiente' 
             }]).select();
-            if(data) { alert("Buscando Conductor..."); btn.style.display='none'; }
+            if(data) {
+                activeViajeId = data[0].id;
+                alert("Buscando conductor...");
+                escucharEstadoViaje(activeViajeId);
+            }
         }
     }
 
-    // --- HUCHA Y TRANSFERENCIAS ---
-    async function renderHucha() {
-        document.getElementById('hucha-main-val').innerText = currentUser.taxcoins.toFixed(2) + " TC";
-        const { data } = await _supabase.from('historial_tc').select('*').eq('cliente_id', currentUser.id).order('fecha', {ascending: false});
-        const list = document.getElementById('lista-tc');
-        list.innerHTML = data && data.length ? '' : '<p class="text-center text-gray-400 text-xs py-10">Sin movimientos</p>';
-        if(data) data.forEach(m => {
-            const isPos = m.monto > 0;
-            list.innerHTML += `<div class="movimiento-item">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full ${isPos?'bg-green-100 text-green-600':'bg-red-100 text-red-600'} flex items-center justify-center"><i class="fa-solid ${isPos?'fa-plus':'fa-minus'}"></i></div>
-                    <div><p class="text-xs font-bold">${m.concepto}</p><p class="text-[8px] text-gray-400 uppercase">${new Date(m.fecha).toLocaleDateString()}</p></div>
-                </div>
-                <p class="font-black ${isPos?'text-green-500':'text-red-500'}">${isPos?'+':''}${m.monto.toFixed(2)}</p>
-            </div>`;
-        });
+    function escucharEstadoViaje(id) {
+        _supabase.channel('viajes_cambios')
+        .on('postgres_changes', { event: 'UPDATE', table: 'viajes', filter: `id=eq.${id}` }, async payload => {
+            if(payload.new.estado === 'aceptado') {
+                const { data: dr } = await _supabase.from('drivers').select('*').eq('id', payload.new.driver_id).single();
+                driverPhone = dr.telefono;
+                document.getElementById('active-trip-widget').style.display = 'block';
+                document.getElementById('dr-name').innerText = dr.nombre;
+                document.getElementById('dr-vehicle').innerText = dr.matricula;
+            }
+        }).subscribe();
     }
 
-    async function transferirTC() {
-        const uDest = prompt("Usuario destino:");
-        const cant = parseFloat(prompt("Cantidad de TC:"));
-        if(cant > currentUser.taxcoins) return alert("Saldo insuficiente");
-
-        const { data: receptor } = await _supabase.from('clientes').select('*').eq('usuario', uDest).single();
-        if(receptor) {
-            await _supabase.from('clientes').update({ taxcoins: receptor.taxcoins + cant }).eq('id', receptor.id);
-            await _supabase.from('clientes').update({ taxcoins: currentUser.taxcoins - cant }).eq('id', currentUser.id);
-            await _supabase.from('historial_tc').insert([
-                { cliente_id: currentUser.id, monto: -cant, concepto: `Envío a @${uDest}` },
-                { cliente_id: receptor.id, monto: cant, concepto: `De @${currentUser.usuario}` }
-            ]);
-            alert("Enviado"); location.reload();
-        } else {
-            alert("No existe el usuario.");
-        }
+    // --- LLAMADA Y CHAT ---
+    function llamarSeguro() {
+        if(driverPhone) window.location.href = `tel:${driverPhone}`;
     }
 
-    function abrirEditor() {
-        toggleAuth('register');
-        document.getElementById('form-title').innerText = "Editar Perfil";
-        document.getElementById('reg-user').value = currentUser.usuario;
-        document.getElementById('reg-nom').value = currentUser.nombre;
-        document.getElementById('reg-ape').value = currentUser.apellido;
-        document.getElementById('reg-tel').value = currentUser.telefono;
-        if(currentUser.foto) {
-            document.getElementById('img-preview').src = currentUser.foto;
-            document.getElementById('img-preview').style.display = 'block';
-            document.getElementById('icon-cam').style.display = 'none';
-        }
+    function abrirChat() {
+        document.getElementById('chat-modal').style.display = 'flex';
+        cargarMensajes();
+        _supabase.channel('mensajes_realtime')
+        .on('postgres_changes', { event: 'INSERT', table: 'mensajes', filter: `viaje_id=eq.${activeViajeId}` }, payload => {
+            renderMsg(payload.new);
+        }).subscribe();
     }
+
+    async function cargarMensajes() {
+        const { data } = await _supabase.from('mensajes').select('*').eq('viaje_id', activeViajeId).order('creado_at');
+        document.getElementById('chat-messages').innerHTML = '';
+        if(data) data.forEach(renderMsg);
+    }
+
+    function renderMsg(m) {
+        const container = document.getElementById('chat-messages');
+        const isMe = m.remitente_id === currentUser.id;
+        container.innerHTML += `<div class="msg ${isMe ? 'msg-me' : 'msg-them'}">${m.texto}</div>`;
+        container.scrollTop = container.scrollHeight;
+    }
+
+    async function enviarMensaje() {
+        const msg = document.getElementById('chat-input').value;
+        if(!msg) return;
+        await _supabase.from('mensajes').insert([{ viaje_id: activeViajeId, remitente_id: currentUser.id, texto: msg }]);
+        document.getElementById('chat-input').value = '';
+    }
+
+    function cerrarChat() { document.getElementById('chat-modal').style.display = 'none'; }
+    function showTab(t) { 
+        document.getElementById('main-app').style.display = t=='home'?'flex':'none'; 
+        document.getElementById('hucha-screen').style.display = t=='hucha'?'flex':'none';
+    }
+    function abrirEditor() { toggleAuth('register'); }
 </script>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places" async defer></script>
