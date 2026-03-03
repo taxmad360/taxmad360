@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LiveMad – Premium App</title>
+    <title>TaxMad – Premium App</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,102 +15,135 @@
         body { background: #001a3d; font-family: "Montserrat", sans-serif; margin: 0; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
         .mobile-container { width: 100%; max-width: 414px; background: var(--bg-app); position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
         
-        /* Pantalla de Autenticación */
-        #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: #001a3d; color: white; z-index: 1000; text-align: center; }
-        .input-auth { width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 16px; }
+        /* Pantallas de Autenticación */
+        #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: #001a3d; color: white; z-index: 1000; text-align: center; overflow-y: auto; }
+        .input-auth { width: 100%; padding: 14px; margin-bottom: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: white; outline: none; font-size: 14px; }
         
         /* App Principal */
         #main-app { display: none; flex-direction: column; height: 100%; background: white; overflow-y: auto; }
-        .user-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
+        .user-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: white; position: sticky; top: 0; z-index: 100; }
         .logo-txt { font-weight: 800; font-size: 20px; color: var(--dark); }
         .logo-txt span { color: var(--blue); }
 
-        .form-content { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .form-content { padding: 20px; display: flex; flex-direction: column; gap: 8px; }
         .input-group { position: relative; }
-        .input-group label { display: block; font-size: 10px; font-weight: 700; color: var(--dark); margin-bottom: 4px; margin-left: 5px; text-transform: uppercase; }
-        .input-group input { width: 100%; padding: 14px 45px 14px 15px; border-radius: 12px; background: var(--input-bg); border: 1px solid #e5e7eb; font-size: 14px; font-weight: 500; color: #333; outline: none; }
-        .input-group i { position: absolute; right: 15px; top: 35px; color: var(--blue); font-size: 18px; }
+        .input-group label { display: block; font-size: 9px; font-weight: 800; color: var(--dark); margin-bottom: 4px; margin-left: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .input-group input { width: 100%; padding: 12px 45px 12px 15px; border-radius: 12px; background: var(--input-bg); border: 1px solid #e5e7eb; font-size: 14px; font-weight: 500; color: #333; outline: none; }
+        .input-group i { position: absolute; right: 15px; top: 32px; color: var(--blue); font-size: 16px; }
 
-        #map { width: 100%; height: 220px; background: #f0f0f0; margin-top: 10px; border-radius: 15px; }
+        #map { width: 100%; height: 200px; background: #f0f0f0; border-radius: 15px; margin: 10px 0; }
         
-        .info-card { background: #f9fafb; margin: 15px 20px; padding: 15px; border-radius: 15px; border: 1px solid #eee; display: none; }
+        .taxcoin-card { background: linear-gradient(135deg, #001a3d 0%, #112F5C 100%); margin: 10px 20px; padding: 15px; border-radius: 20px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 8px 20px rgba(0,181,255,0.2); }
+        .tc-val { font-size: 22px; font-weight: 900; color: var(--blue); }
+
+        .info-card { background: #f9fafb; margin: 10px 20px; padding: 15px; border-radius: 15px; border: 1px solid #eee; display: none; }
         .price-val { font-size: 28px; font-weight: 800; color: var(--dark); text-align: center; display: block; }
         .tarifa-badge { font-size: 10px; background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; font-weight: 700; margin-bottom: 5px; display: inline-block; }
 
-        .btn-ver-precio { background: linear-gradient(90deg, #38bdf8 0%, #4f46e5 100%); color: white; padding: 18px; border-radius: 14px; width: 90%; margin: 10px auto; font-weight: 700; text-align: center; cursor: pointer; border: none; transition: 0.3s; }
-
-        /* WIDGET VIAJE ACTIVO */
-        #active-trip-widget { display: none; position: absolute; bottom: 85px; left: 15px; right: 15px; background: #001a3d; border-radius: 20px; padding: 15px; z-index: 2000; box-shadow: 0 10px 40px rgba(0,0,0,0.6); color: white; border: 1px solid rgba(0,181,255,0.2); }
-        .dr-avatar { width: 45px; height: 45px; border-radius: 12px; background: var(--blue); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #001a3d; }
-        .countdown-box { background: rgba(0, 181, 255, 0.1); padding: 5px 12px; border-radius: 10px; text-align: center; min-width: 60px; }
-        .btn-contact { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; font-size: 11px; flex: 1; text-align: center; color: white; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-main { background: linear-gradient(90deg, #38bdf8 0%, #4f46e5 100%); color: white; padding: 16px; border-radius: 14px; width: 90%; margin: 10px auto; font-weight: 800; text-align: center; cursor: pointer; border: none; text-transform: uppercase; letter-spacing: 1px; }
+        
+        #active-trip-widget { display: none; position: absolute; bottom: 85px; left: 15px; right: 15px; background: #001a3d; border-radius: 20px; padding: 15px; z-index: 2000; color: white; border: 1px solid rgba(0,181,255,0.3); }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div class="mobile-container">
+    
     <div id="auth-screen">
-        <div style="font-size: 35px; font-weight: 800; margin-bottom: 40px;">Live<span style="color:var(--blue)">Mad</span></div>
-        <input type="text" id="user-login" placeholder="Usuario" class="input-auth">
-        <input type="password" id="pass-login" placeholder="Contraseña" class="input-auth">
-        <button onclick="intentarAcceso()" class="btn-ver-precio" style="width: 100%; margin-top: 20px;">INICIAR SESIÓN</button>
+        <div style="font-size: 35px; font-weight: 900; margin-bottom: 30px;">Tax<span style="color:var(--blue)">Mad</span></div>
+        
+        <div id="login-box">
+            <input type="text" id="user-login" placeholder="Usuario" class="input-auth">
+            <input type="password" id="pass-login" placeholder="Contraseña" class="input-auth">
+            <button onclick="intentarAcceso()" class="btn-main" style="width: 100%;">ENTRAR</button>
+            <p class="mt-4 text-xs text-gray-400">¿No tienes cuenta? <span class="text-sky-400 font-bold cursor-pointer" onclick="toggleAuth('register')">Regístrate</span></p>
+            <p class="mt-2 text-xs text-gray-400 cursor-pointer" onclick="toggleAuth('recover')">Recuperar cuenta</p>
+        </div>
+
+        <div id="register-box" class="hidden">
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="reg-nom" placeholder="Nombre" class="input-auth">
+                <input type="text" id="reg-ape" placeholder="Apellido" class="input-auth">
+            </div>
+            <input type="text" id="reg-user" placeholder="Nombre de Usuario" class="input-auth">
+            <input type="password" id="reg-pass" placeholder="Contraseña" class="input-auth">
+            <input type="password" id="reg-pass2" placeholder="Confirmar Contraseña" class="input-auth">
+            <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-auth">
+            <input type="text" id="reg-foto" placeholder="URL Foto (Opcional)" class="input-auth">
+            <button onclick="registrarUsuario()" class="btn-main" style="width: 100%;">CREAR CUENTA</button>
+            <p class="mt-4 text-xs text-gray-400" onclick="toggleAuth('login')">Volver al Login</p>
+        </div>
+
+        <div id="recover-box" class="hidden">
+            <p class="text-sm mb-4">Introduce tu usuario o teléfono para recuperar tu cuenta</p>
+            <input type="text" id="rec-data" placeholder="Usuario o Teléfono" class="input-auth">
+            <button onclick="alert('Instrucciones enviadas al teléfono registrado')" class="btn-main" style="width: 100%;">RECUPERAR</button>
+            <p class="mt-4 text-xs text-gray-400" onclick="toggleAuth('login')">Volver</p>
+        </div>
     </div>
 
     <div id="main-app">
         <header class="user-header">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold" id="user-initial">D</div>
+                <img id="u-img" src="https://ui-avatars.com/api/?name=User&background=00B5FF&color=fff" class="w-10 h-10 rounded-full border-2 border-sky-400" onclick="abrirEditor()">
                 <div>
-                    <p style="font-size: 9px; color: #aaa; margin:0; font-weight:700;">PREMIUM MEMBER</p>
-                    <h2 id="user-display-name" style="font-size: 13px; font-weight: 700; margin:0;">Dani Martínez</h2>
+                    <p style="font-size: 8px; color: #aaa; font-weight:800; letter-spacing: 1px;">TAXMAD CLIENT</p>
+                    <h2 id="u-name" style="font-size: 13px; font-weight: 700;">Dani Martínez</h2>
                 </div>
             </div>
-            <div class="logo-txt">Live<span>Mad</span></div>
+            <div class="logo-txt text-right">Tax<span>Mad</span></div>
         </header>
 
-        <div class="form-content">
-            <div class="input-group"><label>Recogida</label><input type="text" id="origin" placeholder="¿Dónde te buscamos?"><i class="fa-solid fa-location-crosshairs" onclick="geolocalizar()"></i></div>
-            <div class="input-group"><label>Destino</label><input type="text" id="destination" placeholder="¿A dónde vas?"><i class="fa-solid fa-flag-checkered"></i></div>
-            <div class="input-group"><label>Fecha y Hora</label><input type="datetime-local" id="fechaHora"><i class="fa-solid fa-calendar-day"></i></div>
-        </div>
-
-        <div id="map"></div>
-
-        <div id="info-resumen" class="info-card">
-            <div id="tarifa-tag" class="tarifa-badge">TARIFA ESTÁNDAR</div>
-            <span id="precio-txt" class="price-val">0.00€</span>
-            <div class="flex justify-between text-[11px] text-gray-500 mt-2">
-                <span><i class="fa-solid fa-route mr-1"></i> <span id="dist-txt">0 km</span></span>
-                <span><i class="fa-solid fa-clock mr-1"></i> <span id="time-txt">0 min</span></span>
+        <div class="taxcoin-card">
+            <div>
+                <p class="text-[9px] font-black opacity-60 uppercase">Saldo Taxcoins</p>
+                <p class="tc-val"><span id="u-tc">0.00</span> <small class="text-xs">TC</small></p>
             </div>
+            <button onclick="transferirTC()" class="bg-white/10 p-2 px-4 rounded-xl text-[10px] font-bold border border-white/20">
+                <i class="fa-solid fa-paper-plane mr-1"></i> TRANSFERIR
+            </button>
         </div>
 
-        <button id="btnAction" class="btn-ver-precio" onclick="procesarViaje()">CALCULAR PRECIO</button>
+        <div class="form-content">
+            <div class="input-group"><label>Recogida</label><input type="text" id="origin" placeholder="¿Dónde recogemos?"><i class="fa-solid fa-location-dot"></i></div>
+            <div class="input-group"><label>Destino</label><input type="text" id="destination" placeholder="¿A dónde vas?"><i class="fa-solid fa-flag-checkered"></i></div>
+            <div class="input-group"><label>Fecha y Hora (Reserva)</label><input type="datetime-local" id="fechaHora"><i class="fa-solid fa-clock"></i></div>
+            
+            <div id="map"></div>
+
+            <div id="info-resumen" class="info-card">
+                <div class="tarifa-badge">RESERVA PREMIUM</div>
+                <span id="precio-txt" class="price-val">0.00€</span>
+                <p class="text-[9px] text-center text-sky-500 font-bold mt-1">+ 0.50 TC de regalo al finalizar</p>
+            </div>
+
+            <button id="btnAction" class="btn-main" onclick="procesarViaje()">CALCULAR PRECIO</button>
+        </div>
 
         <div id="active-trip-widget">
             <div class="flex justify-between items-center mb-4">
                 <div class="flex gap-3 items-center">
-                    <div id="dr-avatar" class="dr-avatar">A</div>
+                    <div id="dr-avatar" class="w-10 h-10 bg-sky-400 rounded-lg flex items-center justify-center font-black text-dark">?</div>
                     <div>
-                        <div id="dr-name" class="text-sm font-bold">Buscando...</div>
-                        <div id="dr-vehicle" class="text-[9px] text-sky-400 font-bold uppercase">Asignando unidad</div>
+                        <div id="dr-name" class="text-sm font-bold">Asignando...</div>
+                        <div id="dr-vehicle" class="text-[9px] text-sky-400 font-bold uppercase">Espera por favor</div>
                     </div>
                 </div>
-                <div class="countdown-box">
-                    <div id="timer" class="text-lg font-black">--:--</div>
-                    <div id="timer-label" class="text-[7px] font-bold text-gray-400 uppercase">Minutos</div>
+                <div class="text-center bg-sky-400/10 p-2 rounded-xl border border-sky-400/20">
+                    <div id="timer" class="text-lg font-black text-sky-400">--:--</div>
                 </div>
             </div>
             <div class="flex gap-2">
-                <a id="link-call" href="#" class="btn-contact"><i class="fa-solid fa-phone text-sky-400 mr-2"></i>Llamar</a>
-                <a id="link-chat" href="#" class="btn-contact"><i class="fa-solid fa-comment text-sky-400 mr-2"></i>Mensaje</a>
+                <a id="link-call" href="#" class="flex-1 bg-white/5 p-3 rounded-xl text-center text-[10px] font-bold border border-white/10 italic"><i class="fa-solid fa-phone mr-2"></i>Llamar</a>
+                <a id="link-chat" href="#" class="flex-1 bg-white/5 p-3 rounded-xl text-center text-[10px] font-bold border border-white/10 italic"><i class="fa-solid fa-comment mr-2"></i>Chat</a>
             </div>
         </div>
 
-        <nav class="h-20 bg-white border-t flex justify-around items-center mt-auto">
-            <div class="text-center text-blue-500 text-[10px] font-bold"><i class="fa-solid fa-house text-xl block mb-1"></i>Home</div>
-            <div class="text-center text-gray-400 text-[10px] font-bold"><i class="fa-solid fa-clock-rotate-left text-xl block mb-1"></i>Reservas</div>
-            <div class="text-center text-gray-400 text-[10px] font-bold"><i class="fa-solid fa-user text-xl block mb-1"></i>Perfil</div>
+        <nav class="h-20 bg-white border-t flex justify-around items-center">
+            <div class="text-center text-sky-500 text-[10px] font-bold"><i class="fa-solid fa-house text-xl block mb-1"></i>TaxMad</div>
+            <div class="text-center text-gray-400 text-[10px] font-bold"><i class="fa-solid fa-gift text-xl block mb-1"></i>Hucha</div>
+            <div class="text-center text-gray-400 text-[10px] font-bold" onclick="abrirEditor()"><i class="fa-solid fa-circle-user text-xl block mb-1"></i>Perfil</div>
         </nav>
     </div>
 </div>
@@ -120,21 +153,62 @@
     const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHRudmJsb2xocWlwc2NweGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NzQxNzIsImV4cCI6MjA4ODA1MDE3Mn0.xO19SVN8gowDATLWDEpyakcZXbdGg2Iex8C-ZEWL2dM';
     const _supabase = supabase.createClient(S_URL, S_KEY);
 
-    let map, directionsRenderer, directionsService, ultimoCalculo = null, timerInt = null;
+    let map, directionsRenderer, directionsService, currentUser = null, ultimoCalculo = null;
 
-    function intentarAcceso() {
-        const u = document.getElementById('user-login').value;
-        const p = document.getElementById('pass-login').value;
-        if (u === 'admin' && p === '1234') {
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-            initMap();
-        } else { alert("Error de acceso"); }
+    // --- SISTEMA DE AUTENTICACIÓN ---
+    function toggleAuth(view) {
+        document.getElementById('login-box').classList.add('hidden');
+        document.getElementById('register-box').classList.add('hidden');
+        document.getElementById('recover-box').classList.add('hidden');
+        document.getElementById(view + '-box').classList.remove('hidden');
     }
 
+    async function registrarUsuario() {
+        const u = document.getElementById('reg-user').value;
+        const p = document.getElementById('reg-pass').value;
+        const p2 = document.getElementById('reg-pass2').value;
+        if(p !== p2) return alert("Contraseñas no coinciden");
+
+        const nuevo = {
+            nombre: document.getElementById('reg-nom').value,
+            apellido: document.getElementById('reg-ape').value,
+            usuario: u,
+            password: p,
+            telefono: document.getElementById('reg-tel').value,
+            foto: document.getElementById('reg-foto').value || "",
+            taxcoins: 0
+        };
+
+        const { error } = await _supabase.from('clientes').insert([nuevo]);
+        if(!error) { alert("¡Registro Éxito! Ya puedes entrar."); toggleAuth('login'); }
+        else { alert("Error: El usuario ya existe o campos incompletos."); }
+    }
+
+    async function intentarAcceso() {
+        const u = document.getElementById('user-login').value;
+        const p = document.getElementById('pass-login').value;
+
+        const { data, error } = await _supabase.from('clientes').select('*').eq('usuario', u).single();
+
+        if (data && data.password === p) {
+            currentUser = data;
+            iniciarApp();
+        } else { alert("Usuario o contraseña incorrectos"); }
+    }
+
+    function iniciarApp() {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('u-name').innerText = `${currentUser.nombre} ${currentUser.apellido}`;
+        document.getElementById('u-tc').innerText = currentUser.taxcoins.toFixed(2);
+        if(currentUser.foto) document.getElementById('u-img').src = currentUser.foto;
+        initMap();
+    }
+
+    // --- LÓGICA DE VIAJES Y TAXCOINS ---
     function initMap() {
         directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer();
+        directionsRenderer = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: "#00B5FF", strokeWeight: 5 }});
         map = new google.maps.Map(document.getElementById('map'), { center: {lat: 40.41, lng: -3.70}, zoom: 14, disableDefaultUI: true });
         directionsRenderer.setMap(map);
         new google.maps.places.Autocomplete(document.getElementById('origin'));
@@ -152,23 +226,27 @@
             directionsService.route({ origin: o, destination: d, travelMode: 'DRIVING' }, (res, status) => {
                 if(status === 'OK') {
                     directionsRenderer.setDirections(res);
-                    const total = (6 + (res.routes[0].legs[0].distance.value/1000 * 1.45)).toFixed(2);
+                    const distKm = res.routes[0].legs[0].distance.value / 1000;
+                    const total = (6 + (distKm * 1.45)).toFixed(2);
                     ultimoCalculo = { o, d, p: total, f: fh };
                     document.getElementById('precio-txt').innerText = total + "€";
                     document.getElementById('info-resumen').style.display = 'block';
-                    btn.innerText = "CONFIRMAR RESERVA";
+                    btn.innerText = "CONFIRMAR TAXMAD";
                 }
             });
         } else {
             btn.disabled = true;
             const { data, error } = await _supabase.from('viajes').insert([{
-                cliente_nombre: "Dani Martínez", origen: o, destino: d, precio: parseFloat(ultimoCalculo.p), fecha_reserva: fh, estado: 'pendiente'
+                cliente_nombre: currentUser.nombre, 
+                cliente_id: currentUser.id,
+                origen: o, destino: d, precio: parseFloat(ultimoCalculo.p), 
+                fecha_reserva: fh, estado: 'pendiente'
             }]).select();
 
             if (!error) {
-                alert("¡Buscando conductor!");
-                iniciarMonitoreo(data[0].id);
+                alert("Buscando tu TaxMad...");
                 btn.style.display = 'none';
+                iniciarMonitoreo(data[0].id);
             }
         }
     }
@@ -180,35 +258,56 @@
     }
 
     async function actualizarUI(viaje) {
-        const widget = document.getElementById('active-trip-widget');
-        widget.style.display = 'block';
-
+        document.getElementById('active-trip-widget').style.display = 'block';
         if (viaje.estado === 'aceptado') {
-            const { data: dr } = await _supabase.from('Drivers').select('*').eq('id', viaje.driver_id).single();
+            const { data: dr } = await _supabase.from('drivers').select('*').eq('id', viaje.driver_id).single();
             document.getElementById('dr-name').innerText = dr.nombre;
             document.getElementById('dr-vehicle').innerText = `${dr.marca_v} • ${dr.matricula}`;
-            document.getElementById('dr-avatar').innerText = dr.nombre[0];
             document.getElementById('link-call').href = `tel:${dr.telefono}`;
             iniciarContador(5);
-        } else if (viaje.estado === 'en_punto') {
-            document.getElementById('timer').innerText = "00:00";
-            alert("¡Tu conductor ha llegado!");
-        } else if (viaje.estado === 'en_curso') {
-            document.getElementById('timer').innerText = "RUTA";
         } else if (viaje.estado === 'finalizado') {
-            alert("Servicio Finalizado. ¡Gracias!");
+            // AL FINALIZAR: Sumar 0.50 TC
+            const nuevoSaldo = currentUser.taxcoins + 0.50;
+            await _supabase.from('clientes').update({ taxcoins: nuevoSaldo }).eq('id', currentUser.id);
+            alert("¡Viaje finalizado! Has ganado 0.50 Taxcoins (TC)");
             location.reload();
         }
     }
 
+    async function transferirTC() {
+        const destino = prompt("Nombre de usuario del amigo:");
+        const cant = parseFloat(prompt("Cantidad de TC a enviar:"));
+        
+        if(cant > currentUser.taxcoins) return alert("No tienes suficientes TC");
+
+        const { data: receptor } = await _supabase.from('clientes').select('*').eq('usuario', destino).single();
+
+        if(receptor) {
+            await _supabase.from('clientes').update({ taxcoins: receptor.taxcoins + cant }).eq('id', receptor.id);
+            await _supabase.from('clientes').update({ taxcoins: currentUser.taxcoins - cant }).eq('id', currentUser.id);
+            alert(`Enviados ${cant} TC a ${destino}`);
+            location.reload();
+        } else {
+            alert("Usuario no encontrado. Invítalo a TaxMad para que pueda recibir tus TC.");
+        }
+    }
+
+    function abrirEditor() {
+        toggleAuth('register');
+        document.getElementById('form-title').innerText = "Editar Perfil";
+        document.getElementById('reg-user').value = currentUser.usuario;
+        document.getElementById('reg-nom').value = currentUser.nombre;
+        document.getElementById('reg-ape').value = currentUser.apellido;
+        document.getElementById('reg-tel').value = currentUser.telefono;
+    }
+
     function iniciarContador(min) {
         let seg = min * 60;
-        if(timerInt) clearInterval(timerInt);
-        timerInt = setInterval(() => {
+        const t = setInterval(() => {
             seg--;
             let m = Math.floor(seg/60), s = seg%60;
             document.getElementById('timer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
-            if(seg <= 0) clearInterval(timerInt);
+            if(seg <= 0) clearInterval(t);
         }, 1000);
     }
 </script>
