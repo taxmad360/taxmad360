@@ -5,26 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TaxMad – Premium TXMD</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* Variables de Marca TXMD */
         :root {
             --bg-color: #000000;
             --card-bg: #121212;
-            --neon-green: #39FF14;
-            --neon-blue: #00D1FF;
-            --neon-purple: #BC00FF;
+            --neon-green: #39FF14; /* Primario: Pedir Taxi */
+            --neon-blue: #00D1FF;  /* Secundario: Navegación */
             --text-main: #ffffff;
             --border-radius: 16px;
         }
 
         body { 
             background: var(--bg-color); 
-            font-family: "Montserrat", sans-serif; 
+            font-family: 'Inter', sans-serif; 
             margin: 0; 
             display: flex; 
             justify-content: center; 
@@ -32,7 +30,9 @@
             overflow: hidden; 
             color: var(--text-main);
         }
-        
+
+        h1, h2, h3, .font-txmd { font-family: 'Montserrat', sans-serif; font-weight: 800; text-transform: uppercase; }
+
         .mobile-container { 
             width: 100%; 
             max-width: 414px; 
@@ -40,208 +40,204 @@
             position: relative; 
             display: flex; 
             flex-direction: column; 
-            overflow: hidden; 
-            box-shadow: 0 0 50px rgba(0,0,0,0.9); 
-        }
-        
-        .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 100px; }
-        .screen.active { display: flex; }
-
-        /* Estilos TXMD */
-        .header-gradient {
-            background: linear-gradient(90deg, var(--neon-purple) 0%, var(--neon-blue) 50%, var(--neon-green) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
+            height: 100vh;
         }
 
-        .card-txmd {
-            background-color: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: var(--border-radius);
-            padding: 20px;
-            color: var(--text-main);
+        /* Header TXMD con Skyline */
+        .header-skyline {
+            background: #000;
+            border-bottom: 1px solid #222;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
+        /* Botón de Acción Principal con sombra de neón */
         .btn-main { 
             background-color: var(--neon-green); 
             color: #000000; 
-            padding: 18px; 
+            padding: 20px; 
             border-radius: var(--border-radius); 
-            font-weight: 800; 
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900; 
             text-align: center; 
             cursor: pointer; 
             border: none; 
             width: 100%; 
             text-transform: uppercase;
-            box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+            letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
             transition: all 0.3s ease;
         }
-        .btn-main:active { transform: scale(0.98); box-shadow: 0 0 5px rgba(57, 255, 20, 0.5); }
+        .btn-main:active { transform: scale(0.96); box-shadow: 0 0 10px rgba(57, 255, 20, 0.6); }
 
-        /* Auth & Profile */
-        #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: #000; color: white; z-index: 5000; text-align: center; }
-        #auth-screen.as-profile { z-index: 3000; padding-bottom: 120px; background: #000; color: white; }
+        /* Estilo Dark Mode para el Mapa */
+        #map { 
+            width: 100%; 
+            height: 240px; 
+            background: #111; 
+            border-radius: 20px; 
+            margin: 15px 0; 
+            border: 1px solid #333; 
+            filter: brightness(0.8) contrast(1.2); 
+        }
 
-        .input-auth { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 1px solid #333; background: #111; color: white; outline: none; font-size: 14px; }
-        .as-profile .input-auth { background: #111; border: 1px solid #333; color: white; }
-        
-        .photo-picker { width: 110px; height: 110px; border-radius: 50%; background: #111; border: 3px solid var(--neon-blue); margin: 0 auto 20px; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .photo-picker img { width: 100%; height: 100%; object-fit: cover; }
+        /* Inputs Modernos */
+        .input-group label { 
+            display: block; 
+            font-size: 10px; 
+            font-weight: 700; 
+            color: var(--neon-blue); 
+            margin-bottom: 6px; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px; 
+        }
+        .input-group input { 
+            width: 100%; 
+            padding: 16px; 
+            border-radius: 14px; 
+            background: var(--card-bg); 
+            border: 1px solid #222; 
+            font-size: 14px; 
+            color: white; 
+            outline: none; 
+        }
+        .input-group input:focus { border-color: var(--neon-blue); }
 
-        .user-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; background: #000; position: sticky; top: 0; z-index: 4000; }
-        .logo-txt { font-weight: 800; font-size: 20px; color: white; }
-        .logo-txt span { color: var(--neon-blue); }
+        /* Pantallas */
+        .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 100px; }
+        .screen.active { display: flex; }
 
-        .taxcoin-card { background: linear-gradient(135deg, #121212 0%, #000 100%); margin: 15px 20px; padding: 20px; border-radius: 24px; color: white; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
+        /* Nav Inferior con Cian Eléctrico */
+        nav { 
+            position: absolute; 
+            bottom: 0; 
+            width: 100%; 
+            height: 85px; 
+            background: rgba(0,0,0,0.95); 
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #1a1a1a; 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            z-index: 6000; 
+        }
+        .nav-btn { color: #555; cursor: pointer; text-align: center; transition: 0.3s; }
+        .nav-btn.active { color: var(--neon-blue); }
 
-        .input-group { position: relative; margin-bottom: 12px; }
-        .input-group label { display: block; font-size: 10px; font-weight: 800; color: var(--neon-blue); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
-        .input-group input { width: 100%; padding: 14px 15px; border-radius: 14px; background: #111; border: 1px solid #333; font-size: 14px; outline: none; padding-right: 45px; color: white; }
-
-        .btn-gps { position: absolute; right: 10px; bottom: 8px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; color: var(--neon-green); cursor: pointer; border-radius: 10px; }
-
-        .option-selector { display: flex; gap: 8px; margin-bottom: 15px; }
-        .opt-btn { flex: 1; padding: 12px; border-radius: 14px; border: 1px solid #333; background: #111; font-size: 10px; font-weight: 800; text-transform: uppercase; text-align: center; cursor: pointer; transition: all 0.3s; color: #666; }
-        .opt-btn.active { border-color: var(--neon-blue); background: rgba(0, 209, 255, 0.1); color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 209, 255, 0.2); }
-
-        #map { width: 100%; height: 220px; background: #111; border-radius: 20px; margin: 10px 0; border: 1px solid #333; }
-        
-        .trip-item { background: var(--card-bg); padding: 15px; border-radius: 20px; margin-bottom: 10px; border: 1px solid #333; }
-
-        nav { position: fixed; bottom: 0; width: 100%; max-width: 414px; height: 85px; background: #000; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; z-index: 6000; }
-        .nav-btn { color: #444; cursor: pointer; text-align: center; }
-        .nav-btn.active { color: var(--neon-green); text-shadow: 0 0 8px rgba(57, 255, 20, 0.4); }
-        .hidden { display: none !important; }
+        /* Splash / Auth */
+        #auth-screen { 
+            position: absolute; 
+            inset: 0; 
+            background: #000; 
+            z-index: 9000; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 40px; 
+        }
+        .logo-splash { width: 60%; margin-bottom: 40px; }
     </style>
 </head>
 <body>
 
 <div class="mobile-container">
     
-    <header id="app-header" class="user-header hidden">
-        <div class="flex items-center gap-3">
-            <img id="u-img" src="" class="w-11 h-11 rounded-full border-2 border-[#BC00FF] object-cover bg-gray-900" onclick="showTab('perfil')">
-            <div>
-                <p class="text-[8px] font-black text-[#BC00FF] uppercase tracking-widest">Premium User</p>
-                <h2 id="u-name" class="text-sm font-bold text-white">...</h2>
-            </div>
-        </div>
-        <div class="logo-txt header-gradient">TaxMad</div>
-    </header>
-
     <div id="auth-screen">
-        <button id="btn-close-profile" onclick="showTab('home')" class="hidden absolute top-5 right-5 text-gray-600 text-2xl z-[5001]">
-            <i class="fa-solid fa-circle-xmark"></i>
-        </button>
-
-        <div id="auth-content">
-            <div class="mb-10" id="auth-logo">
-                <h1 class="text-4xl font-black italic header-gradient">TaxMad</h1>
-                <p class="text-[10px] tracking-[4px] opacity-50 uppercase text-white">Black Mobility</p>
+        <div id="auth-content" class="w-full text-center">
+            <div class="mb-10">
+                <h1 class="text-5xl font-black italic tracking-tighter text-white">TX<span style="color:var(--neon-green)">MD</span></h1>
+                <p class="text-[9px] tracking-[6px] opacity-40 uppercase text-white mt-2">Conectando Madrid</p>
             </div>
 
-            <div id="login-box">
-                <input type="text" id="user-login" placeholder="Usuario" class="input-auth">
-                <input type="password" id="pass-login" placeholder="Contraseña" class="input-auth">
-                <button onclick="intentarAcceso()" class="btn-main mt-4">ENTRAR</button>
-                <p class="mt-6 text-sm text-gray-500">¿Nuevo aquí? <span class="text-[#00D1FF] font-bold cursor-pointer" onclick="toggleAuth('register')">Crea una cuenta</span></p>
+            <div id="login-box" class="space-y-3">
+                <input type="text" id="user-login" placeholder="Usuario" class="w-full p-4 bg-[#111] border border-[#222] rounded-xl text-white outline-none">
+                <input type="password" id="pass-login" placeholder="Contraseña" class="w-full p-4 bg-[#111] border border-[#222] rounded-xl text-white outline-none">
+                <button onclick="intentarAcceso()" class="btn-main mt-4">INICIAR SESIÓN</button>
+                <p class="mt-6 text-sm text-gray-500">¿Nuevo en TXMD? <span class="text-[#00D1FF] font-bold cursor-pointer" onclick="toggleAuth('register')">Crear cuenta</span></p>
             </div>
 
-            <div id="register-box" class="hidden">
-                <h2 id="reg-title" class="text-xl font-bold mb-4 text-white uppercase tracking-tighter">Crear Cuenta</h2>
-                <div class="photo-picker" onclick="document.getElementById('reg-foto-input').click()">
-                    <i class="fa-solid fa-camera text-2xl text-[#00D1FF]" id="icon-cam"></i>
-                    <img id="img-preview" src="" class="hidden">
+            <div id="register-box" class="hidden space-y-3">
+                <div class="photo-picker w-24 h-24 rounded-full bg-[#111] border-2 border-[#00D1FF] mx-auto mb-4 flex items-center justify-center overflow-hidden" onclick="document.getElementById('reg-foto-input').click()">
+                    <i class="fa-solid fa-camera text-xl text-[#00D1FF]" id="icon-cam"></i>
+                    <img id="img-preview" src="" class="hidden w-full h-full object-cover">
                 </div>
-                <input type="file" id="reg-foto-input" accept="image/*" class="hidden" onchange="previewImagen(this)">
-                
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="reg-nom" placeholder="Nombre" class="input-auth">
-                    <input type="text" id="reg-ape" placeholder="Apellido" class="input-auth">
-                </div>
-                <input type="text" id="reg-user" placeholder="Usuario" class="input-auth">
-                <input type="password" id="reg-pass" placeholder="Contraseña" class="input-auth">
-                <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-auth">
-                
-                <button id="btn-save-reg" onclick="registrarUsuario()" class="btn-main">GUARDAR DATOS</button>
-                
-                <button id="btn-logout" onclick="cerrarSesion()" class="mt-8 text-red-500 font-bold text-xs uppercase tracking-widest hidden flex items-center justify-center gap-2 w-full">
-                    <i class="fa-solid fa-power-off"></i> Cerrar Sesión
-                </button>
-                <p id="btn-back-login" class="mt-4 text-xs text-gray-600 cursor-pointer" onclick="toggleAuth('login')">Volver al inicio</p>
+                <input type="file" id="reg-foto-input" class="hidden" onchange="previewImagen(this)">
+                <input type="text" id="reg-nom" placeholder="Nombre" class="w-full p-4 bg-[#111] border border-[#222] rounded-xl text-white">
+                <input type="text" id="reg-user" placeholder="Usuario" class="w-full p-4 bg-[#111] border border-[#222] rounded-xl text-white">
+                <input type="password" id="reg-pass" placeholder="Contraseña" class="w-full p-4 bg-[#111] border border-[#222] rounded-xl text-white">
+                <button onclick="registrarUsuario()" class="btn-main">CREAR CUENTA</button>
+                <p class="mt-4 text-xs text-gray-600 cursor-pointer" onclick="toggleAuth('login')">Volver</p>
             </div>
         </div>
     </div>
 
-    <div id="main-app" class="screen">
-        <div class="taxcoin-card">
+    <header id="app-header" class="header-skyline hidden">
+        <div class="flex items-center gap-3">
+            <img id="u-img" src="" class="w-10 h-10 rounded-full border border-[#00D1FF] object-cover bg-zinc-900">
             <div>
-                <p class="text-[10px] font-bold text-[#39FF14] uppercase mb-1">Taxcoins</p>
-                <p class="text-2xl font-black text-white"><span id="u-tc">0.00</span> <small class="text-xs text-gray-500">TC</small></p>
+                <p class="text-[8px] font-black text-[#00D1FF] uppercase tracking-widest">Premium User</p>
+                <h2 id="u-name" class="text-xs font-bold text-white">...</h2>
             </div>
-            <i class="fa-solid fa-crown text-3xl text-[#39FF14] opacity-40"></i>
+        </div>
+        <div class="font-txmd text-xl italic">TXMD</div>
+    </header>
+
+    <div id="main-app" class="screen">
+        <div class="px-6 pt-6">
+            <h1 class="text-2xl font-txmd mb-1 text-white">¡Hola, <span id="u-welcome-name">Usuario</span>!</h1>
+            <p class="text-sm text-gray-400">¿A dónde vamos hoy?</p>
         </div>
 
-        <div class="px-5 mt-4 space-y-4">
+        <div class="px-6 mt-6 space-y-4">
             <div class="input-group">
-                <label>Recogida</label>
-                <input type="text" id="origin" placeholder="¿Dónde recogemos?">
-                <div class="btn-gps" onclick="obtenerUbicacionActual()"><i class="fa-solid fa-crosshairs"></i></div>
+                <label>Punto de Recogida</label>
+                <div class="relative">
+                    <input type="text" id="origin" placeholder="Tu ubicación actual">
+                    <div class="absolute right-3 top-3.5 text-[#39FF14]" onclick="obtenerUbicacionActual()"><i class="fa-solid fa-crosshairs"></i></div>
+                </div>
             </div>
             <div class="input-group">
-                <label>Destino</label>
+                <label>Destino Final</label>
                 <input type="text" id="destination" placeholder="¿A dónde vas?">
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-[10px] font-black text-gray-500 block mb-2 uppercase">Pago</label>
-                    <div class="option-selector">
-                        <div id="pay-card" class="opt-btn active" onclick="setOpt('pay', 'tarjeta')">Tarjeta</div>
-                        <div id="pay-cash" class="opt-btn" onclick="setOpt('pay', 'efectivo')">Efectivo</div>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-[10px] font-black text-gray-500 block mb-2 uppercase">Tarifa</label>
-                    <div class="option-selector">
-                        <div id="rate-fixed" class="opt-btn active" onclick="setOpt('rate', 'cerrado')">Cerrado</div>
-                        <div id="rate-meter" class="opt-btn" onclick="setOpt('rate', 'taximetro')">Taxi</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="input-group">
-                    <label>Fecha</label><input type="date" id="res-date">
-                </div>
-                <div class="input-group">
-                    <label>Hora</label><input type="time" id="res-time">
-                </div>
             </div>
 
             <div id="map"></div>
             
-            <div id="info-resumen" class="hidden card-txmd text-center border-dashed border-[#39FF14]">
-                <p id="label-precio" class="text-[10px] font-black text-[#39FF14] uppercase">Precio Cerrado</p>
+            <div id="info-resumen" class="hidden p-5 bg-[#121212] rounded-2xl border border-dashed border-[#39FF14] text-center">
+                <p id="label-precio" class="text-[10px] font-black text-[#39FF14] uppercase mb-1">Precio TXMD</p>
                 <span id="precio-txt" class="text-3xl font-black text-white">0.00€</span>
+                <p class="text-[10px] text-gray-500 mt-2 italic">🚀 Tu TXMD está llegando a tu ubicación</p>
             </div>
 
-            <button id="btnAction" class="btn-main mb-6" onclick="procesarViaje()">CALCULAR PRECIO</button>
+            <button id="btnAction" class="btn-main mt-4" onclick="procesarViaje()">RESERVAR AHORA</button>
         </div>
+        
+        <p class="text-center text-[9px] text-zinc-600 font-bold uppercase tracking-widest mt-10 mb-4">TXMD - Conectando Madrid</p>
     </div>
 
     <div id="hucha-screen" class="screen">
         <div class="p-6">
-            <h1 class="text-3xl font-black italic mb-6">Mis <span class="header-gradient">Viajes</span></h1>
-            <div id="lista-viajes" class="space-y-3"></div>
+            <h1 class="text-3xl font-txmd italic mb-8">MIS <span style="color:var(--neon-blue)">VIAJES</span></h1>
+            <div id="lista-viajes" class="space-y-4"></div>
         </div>
     </div>
 
     <nav id="bottom-nav" class="hidden">
-        <div onclick="showTab('home')" id="n-home" class="nav-btn active"><i class="fa-solid fa-compass text-xl block mb-1"></i><span class="text-[9px] font-bold">RESERVAR</span></div>
-        <div onclick="showTab('hucha')" id="n-hucha" class="nav-btn"><i class="fa-solid fa-receipt text-xl block mb-1"></i><span class="text-[9px] font-bold">VIAJES</span></div>
-        <div onclick="showTab('perfil')" id="n-perfil" class="nav-btn"><i class="fa-solid fa-user-gear text-xl block mb-1"></i><span class="text-[9px] font-bold">PERFIL</span></div>
+        <div onclick="showTab('home')" id="n-home" class="nav-btn active">
+            <i class="fa-solid fa-map-location-dot text-xl block mb-1"></i>
+            <span class="text-[9px] font-bold">RESERVAR</span>
+        </div>
+        <div onclick="showTab('hucha')" id="n-hucha" class="nav-btn">
+            <i class="fa-solid fa-clock-rotate-left text-xl block mb-1"></i>
+            <span class="text-[9px] font-bold">HISTORIAL</span>
+        </div>
+        <div onclick="cerrarSesion()" class="nav-btn text-rose-600">
+            <i class="fa-solid fa-power-off text-xl block mb-1"></i>
+            <span class="text-[9px] font-bold">SALIR</span>
+        </div>
     </nav>
 </div>
 
@@ -251,39 +247,7 @@
     const _supabase = supabase.createClient(S_URL, S_KEY);
 
     let currentUser = null, ultimoCalculo = null;
-    let selectedPay = 'tarjeta', selectedRate = 'cerrado';
     let map, directionsService, directionsRenderer;
-    let driverMarkers = []; 
-
-    function setOpt(type, val) {
-        if(type === 'pay') {
-            selectedPay = val;
-            document.getElementById('pay-card').classList.toggle('active', val === 'tarjeta');
-            document.getElementById('pay-cash').classList.toggle('active', val === 'efectivo');
-        } else {
-            selectedRate = val;
-            ultimoCalculo = null;
-            document.getElementById('rate-fixed').classList.toggle('active', val === 'cerrado');
-            document.getElementById('rate-meter').classList.toggle('active', val === 'taximetro');
-            document.getElementById('info-resumen').classList.add('hidden');
-            document.getElementById('btnAction').innerText = "CALCULAR PRECIO";
-        }
-    }
-
-    async function registrarUsuario() {
-        const u = document.getElementById('reg-user').value;
-        const p = document.getElementById('reg-pass').value;
-        const n = document.getElementById('reg-nom').value;
-        const a = document.getElementById('reg-ape').value;
-        const t = document.getElementById('reg-tel').value;
-        const f = document.getElementById('img-preview').src;
-        if(!u || !p || !n) return alert("Faltan datos obligatorios");
-        const { error } = await _supabase.from('clientes').upsert([{ 
-            nombre: n, apellido: a, usuario: u, password: p, telefono: t, foto: f,
-            taxcoins: currentUser?.taxcoins || 0
-        }], { onConflict: 'usuario' });
-        if(!error) { alert("¡Datos guardados!"); if(!currentUser) toggleAuth('login'); else { location.reload(); } }
-    }
 
     async function intentarAcceso() {
         const u = document.getElementById('user-login').value;
@@ -291,123 +255,88 @@
         const { data } = await _supabase.from('clientes').select('*').eq('usuario', u).single();
         if (data && data.password === p) {
             currentUser = data;
+            document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('bottom-nav').classList.remove('hidden');
             document.getElementById('app-header').classList.remove('hidden');
+            document.getElementById('u-name').innerText = currentUser.nombre;
+            document.getElementById('u-welcome-name').innerText = currentUser.nombre;
+            document.getElementById('u-img').src = currentUser.foto || 'https://via.placeholder.com/100';
             showTab('home');
-            actualizarUI();
             initMap();
-        } else alert("Credenciales incorrectas");
+        } else alert("Error de acceso");
     }
 
-    function actualizarUI() {
-        document.getElementById('u-name').innerText = currentUser.nombre;
-        document.getElementById('u-tc').innerText = (currentUser.taxcoins || 0).toFixed(2);
-        document.getElementById('u-img').src = currentUser.foto;
+    async function registrarUsuario() {
+        const u = document.getElementById('reg-user').value;
+        const p = document.getElementById('reg-pass').value;
+        const n = document.getElementById('reg-nom').value;
+        const f = document.getElementById('img-preview').src;
+        if(!u || !p || !n) return alert("Completa los campos");
+        const { error } = await _supabase.from('clientes').insert([{ nombre: n, usuario: u, password: p, foto: f }]);
+        if(!error) { alert("¡Registro Éxitoso!"); toggleAuth('login'); }
     }
 
     function initMap() {
         directionsService = new google.maps.DirectionsService();
-        directionsRenderer = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: "#39FF14", strokeWeight: 5 }});
+        directionsRenderer = new google.maps.DirectionsRenderer({ 
+            polylineOptions: { strokeColor: "#39FF14", strokeWeight: 6 }
+        });
         map = new google.maps.Map(document.getElementById('map'), { 
-            center: {lat: 40.41, lng: -3.70}, 
-            zoom: 13, 
-            disableDefaultUI: true,
+            center: {lat: 40.41, lng: -3.70}, zoom: 14, disableDefaultUI: true,
             styles: [
-                { "elementType": "geometry", "stylers": [{ "color": "#212121" }] },
-                { "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
-                { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#303030" }] }
+                {"elementType": "geometry", "stylers": [{"color": "#212121"}]},
+                {"featureType": "road", "elementType": "geometry", "stylers": [{"color": "#303030"}]},
+                {"featureType": "water", "elementType": "geometry", "stylers": [{"color": "#000000"}]}
             ]
         });
         directionsRenderer.setMap(map);
         new google.maps.places.Autocomplete(document.getElementById('origin'));
         new google.maps.places.Autocomplete(document.getElementById('destination'));
-        pintarConductores();
-        setInterval(pintarConductores, 300000); 
-    }
-
-    async function pintarConductores() {
-        driverMarkers.forEach(m => m.setMap(null));
-        driverMarkers = [];
-        const { data: drivers } = await _supabase.from('conductores').select('nombre, latitud, longitud').eq('estado', 'activo');
-        if (drivers) {
-            drivers.forEach(d => {
-                if (d.latitud && d.longitud) {
-                    const marker = new google.maps.Marker({
-                        position: { lat: parseFloat(d.latitud), lng: parseFloat(d.longitud) },
-                        map: map,
-                        title: d.nombre,
-                        icon: {
-                            url: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png', 
-                            scaledSize: new google.maps.Size(30, 30)
-                        }
-                    });
-                    driverMarkers.push(marker);
-                }
-            });
-        }
     }
 
     async function procesarViaje() {
         const o = document.getElementById('origin').value;
         const d = document.getElementById('destination').value;
-        const f = document.getElementById('res-date').value;
-        const h = document.getElementById('res-time').value;
-        if(!o || !d || !f || !h) return alert("Faltan datos");
+        if(!o || !d) return alert("Indica origen y destino");
 
         if(!ultimoCalculo) {
             directionsService.route({ origin: o, destination: d, travelMode: 'DRIVING' }, (res, status) => {
                 if(status === 'OK') {
                     directionsRenderer.setDirections(res);
                     const kms = res.routes[0].legs[0].distance.value / 1000;
-                    const base = (5.50 + (kms * 1.40));
-                    if(selectedRate === 'cerrado') {
-                        ultimoCalculo = base.toFixed(2);
-                        document.getElementById('label-precio').innerText = "Precio Cerrado";
-                        document.getElementById('precio-txt').innerText = ultimoCalculo + "€";
-                    } else {
-                        const min = (base * 0.95).toFixed(0);
-                        const max = (base * 1.15).toFixed(0);
-                        ultimoCalculo = "estimado";
-                        document.getElementById('label-precio').innerText = "Estimación Taxímetro";
-                        document.getElementById('precio-txt').innerText = `${min}€ - ${max}€`;
-                    }
+                    ultimoCalculo = (5.50 + (kms * 1.45)).toFixed(2);
+                    document.getElementById('precio-txt').innerText = ultimoCalculo + "€";
                     document.getElementById('info-resumen').classList.remove('hidden');
-                    document.getElementById('btnAction').innerText = "CONFIRMAR RESERVA";
+                    document.getElementById('btnAction').innerText = "CONFIRMAR TXMD";
                 }
             });
         } else {
             const { error } = await _supabase.from('viajes').insert([{
                 cliente_id: currentUser.id, cliente_nombre: currentUser.nombre,
-                origen: o, destino: d, 
-                precio: selectedRate === 'cerrado' ? parseFloat(ultimoCalculo) : 0,
-                metodo_pago: selectedPay, tipo_tarifa: selectedRate,
-                estado: 'pendiente', fecha_reserva: new Date(`${f}T${h}`).toISOString()
+                origen: o, destino: d, precio: parseFloat(ultimoCalculo), estado: 'pendiente'
             }]);
-            if(!error) { alert("¡Reserva confirmada!"); ultimoCalculo = null; showTab('hucha'); }
+            if(!error) { alert("🚀 Tu TXMD está en camino"); ultimoCalculo = null; showTab('hucha'); }
         }
     }
 
     function showTab(t) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        const auth = document.getElementById('auth-screen');
-        auth.classList.add('hidden');
-        if(t === 'home') { document.getElementById('main-app').classList.add('active'); document.getElementById('n-home').classList.add('active'); }
-        else if(t === 'hucha') { document.getElementById('hucha-screen').classList.add('active'); document.getElementById('n-hucha').classList.add('active'); cargarHistorial(); }
-        else if(t === 'perfil') { auth.classList.remove('hidden'); auth.classList.add('as-profile'); document.getElementById('btn-close-profile').classList.remove('hidden'); toggleAuth('register'); }
+        document.getElementById(t === 'home' ? 'main-app' : 'hucha-screen').classList.add('active');
+        document.getElementById('n-' + t).classList.add('active');
+        if(t === 'hucha') cargarHistorial();
     }
 
     async function cargarHistorial() {
         const { data } = await _supabase.from('viajes').select('*').eq('cliente_id', currentUser.id).order('created_at', {ascending: false});
         document.getElementById('lista-viajes').innerHTML = data.map(v => `
-            <div class="trip-item">
-                <div class="flex justify-between text-[10px] font-bold mb-2 uppercase">
-                    <span class="text-[#00D1FF]">${v.tipo_tarifa}</span>
-                    <span class="bg-[#222] text-white px-2 py-1 rounded">${v.estado}</span>
+            <div class="p-4 bg-[#121212] rounded-2xl border border-zinc-900">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="text-[9px] font-black text-[#00D1FF] uppercase tracking-widest">${new Date(v.created_at).toLocaleDateString()}</span>
+                    <span class="text-xs font-bold text-[#39FF14]">${v.precio.toFixed(2)}€</span>
                 </div>
-                <p class="text-[11px] truncate text-gray-300">📍 ${v.origen}</p>
-                <p class="text-[11px] truncate text-gray-300">🏁 ${v.destino}</p>
-                <p class="mt-2 font-black text-right text-[#39FF14] text-lg">${v.precio > 0 ? v.precio.toFixed(2)+'€' : 'TAXÍMETRO'}</p>
+                <p class="text-xs text-white font-medium truncate mb-1">📍 ${v.origen}</p>
+                <p class="text-xs text-zinc-500 truncate">🏁 ${v.destino}</p>
             </div>
         `).join('');
     }
@@ -415,22 +344,6 @@
     function toggleAuth(v) {
         document.getElementById('login-box').classList.toggle('hidden', v !== 'login');
         document.getElementById('register-box').classList.toggle('hidden', v !== 'register');
-        if(v === 'register' && currentUser) {
-            document.getElementById('reg-nom').value = currentUser.nombre;
-            document.getElementById('reg-user').value = currentUser.usuario;
-            document.getElementById('img-preview').src = currentUser.foto;
-            document.getElementById('img-preview').classList.remove('hidden');
-            document.getElementById('icon-cam').classList.add('hidden');
-        }
-    }
-
-    function obtenerUbicacionActual() {
-        navigator.geolocation.getCurrentPosition((pos) => {
-            const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ location: { lat: pos.coords.latitude, lng: pos.coords.longitude } }, (results, status) => {
-                if (status === "OK") document.getElementById('origin').value = results[0].formatted_address;
-            });
-        });
     }
 
     function previewImagen(input) {
@@ -445,7 +358,7 @@
         }
     }
 
-    function cerrarSesion() { localStorage.clear(); location.reload(); }
+    function cerrarSesion() { location.reload(); }
 </script>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places" async defer></script>
