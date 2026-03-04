@@ -153,13 +153,13 @@
     let currentUser = null, ultimoCalculo = null;
     let selectedPay = 'tarjeta', selectedRate = 'cerrado';
     let map, directionsService, directionsRenderer;
+    let driverMarkers = []; // Almacena marcadores de conductores
 
     // --- SEGURIDAD Y PERSISTENCIA ---
     window.onload = async () => {
         const savedUser = localStorage.getItem('txmd_user');
         if (savedUser) {
             currentUser = JSON.parse(savedUser);
-            // Validar sesión contra Supabase para asegurar que el usuario aún existe
             const { data, error } = await _supabase.from('clientes').select('*').eq('usuario', currentUser.usuario).single();
             if (data && !error) {
                 currentUser = data;
@@ -181,7 +181,7 @@
         
         if (data && data.password === p) {
             currentUser = data;
-            localStorage.setItem('txmd_user', JSON.stringify(data)); // Guardar sesión
+            localStorage.setItem('txmd_user', JSON.stringify(data));
             document.getElementById('bottom-nav').classList.remove('hidden');
             document.getElementById('app-header').classList.remove('hidden');
             showTab('home');
@@ -197,7 +197,6 @@
         location.reload();
     }
 
-    // --- LÓGICA DE NEGOCIO ---
     function actualizarUI() {
         document.getElementById('u-name').innerText = currentUser.nombre;
         document.getElementById('u-tc').innerText = (currentUser.taxcoins || 0).toFixed(2);
@@ -228,17 +227,52 @@
         }
     }
 
+    // --- MAPA Y CONDUCTORES ---
     function initMap() {
         if(map) return;
         directionsService = new google.maps.DirectionsService();
         directionsRenderer = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: "#39FF14", strokeWeight: 5 }});
         map = new google.maps.Map(document.getElementById('map'), { 
-            center: {lat: 40.41, lng: -3.70}, zoom: 13, disableDefaultUI: true,
+            center: {lat: 40.41, lng: -3.70}, zoom: 14, disableDefaultUI: true,
             styles: [{"elementType":"geometry","stylers":[{"color":"#212121"}]},{"elementType":"labels.text.fill","stylers":[{"color":"#757575"}]},{"featureType":"road","elementType":"geometry","stylers":[{"color":"#303030"}]}]
         });
         directionsRenderer.setMap(map);
         new google.maps.places.Autocomplete(document.getElementById('origin'));
         new google.maps.places.Autocomplete(document.getElementById('destination'));
+
+        // Cargar conductores cada 5 segundos
+        pintarDrivers();
+        setInterval(pintarDrivers, 5000);
+    }
+
+    async function pintarDrivers() {
+        const { data: driversData, error } = await _supabase
+            .from('drivers')
+            .select('nombre, latitud, longitud, marca_v')
+            .eq('estado', 'activo');
+
+        if (error) return console.error("Error drivers:", error);
+
+        // Limpiar marcadores viejos
+        driverMarkers.forEach(m => m.setMap(null));
+        driverMarkers = [];
+
+        if (driversData) {
+            driversData.forEach(d => {
+                if (d.latitud && d.longitud) {
+                    const marker = new google.maps.Marker({
+                        position: { lat: parseFloat(d.latitud), lng: parseFloat(d.longitud) },
+                        map: map,
+                        icon: {
+                            url: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png',
+                            scaledSize: new google.maps.Size(32, 32)
+                        },
+                        title: d.nombre
+                    });
+                    driverMarkers.push(marker);
+                }
+            });
+        }
     }
 
     async function procesarViaje() {
