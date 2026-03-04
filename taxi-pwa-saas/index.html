@@ -3,196 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TaxMad Driver – Terminal Oficial</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <title>TaxMad – Premium TXMD</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        :root { 
-            --accent: #00F0FF; /* Electric Cyan */
-            --bg-dark: #050a14; 
-            --card-bg: #0f172a;
-            --text-main: #f8fafc;
+        /* Variables de Marca TXMD */
+        :root {
+            --bg-color: #000000;
+            --card-bg: #121212;
+            --neon-green: #39FF14;
+            --neon-blue: #00D1FF;
+            --neon-purple: #BC00FF;
+            --text-main: #ffffff;
+            --border-radius: 16px;
         }
 
         body { 
-            background: var(--bg-dark); 
-            font-family: 'Inter', sans-serif; 
-            color: var(--text-main); 
+            background: var(--bg-color); 
+            font-family: "Montserrat", sans-serif; 
             margin: 0; 
+            display: flex; 
+            justify-content: center; 
             height: 100vh; 
             overflow: hidden; 
+            color: var(--text-main);
         }
-
-        h1, h2, h3, .font-syne { font-family: 'Syne', sans-serif; }
-
+        
         .mobile-container { 
             width: 100%; 
             max-width: 414px; 
-            margin: 0 auto; 
-            background: var(--bg-dark); 
+            background: var(--bg-color); 
             position: relative; 
             display: flex; 
             flex-direction: column; 
-            height: 100vh; 
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            overflow: hidden; 
+            box-shadow: 0 0 50px rgba(0,0,0,0.9); 
         }
-
-        .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 90px; }
+        
+        .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 100px; }
         .screen.active { display: flex; }
 
-        /* Status Toggle Style */
-        .status-toggle { 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-            font-weight: 700; 
-            font-size: 11px; 
-            padding: 10px 20px; 
-            border-radius: 14px; 
-            cursor: pointer; 
-            letter-spacing: 1px;
-        }
-        .status-off { background: #1e293b; color: #64748b; border: 1px solid #334155; }
-        .status-on { 
-            background: rgba(34, 197, 94, 0.1); 
-            color: #4ade80; 
-            border: 1px solid #22c55e;
-            box-shadow: 0 0 15px rgba(34, 197, 94, 0.2); 
+        /* Estilos TXMD */
+        .header-gradient {
+            background: linear-gradient(90deg, var(--neon-purple) 0%, var(--neon-blue) 50%, var(--neon-green) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
         }
 
-        #map { width: 100%; height: 300px; filter: grayscale(0.2) invert(0.9) hue-rotate(180deg); }
-
-        .nav-btn { color: #475569; cursor: pointer; text-align: center; flex: 1; transition: 0.3s; padding: 12px 0; }
-        .nav-btn.active { color: var(--accent); }
-        .nav-btn i { font-size: 1.4rem; margin-bottom: 4px; }
-
-        .lm-input { 
-            width: 100%; 
-            padding: 18px; 
-            margin-bottom: 16px; 
-            border-radius: 16px; 
-            border: 1px solid rgba(255,255,255,0.05); 
-            background: rgba(15, 23, 42, 0.8); 
-            color: white; 
-            outline: none;
-            transition: border 0.3s;
-        }
-        .lm-input:focus { border-color: var(--accent); }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
+        .card-txmd {
+            background-color: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 24px;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            color: var(--text-main);
         }
 
-        #modal-qr { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        #qrcode { background: white; padding: 20px; border-radius: 20px; margin: 25px 0; }
+        .btn-main { 
+            background-color: var(--neon-green); 
+            color: #000000; 
+            padding: 18px; 
+            border-radius: var(--border-radius); 
+            font-weight: 800; 
+            text-align: center; 
+            cursor: pointer; 
+            border: none; 
+            width: 100%; 
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-main:active { transform: scale(0.98); box-shadow: 0 0 5px rgba(57, 255, 20, 0.5); }
 
-        /* Animación pulso para el estado vivo */
-        .live-dot { height: 8px; width: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        /* Auth & Profile */
+        #auth-screen { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 40px; background: #000; color: white; z-index: 5000; text-align: center; }
+        #auth-screen.as-profile { z-index: 3000; padding-bottom: 120px; background: #000; color: white; }
+
+        .input-auth { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 1px solid #333; background: #111; color: white; outline: none; font-size: 14px; }
+        .as-profile .input-auth { background: #111; border: 1px solid #333; color: white; }
+        
+        .photo-picker { width: 110px; height: 110px; border-radius: 50%; background: #111; border: 3px solid var(--neon-blue); margin: 0 auto 20px; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .photo-picker img { width: 100%; height: 100%; object-fit: cover; }
+
+        .user-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; background: #000; position: sticky; top: 0; z-index: 4000; }
+        .logo-txt { font-weight: 800; font-size: 20px; color: white; }
+        .logo-txt span { color: var(--neon-blue); }
+
+        .taxcoin-card { background: linear-gradient(135deg, #121212 0%, #000 100%); margin: 15px 20px; padding: 20px; border-radius: 24px; color: white; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
+
+        .input-group { position: relative; margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 10px; font-weight: 800; color: var(--neon-blue); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group input { width: 100%; padding: 14px 15px; border-radius: 14px; background: #111; border: 1px solid #333; font-size: 14px; outline: none; padding-right: 45px; color: white; }
+
+        .btn-gps { position: absolute; right: 10px; bottom: 8px; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; color: var(--neon-green); cursor: pointer; border-radius: 10px; }
+
+        .option-selector { display: flex; gap: 8px; margin-bottom: 15px; }
+        .opt-btn { flex: 1; padding: 12px; border-radius: 14px; border: 1px solid #333; background: #111; font-size: 10px; font-weight: 800; text-transform: uppercase; text-align: center; cursor: pointer; transition: all 0.3s; color: #666; }
+        .opt-btn.active { border-color: var(--neon-blue); background: rgba(0, 209, 255, 0.1); color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 209, 255, 0.2); }
+
+        #map { width: 100%; height: 220px; background: #111; border-radius: 20px; margin: 10px 0; border: 1px solid #333; }
+        
+        .trip-item { background: var(--card-bg); padding: 15px; border-radius: 20px; margin-bottom: 10px; border: 1px solid #333; }
+
+        nav { position: fixed; bottom: 0; width: 100%; max-width: 414px; height: 85px; background: #000; border-top: 1px solid #222; display: flex; justify-content: space-around; align-items: center; z-index: 6000; }
+        .nav-btn { color: #444; cursor: pointer; text-align: center; }
+        .nav-btn.active { color: var(--neon-green); text-shadow: 0 0 8px rgba(57, 255, 20, 0.4); }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div class="mobile-container">
     
-    <div id="auth-screen" class="screen active justify-center p-8 text-center">
-        <div class="mb-12">
-            <h1 class="text-5xl font-black italic tracking-tighter mb-2">TAX<span style="color:var(--accent)">MAD</span></h1>
-            <div class="h-1 w-12 bg-sky-500 mx-auto rounded-full"></div>
-            <p class="text-[10px] font-bold tracking-[6px] text-gray-500 mt-4 uppercase">Driver Terminal</p>
+    <header id="app-header" class="user-header hidden">
+        <div class="flex items-center gap-3">
+            <img id="u-img" src="" class="w-11 h-11 rounded-full border-2 border-[#BC00FF] object-cover bg-gray-900" onclick="showTab('perfil')">
+            <div>
+                <p class="text-[8px] font-black text-[#BC00FF] uppercase tracking-widest">Premium User</p>
+                <h2 id="u-name" class="text-sm font-bold text-white">...</h2>
+            </div>
         </div>
-        
-        <div class="text-left space-y-1">
-            <label class="text-[11px] font-bold text-gray-400 ml-4 uppercase">Credenciales</label>
-            <input type="text" id="user-input" class="lm-input" placeholder="Usuario">
-            <input type="password" id="pass-input" class="lm-input" placeholder="Contraseña">
-        </div>
+        <div class="logo-txt header-gradient">TaxMad</div>
+    </header>
 
-        <button onclick="intentarLogin()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 p-5 rounded-2xl font-bold text-sm tracking-widest mt-6 shadow-xl shadow-cyan-500/20 active:scale-[0.98] transition-all">
-            ENTRAR AL PANEL
+    <div id="auth-screen">
+        <button id="btn-close-profile" onclick="showTab('home')" class="hidden absolute top-5 right-5 text-gray-600 text-2xl z-[5001]">
+            <i class="fa-solid fa-circle-xmark"></i>
         </button>
+
+        <div id="auth-content">
+            <div class="mb-10" id="auth-logo">
+                <h1 class="text-4xl font-black italic header-gradient">TaxMad</h1>
+                <p class="text-[10px] tracking-[4px] opacity-50 uppercase text-white">Black Mobility</p>
+            </div>
+
+            <div id="login-box">
+                <input type="text" id="user-login" placeholder="Usuario" class="input-auth">
+                <input type="password" id="pass-login" placeholder="Contraseña" class="input-auth">
+                <button onclick="intentarAcceso()" class="btn-main mt-4">ENTRAR</button>
+                <p class="mt-6 text-sm text-gray-500">¿Nuevo aquí? <span class="text-[#00D1FF] font-bold cursor-pointer" onclick="toggleAuth('register')">Crea una cuenta</span></p>
+            </div>
+
+            <div id="register-box" class="hidden">
+                <h2 id="reg-title" class="text-xl font-bold mb-4 text-white uppercase tracking-tighter">Crear Cuenta</h2>
+                <div class="photo-picker" onclick="document.getElementById('reg-foto-input').click()">
+                    <i class="fa-solid fa-camera text-2xl text-[#00D1FF]" id="icon-cam"></i>
+                    <img id="img-preview" src="" class="hidden">
+                </div>
+                <input type="file" id="reg-foto-input" accept="image/*" class="hidden" onchange="previewImagen(this)">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="reg-nom" placeholder="Nombre" class="input-auth">
+                    <input type="text" id="reg-ape" placeholder="Apellido" class="input-auth">
+                </div>
+                <input type="text" id="reg-user" placeholder="Usuario" class="input-auth">
+                <input type="password" id="reg-pass" placeholder="Contraseña" class="input-auth">
+                <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-auth">
+                
+                <button id="btn-save-reg" onclick="registrarUsuario()" class="btn-main">GUARDAR DATOS</button>
+                
+                <button id="btn-logout" onclick="cerrarSesion()" class="mt-8 text-red-500 font-bold text-xs uppercase tracking-widest hidden flex items-center justify-center gap-2 w-full">
+                    <i class="fa-solid fa-power-off"></i> Cerrar Sesión
+                </button>
+                <p id="btn-back-login" class="mt-4 text-xs text-gray-600 cursor-pointer" onclick="toggleAuth('login')">Volver al inicio</p>
+            </div>
+        </div>
     </div>
 
-    <div id="main-app" class="hidden flex-col h-full w-full">
-        <header class="p-5 flex justify-between items-center bg-[#050a14] border-b border-white/5">
-            <div class="flex items-center gap-4">
-                <div class="w-11 h-11 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center font-bold text-white shadow-lg" id="avatar-init">?</div>
-                <div>
-                    <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">En servicio</p>
-                    <p class="text-sm font-bold tracking-tight" id="header-name">...</p>
-                </div>
+    <div id="main-app" class="screen">
+        <div class="taxcoin-card">
+            <div>
+                <p class="text-[10px] font-bold text-[#39FF14] uppercase mb-1">Taxcoins</p>
+                <p class="text-2xl font-black text-white"><span id="u-tc">0.00</span> <small class="text-xs text-gray-500">TC</small></p>
             </div>
-            <button id="btn-status" onclick="toggleStatus()" class="status-toggle status-off">DESCONECTADO</button>
-        </header>
+            <i class="fa-solid fa-crown text-3xl text-[#39FF14] opacity-40"></i>
+        </div>
 
-        <div id="scr-panel" class="screen">
-            <div id="map"></div>
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Solicitudes Cercanas</h3>
-                    <div id="vivo-indicator" class="hidden items-center bg-green-500/10 px-3 py-1 rounded-full">
-                        <span class="live-dot animate-pulse"></span>
-                        <span class="text-[10px] text-green-500 font-bold uppercase">En línea</span>
+        <div class="px-5 mt-4 space-y-4">
+            <div class="input-group">
+                <label>Recogida</label>
+                <input type="text" id="origin" placeholder="¿Dónde recogemos?">
+                <div class="btn-gps" onclick="obtenerUbicacionActual()"><i class="fa-solid fa-crosshairs"></i></div>
+            </div>
+            <div class="input-group">
+                <label>Destino</label>
+                <input type="text" id="destination" placeholder="¿A dónde vas?">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 block mb-2 uppercase">Pago</label>
+                    <div class="option-selector">
+                        <div id="pay-card" class="opt-btn active" onclick="setOpt('pay', 'tarjeta')">Tarjeta</div>
+                        <div id="pay-cash" class="opt-btn" onclick="setOpt('pay', 'efectivo')">Efectivo</div>
                     </div>
                 </div>
-                <div id="active-trips" class="space-y-4"></div>
+                <div>
+                    <label class="text-[10px] font-black text-gray-500 block mb-2 uppercase">Tarifa</label>
+                    <div class="option-selector">
+                        <div id="rate-fixed" class="opt-btn active" onclick="setOpt('rate', 'cerrado')">Cerrado</div>
+                        <div id="rate-meter" class="opt-btn" onclick="setOpt('rate', 'taximetro')">Taxi</div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div id="scr-viajes" class="screen p-6">
-            <h2 class="text-3xl font-bold mb-8">Mis <span class="text-cyan-500">Servicios</span></h2>
-            <div id="history-list" class="space-y-4"></div>
-        </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="input-group">
+                    <label>Fecha</label><input type="date" id="res-date">
+                </div>
+                <div class="input-group">
+                    <label>Hora</label><input type="time" id="res-time">
+                </div>
+            </div>
 
-        <div id="scr-perfil" class="screen p-6">
-            <h2 class="text-3xl font-bold mb-8">Mi <span class="text-cyan-500">Cuenta</span></h2>
+            <div id="map"></div>
             
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="glass-card p-5 bg-gradient-to-br from-cyan-500/10 to-transparent">
-                    <p class="text-[10px] font-bold uppercase text-cyan-500 mb-1">Total Hoy</p>
-                    <p class="text-3xl font-syne font-bold" id="stats-total">0€</p>
-                </div>
-                <div class="glass-card p-5">
-                    <p class="text-[10px] font-bold uppercase text-rose-500 mb-1">Comisión</p>
-                    <p class="text-3xl font-syne font-bold text-rose-500" id="stats-comision">0€</p>
-                </div>
+            <div id="info-resumen" class="hidden card-txmd text-center border-dashed border-[#39FF14]">
+                <p id="label-precio" class="text-[10px] font-black text-[#39FF14] uppercase">Precio Cerrado</p>
+                <span id="precio-txt" class="text-3xl font-black text-white">0.00€</span>
             </div>
 
-            <div id="profile-details-container" class="glass-card p-6 space-y-6"></div>
-
-            <button onclick="location.reload()" class="w-full mt-10 bg-rose-500/10 text-rose-500 p-5 rounded-2xl font-bold text-xs uppercase tracking-widest border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all">
-                <i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión
-            </button>
-        </div>
-
-        <nav class="absolute bottom-0 w-full h-22 bg-[#050a14]/80 backdrop-blur-md flex justify-around items-center border-t border-white/5 px-6 pb-2">
-            <div onclick="showTab('panel')" id="n-panel" class="nav-btn active">
-                <i class="fa-solid fa-compass"></i>
-                <p class="text-[10px] font-bold">RADAR</p>
-            </div>
-            <div onclick="showTab('viajes')" id="n-viajes" class="nav-btn">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                <p class="text-[10px] font-bold">HISTORIAL</p>
-            </div>
-            <div onclick="showTab('perfil')" id="n-perfil" class="nav-btn">
-                <i class="fa-solid fa-user-gear"></i>
-                <p class="text-[10px] font-bold">PERFIL</p>
-            </div>
-        </nav>
-    </div>
-
-    <div id="modal-qr">
-        <div class="glass-card bg-slate-900 p-10 rounded-[32px] w-full max-w-[340px] text-center border-white/10 shadow-2xl">
-            <h3 class="text-cyan-400 font-syne text-lg uppercase tracking-tighter">Viaje Finalizado</h3>
-            <div id="qrcode" class="flex justify-center shadow-inner"></div>
-            <p class="text-[10px] text-gray-500 mb-8 uppercase font-bold" id="qr-info-txt">SCAN PARA RECIBO DIGITAL</p>
-            <button onclick="document.getElementById('modal-qr').style.display = 'none'" class="w-full bg-white text-black py-4 rounded-2xl font-bold text-sm uppercase shadow-lg active:scale-95 transition-transform">ENTENDIDO</button>
+            <button id="btnAction" class="btn-main mb-6" onclick="procesarViaje()">CALCULAR PRECIO</button>
         </div>
     </div>
+
+    <div id="hucha-screen" class="screen">
+        <div class="p-6">
+            <h1 class="text-3xl font-black italic mb-6">Mis <span class="header-gradient">Viajes</span></h1>
+            <div id="lista-viajes" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <nav id="bottom-nav" class="hidden">
+        <div onclick="showTab('home')" id="n-home" class="nav-btn active"><i class="fa-solid fa-compass text-xl block mb-1"></i><span class="text-[9px] font-bold">RESERVAR</span></div>
+        <div onclick="showTab('hucha')" id="n-hucha" class="nav-btn"><i class="fa-solid fa-receipt text-xl block mb-1"></i><span class="text-[9px] font-bold">VIAJES</span></div>
+        <div onclick="showTab('perfil')" id="n-perfil" class="nav-btn"><i class="fa-solid fa-user-gear text-xl block mb-1"></i><span class="text-[9px] font-bold">PERFIL</span></div>
+    </nav>
 </div>
 
 <script>
@@ -200,174 +250,204 @@
     const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHRudmJsb2xocWlwc2NweGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NzQxNzIsImV4cCI6MjA4ODA1MDE3Mn0.xO19SVN8gowDATLWDEpyakcZXbdGg2Iex8C-ZEWL2dM';
     const _supabase = supabase.createClient(S_URL, S_KEY);
 
-    let currentDriver = null;
-    let map, marker, viajesChannel;
-    let isConnected = false;
+    let currentUser = null, ultimoCalculo = null;
+    let selectedPay = 'tarjeta', selectedRate = 'cerrado';
+    let map, directionsService, directionsRenderer;
+    let driverMarkers = []; 
 
-    async function intentarLogin() {
-        const u = document.getElementById('user-input').value;
-        const p = document.getElementById('pass-input').value;
-        if(!u || !p) return;
-
-        const { data: d } = await _supabase.from('drivers').select('*').eq('usuario', u).single();
-        if (d && d.password === p) {
-            if(d.baneado) return alert("CUENTA BLOQUEADA");
-            currentDriver = d;
-            document.getElementById('auth-screen').classList.remove('active');
-            document.getElementById('main-app').classList.replace('hidden', 'flex');
-            document.getElementById('header-name').innerText = d.nombre;
-            document.getElementById('avatar-init').innerText = d.nombre[0].toUpperCase();
-            document.getElementById('profile-details-container').innerHTML = `
-                <div class="flex justify-between items-center"><p class="text-[10px] text-gray-500 font-bold uppercase">Vehículo</p><p class="font-bold text-sm">${d.marca_v || d.modelo_coche}</p></div>
-                <div class="flex justify-between items-center"><p class="text-[10px] text-gray-500 font-bold uppercase">Matrícula</p><p class="font-bold text-sm text-cyan-400">${d.matricula}</p></div>
-                <div class="flex justify-between items-center"><p class="text-[10px] text-gray-500 font-bold uppercase">Licencia</p><p class="font-bold text-sm text-gray-300">${d.num_licencia || 'OFICIAL'}</p></div>
-            `;
-            initMap();
-            escucharSeguridad();
-            showTab('panel');
-        } else { alert("Usuario o contraseña incorrectos"); }
-    }
-
-    function initMap() {
-        map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: 40.4168, lng: -3.7038}, zoom: 16, disableDefaultUI: true,
-            styles: [ { "featureType": "all", "elementType": "labels.text.fill", "stylers": [ { "color": "#ffffff" } ] } ] 
-        });
-        marker = new google.maps.Marker({ 
-            map: map, 
-            icon: { url: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png', scaledSize: new google.maps.Size(40,40) } 
-        });
-    }
-
-    function toggleStatus() {
-        isConnected = !isConnected;
-        const btn = document.getElementById('btn-status');
-        const indicator = document.getElementById('vivo-indicator');
-        
-        if(isConnected) {
-            btn.innerText = "EN LÍNEA";
-            btn.className = "status-toggle status-on";
-            indicator.style.display = 'flex';
-            iniciarServicios();
+    function setOpt(type, val) {
+        if(type === 'pay') {
+            selectedPay = val;
+            document.getElementById('pay-card').classList.toggle('active', val === 'tarjeta');
+            document.getElementById('pay-cash').classList.toggle('active', val === 'efectivo');
         } else {
-            btn.innerText = "DESCONECTADO";
-            btn.className = "status-toggle status-off";
-            indicator.style.display = 'none';
-            detenerServicios();
+            selectedRate = val;
+            ultimoCalculo = null;
+            document.getElementById('rate-fixed').classList.toggle('active', val === 'cerrado');
+            document.getElementById('rate-meter').classList.toggle('active', val === 'taximetro');
+            document.getElementById('info-resumen').classList.add('hidden');
+            document.getElementById('btnAction').innerText = "CALCULAR PRECIO";
         }
     }
 
-    function iniciarServicios() {
-        actualizarPos();
-        window.gpsInterval = setInterval(actualizarPos, 60000);
-        viajesChannel = _supabase.channel('viajes_live').on('postgres_changes', { event: '*', table: 'viajes' }, () => {
-            cargarActivos();
-        }).subscribe();
-        cargarActivos();
+    async function registrarUsuario() {
+        const u = document.getElementById('reg-user').value;
+        const p = document.getElementById('reg-pass').value;
+        const n = document.getElementById('reg-nom').value;
+        const a = document.getElementById('reg-ape').value;
+        const t = document.getElementById('reg-tel').value;
+        const f = document.getElementById('img-preview').src;
+        if(!u || !p || !n) return alert("Faltan datos obligatorios");
+        const { error } = await _supabase.from('clientes').upsert([{ 
+            nombre: n, apellido: a, usuario: u, password: p, telefono: t, foto: f,
+            taxcoins: currentUser?.taxcoins || 0
+        }], { onConflict: 'usuario' });
+        if(!error) { alert("¡Datos guardados!"); if(!currentUser) toggleAuth('login'); else { location.reload(); } }
     }
 
-    function detenerServicios() {
-        clearInterval(window.gpsInterval);
-        if(viajesChannel) _supabase.removeChannel(viajesChannel);
-        document.getElementById('active-trips').innerHTML = '<div class="text-center py-20 opacity-30 text-[10px] font-bold uppercase tracking-[3px]">Conéctate para recibir viajes</div>';
+    async function intentarAcceso() {
+        const u = document.getElementById('user-login').value;
+        const p = document.getElementById('pass-login').value;
+        const { data } = await _supabase.from('clientes').select('*').eq('usuario', u).single();
+        if (data && data.password === p) {
+            currentUser = data;
+            document.getElementById('bottom-nav').classList.remove('hidden');
+            document.getElementById('app-header').classList.remove('hidden');
+            showTab('home');
+            actualizarUI();
+            initMap();
+        } else alert("Credenciales incorrectas");
     }
 
-    function actualizarPos() {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            map.setCenter(p); marker.setPosition(p);
-            await _supabase.from('drivers').update({ latitud: p.lat.toString(), longitud: p.lng.toString() }).eq('id', currentDriver.id);
+    function actualizarUI() {
+        document.getElementById('u-name').innerText = currentUser.nombre;
+        document.getElementById('u-tc').innerText = (currentUser.taxcoins || 0).toFixed(2);
+        document.getElementById('u-img').src = currentUser.foto;
+    }
+
+    function initMap() {
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: "#39FF14", strokeWeight: 5 }});
+        map = new google.maps.Map(document.getElementById('map'), { 
+            center: {lat: 40.41, lng: -3.70}, 
+            zoom: 13, 
+            disableDefaultUI: true,
+            styles: [
+                { "elementType": "geometry", "stylers": [{ "color": "#212121" }] },
+                { "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
+                { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#303030" }] }
+            ]
         });
+        directionsRenderer.setMap(map);
+        new google.maps.places.Autocomplete(document.getElementById('origin'));
+        new google.maps.places.Autocomplete(document.getElementById('destination'));
+        pintarConductores();
+        setInterval(pintarConductores, 300000); 
     }
 
-    function escucharSeguridad() {
-        _supabase.channel('seguridad').on('postgres_changes', { event: 'UPDATE', table: 'drivers', filter: `id=eq.${currentDriver.id}` }, (payload) => {
-            if(payload.new.baneado) location.reload();
-        }).subscribe();
+    async function pintarConductores() {
+        driverMarkers.forEach(m => m.setMap(null));
+        driverMarkers = [];
+        const { data: drivers } = await _supabase.from('conductores').select('nombre, latitud, longitud').eq('estado', 'activo');
+        if (drivers) {
+            drivers.forEach(d => {
+                if (d.latitud && d.longitud) {
+                    const marker = new google.maps.Marker({
+                        position: { lat: parseFloat(d.latitud), lng: parseFloat(d.longitud) },
+                        map: map,
+                        title: d.nombre,
+                        icon: {
+                            url: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png', 
+                            scaledSize: new google.maps.Size(30, 30)
+                        }
+                    });
+                    driverMarkers.push(marker);
+                }
+            });
+        }
     }
 
-    async function cargarActivos() {
-        if(!isConnected) return;
-        const { data } = await _supabase.from('viajes').select('*').in('estado', ['pendiente','aceptado','en_punto','en_curso']).order('created_at',{ascending:false});
-        const cont = document.getElementById('active-trips');
-        cont.innerHTML = data.length ? data.map(t => `
-            <div class="glass-card p-6 bg-slate-800/40">
-                <div class="flex justify-between items-start mb-4">
-                    <span class="bg-cyan-500/10 text-cyan-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tighter">${t.estado.replace('_', ' ')}</span>
-                    <span class="text-2xl font-syne font-bold">${t.precio}€</span>
-                </div>
-                <div class="space-y-1 mb-6">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase">Ruta</p>
-                    <p class="text-sm font-bold leading-tight">${t.origen} <span class="text-cyan-500">→</span> ${t.destino}</p>
-                </div>
-                <div>${renderBotones(t)}</div>
-            </div>
-        `).join('') : '<div class="text-center py-20 opacity-30 text-[10px] font-bold uppercase tracking-[3px]">Buscando servicios...</div>';
+    async function procesarViaje() {
+        const o = document.getElementById('origin').value;
+        const d = document.getElementById('destination').value;
+        const f = document.getElementById('res-date').value;
+        const h = document.getElementById('res-time').value;
+        if(!o || !d || !f || !h) return alert("Faltan datos");
+
+        if(!ultimoCalculo) {
+            directionsService.route({ origin: o, destination: d, travelMode: 'DRIVING' }, (res, status) => {
+                if(status === 'OK') {
+                    directionsRenderer.setDirections(res);
+                    const kms = res.routes[0].legs[0].distance.value / 1000;
+                    const base = (5.50 + (kms * 1.40));
+                    if(selectedRate === 'cerrado') {
+                        ultimoCalculo = base.toFixed(2);
+                        document.getElementById('label-precio').innerText = "Precio Cerrado";
+                        document.getElementById('precio-txt').innerText = ultimoCalculo + "€";
+                    } else {
+                        const min = (base * 0.95).toFixed(0);
+                        const max = (base * 1.15).toFixed(0);
+                        ultimoCalculo = "estimado";
+                        document.getElementById('label-precio').innerText = "Estimación Taxímetro";
+                        document.getElementById('precio-txt').innerText = `${min}€ - ${max}€`;
+                    }
+                    document.getElementById('info-resumen').classList.remove('hidden');
+                    document.getElementById('btnAction').innerText = "CONFIRMAR RESERVA";
+                }
+            });
+        } else {
+            const { error } = await _supabase.from('viajes').insert([{
+                cliente_id: currentUser.id, cliente_nombre: currentUser.nombre,
+                origen: o, destino: d, 
+                precio: selectedRate === 'cerrado' ? parseFloat(ultimoCalculo) : 0,
+                metodo_pago: selectedPay, tipo_tarifa: selectedRate,
+                estado: 'pendiente', fecha_reserva: new Date(`${f}T${h}`).toISOString()
+            }]);
+            if(!error) { alert("¡Reserva confirmada!"); ultimoCalculo = null; showTab('hucha'); }
+        }
     }
 
-    function renderBotones(t) {
-        const base = "w-full p-4 rounded-xl font-bold text-xs tracking-widest transition-all active:scale-95 ";
-        if(t.estado === 'pendiente') return `<button onclick="updateTrip('${t.id}','aceptado')" class="${base} bg-cyan-500 text-black">ACEPTAR SERVICIO</button>`;
-        if(t.estado === 'aceptado') return `<button onclick="updateTrip('${t.id}','en_punto')" class="${base} bg-emerald-500 text-black">YA ESTOY AQUÍ</button>`;
-        if(t.estado === 'en_punto') return `<button onclick="updateTrip('${t.id}','en_curso')" class="${base} bg-amber-500 text-black">INICIAR TRAYECTO</button>`;
-        if(t.estado === 'en_curso') return `<button onclick="finalizarViaje('${t.id}')" class="${base} bg-rose-600 text-white shadow-lg shadow-rose-900/20">FINALIZAR Y COBRAR</button>`;
-    }
-
-    async function updateTrip(id, status) { 
-        await _supabase.from('viajes').update({ estado: status, driver_id: currentDriver.id }).eq('id', id); 
-        cargarActivos(); 
-    }
-
-    async function finalizarViaje(id) { 
-        const { data: trip } = await _supabase.from('viajes').select('precio').eq('id', id).single();
-        await _supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id); 
-        
-        const comisionAdd = parseFloat(trip.precio) * 0.10;
-        const { data: drv } = await _supabase.from('drivers').select('comision_pendiente_10').eq('id', currentDriver.id).single();
-        await _supabase.from('drivers').update({ comision_pendiente_10: (drv.comision_pendiente_10 || 0) + comisionAdd }).eq('id', currentDriver.id);
-        
-        verQR(id); 
-        cargarActivos(); 
-    }
-
-    async function verQR(id) {
-        const { data: t } = await _supabase.from('viajes').select('*').eq('id', id).single();
-        const info = { cli: t.cliente_nombre, org: t.origen, des: t.destino, eur: t.precio, lic: currentDriver.num_licencia };
-        document.getElementById('modal-qr').style.display = 'flex';
-        document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: `https://taxmad.pro/invoice?v=${btoa(JSON.stringify(info))}`, width: 200, height: 200 });
+    function showTab(t) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        const auth = document.getElementById('auth-screen');
+        auth.classList.add('hidden');
+        if(t === 'home') { document.getElementById('main-app').classList.add('active'); document.getElementById('n-home').classList.add('active'); }
+        else if(t === 'hucha') { document.getElementById('hucha-screen').classList.add('active'); document.getElementById('n-hucha').classList.add('active'); cargarHistorial(); }
+        else if(t === 'perfil') { auth.classList.remove('hidden'); auth.classList.add('as-profile'); document.getElementById('btn-close-profile').classList.remove('hidden'); toggleAuth('register'); }
     }
 
     async function cargarHistorial() {
-        const { data } = await _supabase.from('viajes').select('*').eq('estado','finalizado').eq('driver_id', currentDriver.id).order('created_at',{ascending:false});
-        document.getElementById('history-list').innerHTML = data.map(t => `
-            <div class="glass-card p-5 flex justify-between items-center border-white/5">
-                <div>
-                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">${new Date(t.created_at).toLocaleDateString()}</p>
-                    <p class="text-sm font-bold">${t.precio}€ <span class="text-gray-500 font-normal mx-2">|</span> ${t.destino.substring(0,20)}...</p>
+        const { data } = await _supabase.from('viajes').select('*').eq('cliente_id', currentUser.id).order('created_at', {ascending: false});
+        document.getElementById('lista-viajes').innerHTML = data.map(v => `
+            <div class="trip-item">
+                <div class="flex justify-between text-[10px] font-bold mb-2 uppercase">
+                    <span class="text-[#00D1FF]">${v.tipo_tarifa}</span>
+                    <span class="bg-[#222] text-white px-2 py-1 rounded">${v.estado}</span>
                 </div>
-                <button onclick="verQR('${t.id}')" class="w-12 h-12 bg-white/5 text-cyan-400 rounded-2xl flex items-center justify-center hover:bg-cyan-500 hover:text-black transition-all">
-                    <i class="fa-solid fa-qrcode"></i>
-                </button>
+                <p class="text-[11px] truncate text-gray-300">📍 ${v.origen}</p>
+                <p class="text-[11px] truncate text-gray-300">🏁 ${v.destino}</p>
+                <p class="mt-2 font-black text-right text-[#39FF14] text-lg">${v.precio > 0 ? v.precio.toFixed(2)+'€' : 'TAXÍMETRO'}</p>
             </div>
         `).join('');
     }
 
-    function showTab(tab) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`scr-${tab}`).classList.add('active');
-        document.getElementById(`n-${tab}`).classList.add('active');
-        if(tab === 'viajes') cargarHistorial();
-        if(tab === 'perfil') {
-            _supabase.from('viajes').select('precio').eq('driver_id', currentDriver.id).eq('estado', 'finalizado').then(({data}) => {
-                let t = data.reduce((s, v) => s + (parseFloat(v.precio) || 0), 0);
-                document.getElementById('stats-total').innerText = t.toFixed(2) + "€";
-                document.getElementById('stats-comision').innerText = (t * 0.1).toFixed(2) + "€";
-            });
+    function toggleAuth(v) {
+        document.getElementById('login-box').classList.toggle('hidden', v !== 'login');
+        document.getElementById('register-box').classList.toggle('hidden', v !== 'register');
+        if(v === 'register' && currentUser) {
+            document.getElementById('reg-nom').value = currentUser.nombre;
+            document.getElementById('reg-user').value = currentUser.usuario;
+            document.getElementById('img-preview').src = currentUser.foto;
+            document.getElementById('img-preview').classList.remove('hidden');
+            document.getElementById('icon-cam').classList.add('hidden');
         }
     }
+
+    function obtenerUbicacionActual() {
+        navigator.geolocation.getCurrentPosition((pos) => {
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ location: { lat: pos.coords.latitude, lng: pos.coords.longitude } }, (results, status) => {
+                if (status === "OK") document.getElementById('origin').value = results[0].formatted_address;
+            });
+        });
+    }
+
+    function previewImagen(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('img-preview').src = e.target.result;
+                document.getElementById('img-preview').classList.remove('hidden');
+                document.getElementById('icon-cam').classList.add('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function cerrarSesion() { localStorage.clear(); location.reload(); }
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA" async defer></script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places" async defer></script>
 </body>
 </html>
