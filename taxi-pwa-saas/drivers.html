@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TaxMad Driver – Terminal Oficial</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -12,185 +12,176 @@
 
     <style>
         :root { 
-            --accent: #00F0FF; /* Electric Cyan */
-            --bg-dark: #050a14; 
-            --card-bg: #0f172a;
-            --text-main: #f8fafc;
+            --gold: #ffb000; 
+            --dark: #000000; 
+            --card: #111111;
+            --text-gray: #a0a0a0;
         }
 
         body { 
-            background: var(--bg-dark); 
-            font-family: 'Inter', sans-serif; 
-            color: var(--text-main); 
+            background: var(--dark); 
+            font-family: 'Montserrat', sans-serif; 
+            color: white; 
             margin: 0; 
             height: 100vh; 
             overflow: hidden; 
         }
 
-        h1, h2, h3, .font-syne { font-family: 'Syne', sans-serif; }
-
         .mobile-container { 
             width: 100%; 
             max-width: 414px; 
             margin: 0 auto; 
-            background: var(--bg-dark); 
+            background: var(--dark); 
             position: relative; 
             display: flex; 
             flex-direction: column; 
             height: 100vh; 
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
 
-        .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 90px; }
+        .screen { display: none; flex-direction: column; height: 100%; overflow-y: auto; padding-bottom: 100px; }
         .screen.active { display: flex; }
 
-        /* Status Toggle Style */
+        /* Botón de Estado */
         .status-toggle { 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-            font-weight: 700; 
-            font-size: 11px; 
-            padding: 10px 20px; 
-            border-radius: 14px; 
+            transition: all 0.3s ease; 
+            font-weight: 800; 
+            font-size: 10px; 
+            padding: 10px 18px; 
+            border-radius: 8px; 
             cursor: pointer; 
+            text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .status-off { background: #1e293b; color: #64748b; border: 1px solid #334155; }
-        .status-on { 
-            background: rgba(34, 197, 94, 0.1); 
-            color: #4ade80; 
-            border: 1px solid #22c55e;
-            box-shadow: 0 0 15px rgba(34, 197, 94, 0.2); 
-        }
+        .status-off { background: #222; color: #555; border: 1px solid #333; }
+        .status-on { background: var(--gold); color: black; box-shadow: 0 0 20px rgba(255, 176, 0, 0.3); }
 
-        #map { width: 100%; height: 300px; filter: grayscale(0.2) invert(0.9) hue-rotate(180deg); }
+        /* Mapa con filtro oscuro */
+        #map { width: 100%; height: 280px; min-height: 280px; background: #111; filter: invert(90%) hue-rotate(180deg) brightness(0.7); }
 
-        .nav-btn { color: #475569; cursor: pointer; text-align: center; flex: 1; transition: 0.3s; padding: 12px 0; }
-        .nav-btn.active { color: var(--accent); }
-        .nav-btn i { font-size: 1.4rem; margin-bottom: 4px; }
-
+        /* Inputs Estilo Premium */
         .lm-input { 
             width: 100%; 
             padding: 18px; 
-            margin-bottom: 16px; 
-            border-radius: 16px; 
-            border: 1px solid rgba(255,255,255,0.05); 
-            background: rgba(15, 23, 42, 0.8); 
+            margin-bottom: 14px; 
+            border-radius: 12px; 
+            border: 1px solid #222; 
+            background: #111; 
             color: white; 
-            outline: none;
-            transition: border 0.3s;
+            outline: none; 
+            font-weight: 500;
+            transition: 0.3s;
         }
-        .lm-input:focus { border-color: var(--accent); }
+        .lm-input:focus { border-color: var(--gold); }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 24px;
+        /* Navegación Inferior */
+        .nav-btn { color: #444; cursor: pointer; text-align: center; flex: 1; transition: 0.2s; padding: 12px 0; }
+        .nav-btn.active { color: var(--gold); }
+        
+        /* Cards */
+        .premium-card {
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
+            border-radius: 20px;
+            padding: 20px;
         }
 
-        #modal-qr { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.98); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        #qrcode { background: white; padding: 20px; border-radius: 20px; margin: 25px 0; }
-
-        /* Animación pulso para el estado vivo */
-        .live-dot { height: 8px; width: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        #modal-qr { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        #qrcode { background: white; padding: 15px; border-radius: 12px; margin: 20px 0; border: 4px solid var(--gold); }
     </style>
 </head>
 <body>
 
 <div class="mobile-container">
     
-    <div id="auth-screen" class="screen active justify-center p-8 text-center">
-        <div class="mb-12">
-            <h1 class="text-5xl font-black italic tracking-tighter mb-2">TAX<span style="color:var(--accent)">MAD</span></h1>
-            <div class="h-1 w-12 bg-sky-500 mx-auto rounded-full"></div>
-            <p class="text-[10px] font-bold tracking-[6px] text-gray-500 mt-4 uppercase">Driver Terminal</p>
+    <div id="auth-screen" class="screen active justify-center p-10 text-center">
+        <h1 class="text-4xl font-black mb-1 italic tracking-tighter">TAX<span style="color:var(--gold)">MAD</span></h1>
+        <p class="text-[9px] font-bold tracking-[5px] text-zinc-500 mb-12 uppercase">Driver Terminal</p>
+        
+        <div class="text-left">
+            <label class="text-[10px] font-extrabold text-zinc-600 ml-2 uppercase tracking-widest">Identificación</label>
+            <input type="text" id="user-input" class="lm-input" placeholder="Usuario de conductor">
+            <label class="text-[10px] font-extrabold text-zinc-600 ml-2 uppercase tracking-widest">Acceso</label>
+            <input type="password" id="pass-input" class="lm-input" placeholder="••••••••">
         </div>
         
-        <div class="text-left space-y-1">
-            <label class="text-[11px] font-bold text-gray-400 ml-4 uppercase">Credenciales</label>
-            <input type="text" id="user-input" class="lm-input" placeholder="Usuario">
-            <input type="password" id="pass-input" class="lm-input" placeholder="Contraseña">
-        </div>
-
-        <button onclick="intentarLogin()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 p-5 rounded-2xl font-bold text-sm tracking-widest mt-6 shadow-xl shadow-cyan-500/20 active:scale-[0.98] transition-all">
-            ENTRAR AL PANEL
+        <button onclick="intentarLogin()" class="w-full bg-white text-black py-5 rounded-xl font-black text-sm mt-6 hover:bg-[#ffb000] transition-colors active:scale-95">
+            CONECTAR AL SISTEMA
         </button>
     </div>
 
     <div id="main-app" class="hidden flex-col h-full w-full">
-        <header class="p-5 flex justify-between items-center bg-[#050a14] border-b border-white/5">
-            <div class="flex items-center gap-4">
-                <div class="w-11 h-11 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-2xl flex items-center justify-center font-bold text-white shadow-lg" id="avatar-init">?</div>
+        <header class="p-5 flex justify-between items-center bg-black border-b border-zinc-900">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center font-bold text-gold text-lg" id="avatar-init" style="color:var(--gold)">?</div>
                 <div>
-                    <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">En servicio</p>
-                    <p class="text-sm font-bold tracking-tight" id="header-name">...</p>
+                    <p class="text-[8px] text-zinc-500 font-black uppercase tracking-widest">Servicio Oficial</p>
+                    <p class="text-sm font-extrabold" id="header-name">Cargando...</p>
                 </div>
             </div>
-            <button id="btn-status" onclick="toggleStatus()" class="status-toggle status-off">DESCONECTADO</button>
+            <button id="btn-status" onclick="toggleStatus()" class="status-toggle status-off">OFFLINE</button>
         </header>
 
         <div id="scr-panel" class="screen">
             <div id="map"></div>
             <div class="p-6">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Solicitudes Cercanas</h3>
-                    <div id="vivo-indicator" class="hidden items-center bg-green-500/10 px-3 py-1 rounded-full">
-                        <span class="live-dot animate-pulse"></span>
-                        <span class="text-[10px] text-green-500 font-bold uppercase">En línea</span>
-                    </div>
+                    <h3 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Servicios en Tiempo Real</h3>
+                    <span id="vivo-indicator" class="hidden items-center text-[10px] text-[#ffb000] font-black animate-pulse">
+                        <i class="fa-solid fa-circle text-[6px] mr-2"></i> EN LÍNEA
+                    </span>
                 </div>
                 <div id="active-trips" class="space-y-4"></div>
             </div>
         </div>
 
         <div id="scr-viajes" class="screen p-6">
-            <h2 class="text-3xl font-bold mb-8">Mis <span class="text-cyan-500">Servicios</span></h2>
+            <h2 class="text-2xl font-black italic mb-8">Mis <span style="color:var(--gold)">Servicios</span></h2>
             <div id="history-list" class="space-y-4"></div>
         </div>
 
         <div id="scr-perfil" class="screen p-6">
-            <h2 class="text-3xl font-bold mb-8">Mi <span class="text-cyan-500">Cuenta</span></h2>
+            <h2 class="text-2xl font-black italic mb-8">Mi <span style="color:var(--gold)">Perfil</span></h2>
             
-            <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="glass-card p-5 bg-gradient-to-br from-cyan-500/10 to-transparent">
-                    <p class="text-[10px] font-bold uppercase text-cyan-500 mb-1">Total Hoy</p>
-                    <p class="text-3xl font-syne font-bold" id="stats-total">0€</p>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="premium-card bg-[#ffb000] !border-none text-black">
+                    <p class="text-[9px] font-black uppercase opacity-60">Recaudación</p>
+                    <p class="text-2xl font-black" id="stats-total">0€</p>
                 </div>
-                <div class="glass-card p-5">
-                    <p class="text-[10px] font-bold uppercase text-rose-500 mb-1">Comisión</p>
-                    <p class="text-3xl font-syne font-bold text-rose-500" id="stats-comision">0€</p>
+                <div class="premium-card">
+                    <p class="text-[9px] font-black uppercase text-zinc-500">Tasa (10%)</p>
+                    <p class="text-2xl font-black text-rose-500" id="stats-comision">0€</p>
                 </div>
             </div>
 
-            <div id="profile-details-container" class="glass-card p-6 space-y-6"></div>
+            <div id="profile-details-container" class="premium-card space-y-6"></div>
 
-            <button onclick="location.reload()" class="w-full mt-10 bg-rose-500/10 text-rose-500 p-5 rounded-2xl font-bold text-xs uppercase tracking-widest border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all">
-                <i class="fa-solid fa-power-off mr-2"></i> Cerrar Sesión
+            <button onclick="location.reload()" class="w-full mt-10 bg-zinc-900 text-zinc-500 p-5 rounded-xl font-bold text-[10px] uppercase tracking-[3px] border border-zinc-800">
+                <i class="fa-solid fa-power-off mr-2"></i> Finalizar Turno
             </button>
         </div>
 
-        <nav class="absolute bottom-0 w-full h-22 bg-[#050a14]/80 backdrop-blur-md flex justify-around items-center border-t border-white/5 px-6 pb-2">
+        <nav class="absolute bottom-0 w-full h-20 bg-black flex justify-around items-center border-t border-zinc-900 px-6">
             <div onclick="showTab('panel')" id="n-panel" class="nav-btn active">
-                <i class="fa-solid fa-compass"></i>
-                <p class="text-[10px] font-bold">RADAR</p>
+                <i class="fa-solid fa-radar text-xl"></i>
+                <p class="text-[9px] mt-1 font-bold">RADAR</p>
             </div>
             <div onclick="showTab('viajes')" id="n-viajes" class="nav-btn">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                <p class="text-[10px] font-bold">HISTORIAL</p>
+                <i class="fa-solid fa-history text-xl"></i>
+                <p class="text-[9px] mt-1 font-bold">VIAJES</p>
             </div>
             <div onclick="showTab('perfil')" id="n-perfil" class="nav-btn">
-                <i class="fa-solid fa-user-gear"></i>
-                <p class="text-[10px] font-bold">PERFIL</p>
+                <i class="fa-solid fa-user-circle text-xl"></i>
+                <p class="text-[9px] mt-1 font-bold">PERFIL</p>
             </div>
         </nav>
     </div>
 
     <div id="modal-qr">
-        <div class="glass-card bg-slate-900 p-10 rounded-[32px] w-full max-w-[340px] text-center border-white/10 shadow-2xl">
-            <h3 class="text-cyan-400 font-syne text-lg uppercase tracking-tighter">Viaje Finalizado</h3>
-            <div id="qrcode" class="flex justify-center shadow-inner"></div>
-            <p class="text-[10px] text-gray-500 mb-8 uppercase font-bold" id="qr-info-txt">SCAN PARA RECIBO DIGITAL</p>
-            <button onclick="document.getElementById('modal-qr').style.display = 'none'" class="w-full bg-white text-black py-4 rounded-2xl font-bold text-sm uppercase shadow-lg active:scale-95 transition-transform">ENTENDIDO</button>
+        <div class="bg-[#0a0a0a] p-8 rounded-3xl border border-zinc-800 w-full max-w-[320px] text-center shadow-2xl">
+            <h3 class="text-[#ffb000] font-black text-xs uppercase italic tracking-widest mb-2">Comprobante Digital</h3>
+            <div id="qrcode" class="flex justify-center"></div>
+            <p class="text-[10px] text-zinc-500 mb-8 font-bold" id="qr-info-txt">VÁLIDO COMO FACTURA SIMPLIFICADA</p>
+            <button onclick="document.getElementById('modal-qr').style.display = 'none'" class="w-full bg-white text-black py-4 rounded-xl font-black text-xs uppercase">CERRAR</button>
         </div>
     </div>
 </div>
@@ -211,27 +202,26 @@
 
         const { data: d } = await _supabase.from('drivers').select('*').eq('usuario', u).single();
         if (d && d.password === p) {
-            if(d.baneado) return alert("CUENTA BLOQUEADA");
+            if(d.baneado) return alert("ACCESO DENEGADO");
             currentDriver = d;
             document.getElementById('auth-screen').classList.remove('active');
             document.getElementById('main-app').classList.replace('hidden', 'flex');
             document.getElementById('header-name').innerText = d.nombre;
             document.getElementById('avatar-init').innerText = d.nombre[0].toUpperCase();
             document.getElementById('profile-details-container').innerHTML = `
-                <div class="flex justify-between items-center"><p class="text-[10px] text-gray-500 font-bold uppercase">Vehículo</p><p class="font-bold text-sm">${d.marca_v || d.modelo_coche}</p></div>
-                <div class="flex justify-between items-center"><p class="text-[10px] text-gray-500 font-bold uppercase">Matrícula</p><p class="font-bold text-sm text-cyan-400">${d.matricula}</p></div>
-                <div class="flex justify-between items-center"><p class="text-[10px] text-gray-500 font-bold uppercase">Licencia</p><p class="font-bold text-sm text-gray-300">${d.num_licencia || 'OFICIAL'}</p></div>
+                <div class="flex justify-between items-center"><p class="text-[10px] text-zinc-500 font-bold uppercase">Vehículo</p><p class="font-bold text-sm">${d.marca_v || d.modelo_coche}</p></div>
+                <div class="flex justify-between items-center"><p class="text-[10px] text-zinc-500 font-bold uppercase">Matrícula</p><p class="font-bold text-sm text-[#ffb000]">${d.matricula}</p></div>
+                <div class="flex justify-between items-center"><p class="text-[10px] text-zinc-500 font-bold uppercase">Licencia</p><p class="font-bold text-sm text-zinc-300">${d.num_licencia || 'LIC-OFICIAL'}</p></div>
             `;
             initMap();
             escucharSeguridad();
             showTab('panel');
-        } else { alert("Usuario o contraseña incorrectos"); }
+        } else { alert("Credenciales incorrectas"); }
     }
 
     function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: 40.4168, lng: -3.7038}, zoom: 16, disableDefaultUI: true,
-            styles: [ { "featureType": "all", "elementType": "labels.text.fill", "stylers": [ { "color": "#ffffff" } ] } ] 
+            center: {lat: 40.4168, lng: -3.7038}, zoom: 15, disableDefaultUI: true
         });
         marker = new google.maps.Marker({ 
             map: map, 
@@ -245,12 +235,12 @@
         const indicator = document.getElementById('vivo-indicator');
         
         if(isConnected) {
-            btn.innerText = "EN LÍNEA";
+            btn.innerText = "CONECTADO";
             btn.className = "status-toggle status-on";
             indicator.style.display = 'flex';
             iniciarServicios();
         } else {
-            btn.innerText = "DESCONECTADO";
+            btn.innerText = "OFFLINE";
             btn.className = "status-toggle status-off";
             indicator.style.display = 'none';
             detenerServicios();
@@ -269,7 +259,7 @@
     function detenerServicios() {
         clearInterval(window.gpsInterval);
         if(viajesChannel) _supabase.removeChannel(viajesChannel);
-        document.getElementById('active-trips').innerHTML = '<div class="text-center py-20 opacity-30 text-[10px] font-bold uppercase tracking-[3px]">Conéctate para recibir viajes</div>';
+        document.getElementById('active-trips').innerHTML = '<div class="text-center py-10 opacity-20 text-[10px] font-bold uppercase tracking-[4px] mt-10">Desconectado del servidor</div>';
     }
 
     function actualizarPos() {
@@ -291,26 +281,24 @@
         const { data } = await _supabase.from('viajes').select('*').in('estado', ['pendiente','aceptado','en_punto','en_curso']).order('created_at',{ascending:false});
         const cont = document.getElementById('active-trips');
         cont.innerHTML = data.length ? data.map(t => `
-            <div class="glass-card p-6 bg-slate-800/40">
+            <div class="premium-card">
                 <div class="flex justify-between items-start mb-4">
-                    <span class="bg-cyan-500/10 text-cyan-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-tighter">${t.estado.replace('_', ' ')}</span>
-                    <span class="text-2xl font-syne font-bold">${t.precio}€</span>
+                    <span class="bg-zinc-800 text-[#ffb000] text-[9px] font-black px-3 py-1 rounded uppercase">${t.estado.replace('_',' ')}</span>
+                    <span class="text-xl font-black">${t.precio}€</span>
                 </div>
-                <div class="space-y-1 mb-6">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase">Ruta</p>
-                    <p class="text-sm font-bold leading-tight">${t.origen} <span class="text-cyan-500">→</span> ${t.destino}</p>
-                </div>
+                <p class="text-[11px] font-bold mb-1 opacity-50 uppercase tracking-tighter">${t.origen}</p>
+                <p class="text-sm font-black italic mb-6"> <span class="text-[#ffb000]">→</span> ${t.destino}</p>
                 <div>${renderBotones(t)}</div>
             </div>
-        `).join('') : '<div class="text-center py-20 opacity-30 text-[10px] font-bold uppercase tracking-[3px]">Buscando servicios...</div>';
+        `).join('') : '<div class="text-center py-10 opacity-20 text-[10px] font-bold uppercase tracking-[4px] mt-10">Buscando servicios...</div>';
     }
 
     function renderBotones(t) {
-        const base = "w-full p-4 rounded-xl font-bold text-xs tracking-widest transition-all active:scale-95 ";
-        if(t.estado === 'pendiente') return `<button onclick="updateTrip('${t.id}','aceptado')" class="${base} bg-cyan-500 text-black">ACEPTAR SERVICIO</button>`;
-        if(t.estado === 'aceptado') return `<button onclick="updateTrip('${t.id}','en_punto')" class="${base} bg-emerald-500 text-black">YA ESTOY AQUÍ</button>`;
-        if(t.estado === 'en_punto') return `<button onclick="updateTrip('${t.id}','en_curso')" class="${base} bg-amber-500 text-black">INICIAR TRAYECTO</button>`;
-        if(t.estado === 'en_curso') return `<button onclick="finalizarViaje('${t.id}')" class="${base} bg-rose-600 text-white shadow-lg shadow-rose-900/20">FINALIZAR Y COBRAR</button>`;
+        const style = "w-full p-4 rounded-xl font-black text-[11px] tracking-widest transition-all active:scale-95 ";
+        if(t.estado === 'pendiente') return `<button onclick="updateTrip('${t.id}','aceptado')" class="${style} bg-[#ffb000] text-black">ACEPTAR VIAJE</button>`;
+        if(t.estado === 'aceptado') return `<button onclick="updateTrip('${t.id}','en_punto')" class="${style} bg-zinc-100 text-black">EN EL PUNTO</button>`;
+        if(t.estado === 'en_punto') return `<button onclick="updateTrip('${t.id}','en_curso')" class="${style} bg-emerald-600 text-white">INICIAR RUTA</button>`;
+        if(t.estado === 'en_curso') return `<button onclick="finalizarViaje('${t.id}')" class="${style} bg-rose-600 text-white">FINALIZAR SERVICIO</button>`;
     }
 
     async function updateTrip(id, status) { 
@@ -335,20 +323,18 @@
         const info = { cli: t.cliente_nombre, org: t.origen, des: t.destino, eur: t.precio, lic: currentDriver.num_licencia };
         document.getElementById('modal-qr').style.display = 'flex';
         document.getElementById('qrcode').innerHTML = "";
-        new QRCode(document.getElementById("qrcode"), { text: `https://taxmad.pro/invoice?v=${btoa(JSON.stringify(info))}`, width: 200, height: 200 });
+        new QRCode(document.getElementById("qrcode"), { text: `https://taxmad.pro/invoice?v=${btoa(JSON.stringify(info))}`, width: 180, height: 180 });
     }
 
     async function cargarHistorial() {
         const { data } = await _supabase.from('viajes').select('*').eq('estado','finalizado').eq('driver_id', currentDriver.id).order('created_at',{ascending:false});
         document.getElementById('history-list').innerHTML = data.map(t => `
-            <div class="glass-card p-5 flex justify-between items-center border-white/5">
+            <div class="premium-card flex justify-between items-center py-4">
                 <div>
-                    <p class="text-[9px] text-gray-500 font-bold uppercase mb-1">${new Date(t.created_at).toLocaleDateString()}</p>
-                    <p class="text-sm font-bold">${t.precio}€ <span class="text-gray-500 font-normal mx-2">|</span> ${t.destino.substring(0,20)}...</p>
+                    <p class="text-[8px] text-zinc-600 font-bold uppercase tracking-widest">${new Date(t.created_at).toLocaleDateString()}</p>
+                    <p class="text-sm font-black">${t.precio}€ <span class="text-zinc-700 mx-1">/</span> <span class="font-medium text-xs text-zinc-400">${t.destino.substring(0,20)}...</span></p>
                 </div>
-                <button onclick="verQR('${t.id}')" class="w-12 h-12 bg-white/5 text-cyan-400 rounded-2xl flex items-center justify-center hover:bg-cyan-500 hover:text-black transition-all">
-                    <i class="fa-solid fa-qrcode"></i>
-                </button>
+                <button onclick="verQR('${t.id}')" class="text-[#ffb000] p-2"><i class="fa-solid fa-qrcode text-lg"></i></button>
             </div>
         `).join('');
     }
