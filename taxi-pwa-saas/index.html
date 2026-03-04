@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TaxMad">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3448/3448339.png">
+    <link rel="apple-touch-icon" href="logo.png">
 
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -55,6 +55,10 @@
         .nav-btn { color: #444; cursor: pointer; text-align: center; }
         .nav-btn.active { color: var(--neon-green); }
         .hidden { display: none !important; }
+        
+        /* Ajuste para el logo */
+        .app-logo { height: 40px; width: auto; object-fit: contain; }
+        .auth-logo { width: 120px; height: auto; margin: 0 auto 15px; }
     </style>
 </head>
 <body>
@@ -68,7 +72,7 @@
                 <h2 id="u-name" class="text-sm font-bold text-white">...</h2>
             </div>
         </div>
-        <div class="font-black text-xl header-gradient">TaxMad</div>
+        <img src="logo.png" alt="TaxMad" class="app-logo">
     </header>
 
     <div id="auth-screen">
@@ -76,9 +80,10 @@
             <i class="fa-solid fa-circle-xmark"></i>
         </button>
         <div id="auth-content">
-            <div class="mb-10">
-                <h1 class="text-4xl font-black italic header-gradient">TaxMad</h1>
-                <p class="text-[10px] tracking-[4px] opacity-50 uppercase text-white">Black Mobility</p>
+            <div class="mb-10 flex flex-col items-center">
+                <img src="logo.png" alt="TaxMad Logo" class="auth-logo">
+                <h1 class="text-3xl font-black italic header-gradient">TaxMad</h1>
+                <p class="text-[10px] tracking-[4px] opacity-50 uppercase text-white mt-2">Black Mobility</p>
             </div>
             <div id="login-box">
                 <input type="text" id="user-login" placeholder="Usuario" class="input-auth">
@@ -162,7 +167,6 @@
     let map, directionsService, directionsRenderer;
     let driverMarkers = [];
 
-    // --- SERVICE WORKER REGISTRATION ---
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js')
@@ -171,7 +175,6 @@
         });
     }
 
-    // --- SEGURIDAD Y PERSISTENCIA ---
     window.onload = async () => {
         const savedUser = localStorage.getItem('txmd_user');
         if (savedUser) {
@@ -243,7 +246,6 @@
         }
     }
 
-    // --- MAPA Y CONDUCTORES ---
     function initMap() {
         if(map) return;
         directionsService = new google.maps.DirectionsService();
@@ -255,32 +257,22 @@
         directionsRenderer.setMap(map);
         new google.maps.places.Autocomplete(document.getElementById('origin'));
         new google.maps.places.Autocomplete(document.getElementById('destination'));
-
         pintarDrivers();
         setInterval(pintarDrivers, 5000);
     }
 
     async function pintarDrivers() {
-        const { data: driversData, error } = await _supabase
-            .from('drivers')
-            .select('nombre, latitud, longitud, marca_v')
-            .eq('estado', 'activo');
-
+        const { data: driversData, error } = await _supabase.from('drivers').select('nombre, latitud, longitud, marca_v').eq('estado', 'activo');
         if (error) return;
-
         driverMarkers.forEach(m => m.setMap(null));
         driverMarkers = [];
-
         if (driversData) {
             driversData.forEach(d => {
                 if (d.latitud && d.longitud) {
                     const marker = new google.maps.Marker({
                         position: { lat: parseFloat(d.latitud), lng: parseFloat(d.longitud) },
                         map: map,
-                        icon: {
-                            url: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png',
-                            scaledSize: new google.maps.Size(32, 32)
-                        },
+                        icon: { url: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png', scaledSize: new google.maps.Size(32, 32) },
                         title: d.nombre
                     });
                     driverMarkers.push(marker);
@@ -293,7 +285,6 @@
         const o = document.getElementById('origin').value;
         const d = document.getElementById('destination').value;
         if(!o || !d) return alert("Indica origen y destino");
-
         if(!ultimoCalculo) {
             directionsService.route({ origin: o, destination: d, travelMode: 'DRIVING' }, (res, status) => {
                 if(status === 'OK') {
@@ -308,11 +299,9 @@
             });
         } else {
             const { error } = await _supabase.from('viajes').insert([{
-                cliente_id: currentUser.id,
-                origen: o, destino: d, 
+                cliente_id: currentUser.id, origen: o, destino: d, 
                 precio: selectedRate === 'cerrado' ? parseFloat(ultimoCalculo) : 0,
-                metodo_pago: selectedPay, tipo_tarifa: selectedRate,
-                estado: 'pendiente'
+                metodo_pago: selectedPay, tipo_tarifa: selectedRate, estado: 'pendiente'
             }]);
             if(!error) { alert("¡Reserva confirmada!"); showTab('hucha'); }
         }
@@ -326,8 +315,7 @@
         else if(t === 'hucha') { document.getElementById('hucha-screen').classList.add('active'); document.getElementById('n-hucha').classList.add('active'); cargarHistorial(); }
         else if(t === 'perfil') { 
             const auth = document.getElementById('auth-screen');
-            auth.classList.remove('hidden'); 
-            auth.classList.add('as-profile'); 
+            auth.classList.remove('hidden'); auth.classList.add('as-profile'); 
             document.getElementById('btn-close-profile').classList.remove('hidden');
             document.getElementById('btn-logout').classList.remove('hidden');
             toggleAuth('register'); 
