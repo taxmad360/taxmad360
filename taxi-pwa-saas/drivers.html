@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TaxMad Driver – Terminal Oficial</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffb000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3448/3448339.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -135,6 +142,15 @@
     let map, marker, viajesChannel;
     let isConnected = false;
 
+    // --- REGISTRO DE SERVICE WORKER ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then(reg => {
+                console.log('Driver SW registrado');
+            }).catch(err => console.log('Error SW', err));
+        });
+    }
+
     async function intentarLogin() {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
@@ -150,7 +166,6 @@
             document.getElementById('header-name').innerText = d.nombre;
             document.getElementById('avatar-init').innerText = d.nombre[0].toUpperCase();
             
-            // Ajustado para usar marca_v de nuestra base de datos
             document.getElementById('profile-details-container').innerHTML = `
                 <div class="flex justify-between items-center"><p class="text-[10px] text-zinc-500 font-bold uppercase">Vehículo</p><p class="font-bold text-sm">${d.marca_v || 'Premium Car'}</p></div>
                 <div class="flex justify-between items-center"><p class="text-[10px] text-zinc-500 font-bold uppercase">Matrícula</p><p class="font-bold text-sm text-[#ffb000]">${d.matricula || '---'}</p></div>
@@ -193,7 +208,6 @@
 
     function iniciarServicios() {
         actualizarPos();
-        // GPS actualizado cada 10 segundos para mayor precisión en el cliente
         window.gpsInterval = setInterval(actualizarPos, 10000); 
         
         viajesChannel = _supabase.channel('viajes_live').on('postgres_changes', { event: '*', table: 'viajes' }, () => {
@@ -201,7 +215,6 @@
         }).subscribe();
         
         cargarActivos();
-        // Cambiar estado a activo en DB
         _supabase.from('drivers').update({ estado: 'activo' }).eq('id', currentDriver.id);
     }
 
@@ -209,7 +222,6 @@
         clearInterval(window.gpsInterval);
         if(viajesChannel) _supabase.removeChannel(viajesChannel);
         document.getElementById('active-trips').innerHTML = '<div class="text-center py-10 opacity-20 text-[10px] font-bold uppercase tracking-[4px] mt-10">Desconectado del servidor</div>';
-        // Cambiar estado a inactivo en DB
         _supabase.from('drivers').update({ estado: 'inactivo' }).eq('id', currentDriver.id);
     }
 
@@ -262,8 +274,6 @@
         await _supabase.from('viajes').update({ estado: 'finalizado' }).eq('id', id); 
         
         const comisionAdd = parseFloat(trip.precio) * 0.10;
-        
-        // Actualizamos estadísticas del driver
         const { data: drv } = await _supabase.from('drivers').select('comision_pendiente_10, total_dinero_generado').eq('id', currentDriver.id).single();
         await _supabase.from('drivers').update({ 
             comision_pendiente_10: (drv.comision_pendiente_10 || 0) + comisionAdd,
