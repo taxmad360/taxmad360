@@ -14,6 +14,9 @@ export const metadata = {
 }
 
 export default function RootLayout({ children }) {
+  // REEMPLAZA "TU_API_KEY_AQUI" con tu clave real de Google Cloud console
+  const googleMapsUrl = `https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI&libraries=places,geometry&loading=async`;
+
   return (
     <html lang="es">
       <head>
@@ -24,8 +27,11 @@ export default function RootLayout({ children }) {
         />
         {/* El logo para iPhone */}
         <link rel="apple-touch-icon" href="/logo.png" />
+        
+        {/* Script de Google Maps Global */}
+        <script src={googleMapsUrl} async defer></script>
       </head>
-      <body>
+      <body className="antialiased">
         {children}
       </body>
     </html>
