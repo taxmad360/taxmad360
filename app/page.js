@@ -1,21 +1,25 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import BuscadorDirecciones from './components/BuscadorDirecciones'
 
-// Configuración de Supabase (Tus credenciales)
+// Configuración de Supabase
 const S_URL = 'https://wdxtnvblolhqipscpxer.supabase.co';
-const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Tu llave completa
+const S_KEY = 'tu_llave_aqui'; // Asegúrate de poner tu llave completa aquí
 const supabase = createClient(S_URL, S_KEY);
 
 export default function HomePage() {
   const [user, setUser] = useState(null);
-  const [view, setView] = useState('login'); // login, register, home, hucha
+  const [view, setView] = useState('login'); 
   const [loading, setLoading] = useState(false);
+  
+  // Estados para el viaje
+  const [origen, setOrigen] = useState('');
+  const [destino, setDestino] = useState('');
 
   // Campos del formulario
   const [loginForm, setLoginForm] = useState({ user: '', pass: '' });
 
-  // 1. Cargar sesión al iniciar
   useEffect(() => {
     const savedUser = localStorage.getItem('txmd_user');
     if (savedUser) {
@@ -24,7 +28,6 @@ export default function HomePage() {
     }
   }, []);
 
-  // 2. Función de Acceso
   const intentarAcceso = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -43,9 +46,15 @@ export default function HomePage() {
     setLoading(false);
   };
 
+  const calcularViaje = () => {
+    if (!origen || !destino) return alert("Selecciona origen y destino");
+    console.log("Calculando ruta desde:", origen, "hasta:", destino);
+    // Aquí conectaremos con la Directions API para sacar los KM
+  };
+
   return (
     <div className="mobile-container">
-      {/* HEADER: Solo se muestra si hay usuario y no estamos en login */}
+      {/* HEADER */}
       {user && view !== 'login' && (
         <header className="user-header">
           <div className="flex items-center gap-3">
@@ -63,7 +72,7 @@ export default function HomePage() {
         </header>
       )}
 
-      {/* PANTALLA DE AUTENTICACIÓN */}
+      {/* LOGIN/AUTH */}
       {!user && (
         <div id="auth-screen">
           <div className="mb-10 flex flex-col items-center">
@@ -95,20 +104,21 @@ export default function HomePage() {
             </div>
           ) : (
             <div id="register-box">
-               {/* Aquí iría tu formulario de registro similar al de arriba */}
                <button onClick={() => setView('login')} className="text-xs text-gray-500 mt-4">Volver al login</button>
             </div>
           )}
         </div>
       )}
 
-      {/* CONTENIDO PRINCIPAL (RESERVAS) */}
+      {/* HOME / RESERVAS */}
       {user && view === 'home' && (
         <div className="p-5 overflow-y-auto">
           <div className="taxcoin-card">
             <div>
               <p className="text-[10px] font-bold text-[#39FF14] mb-1">Taxcoins</p>
-              <p className="text-2xl font-black text-white">{user.taxcoins?.toFixed(2) || '0.00'} <small className="text-xs text-gray-500">TC</small></p>
+              <p className="text-2xl font-black text-white">
+                {user.taxcoins?.toFixed(2) || '0.00'} <small className="text-xs text-gray-500">TC</small>
+              </p>
             </div>
             <i className="fa-solid fa-crown text-3xl text-[#39FF14] opacity-40"></i>
           </div>
@@ -116,18 +126,28 @@ export default function HomePage() {
           <div className="space-y-4 mt-4">
             <div className="input-group">
               <label>Recogida</label>
-              <input type="text" placeholder="¿Dónde?" id="origin" />
+              <BuscadorDirecciones 
+                placeholder="¿Dónde te recogemos?" 
+                onSelect={(dir) => setOrigen(dir)} 
+              />
             </div>
+
             <div className="input-group">
               <label>Destino</label>
-              <input type="text" placeholder="¿A dónde vas?" id="destination" />
+              <BuscadorDirecciones 
+                placeholder="¿A dónde vas?" 
+                onSelect={(dir) => setDestino(dir)} 
+              />
             </div>
-            <button className="btn-main">CALCULAR PRECIO</button>
+
+            <button onClick={calcularViaje} className="btn-main">
+              CALCULAR PRECIO
+            </button>
           </div>
         </div>
       )}
 
-      {/* NAVEGACIÓN INFERIOR */}
+      {/* NAVEGACIÓN */}
       {user && (
         <nav>
           <div onClick={() => setView('home')} className={`nav-btn ${view === 'home' ? 'active' : ''}`}>
