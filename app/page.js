@@ -1,51 +1,147 @@
-'use client' // Esto le dice a Next.js que es una app interactiva
-import { useEffect, useState } from 'react'
+'use client'
+import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// Tus claves de Supabase que ya tenías
+// Configuración de Supabase (Tus credenciales)
 const S_URL = 'https://wdxtnvblolhqipscpxer.supabase.co';
-const S_KEY = 'tu_clave_aqui';
+const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // Tu llave completa
 const supabase = createClient(S_URL, S_KEY);
 
 export default function HomePage() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState('login'); // login, register, home, hucha
+  const [loading, setLoading] = useState(false);
 
-  // Aquí irán todas tus funciones: intentarAcceso, registrarUsuario, etc.
-  // Adaptadas a React (te las iré pasando si quieres una por una)
+  // Campos del formulario
+  const [loginForm, setLoginForm] = useState({ user: '', pass: '' });
+
+  // 1. Cargar sesión al iniciar
+  useEffect(() => {
+    const savedUser = localStorage.getItem('txmd_user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+      setView('home');
+    }
+  }, []);
+
+  // 2. Función de Acceso
+  const intentarAcceso = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('clientes')
+      .select('*')
+      .eq('usuario', loginForm.user)
+      .single();
+
+    if (data && data.password === loginForm.pass) {
+      setUser(data);
+      localStorage.setItem('txmd_user', JSON.stringify(data));
+      setView('home');
+    } else {
+      alert("Credenciales incorrectas");
+    }
+    setLoading(false);
+  };
 
   return (
     <div className="mobile-container">
-      {/* HEADER */}
-      {user && (
+      {/* HEADER: Solo se muestra si hay usuario y no estamos en login */}
+      {user && view !== 'login' && (
         <header className="user-header">
-           <div className="flex items-center gap-3">
-             <img src={user.foto} className="w-11 h-11 rounded-full border-2 border-[#BC00FF]" />
-             <div>
-               <p className="text-[8px] font-black text-[#BC00FF]">Premium User</p>
-               <h2 className="text-sm font-bold text-white">{user.nombre}</h2>
-             </div>
-           </div>
-           <img src="/logo.png" className="app-logo" />
+          <div className="flex items-center gap-3">
+            <img 
+              src={user.foto || 'https://via.placeholder.com/150'} 
+              className="w-11 h-11 rounded-full border-2 border-[#BC00FF] object-cover"
+              onClick={() => setView('perfil')}
+            />
+            <div>
+              <p className="text-[8px] font-black text-[#BC00FF] uppercase tracking-widest">Premium User</p>
+              <h2 className="text-sm font-bold text-white">{user.nombre}</h2>
+            </div>
+          </div>
+          <img src="/logo.png" alt="TaxMad" className="app-logo" />
         </header>
       )}
 
-      {/* PANTALLA DE LOGIN/AUTH */}
+      {/* PANTALLA DE AUTENTICACIÓN */}
       {!user && (
         <div id="auth-screen">
-            {/* Aquí pegas el contenido de tu div auth-content */}
-            {/* Pero cambiando class por className */}
+          <div className="mb-10 flex flex-col items-center">
+            <img src="/logo.png" alt="TaxMad Logo" className="auth-logo" />
+            <h1 className="text-3xl font-black italic header-gradient">TaxMad</h1>
+            <p className="text-[10px] tracking-[4px] opacity-50 uppercase text-white mt-2">Black Mobility</p>
+          </div>
+
+          {view === 'login' ? (
+            <div id="login-box">
+              <input 
+                type="text" 
+                placeholder="Usuario" 
+                className="input-auth"
+                onChange={(e) => setLoginForm({...loginForm, user: e.target.value})}
+              />
+              <input 
+                type="password" 
+                placeholder="Contraseña" 
+                className="input-auth"
+                onChange={(e) => setLoginForm({...loginForm, pass: e.target.value})}
+              />
+              <button onClick={intentarAcceso} className="btn-main mt-4">
+                {loading ? 'CARGANDO...' : 'ENTRAR'}
+              </button>
+              <p className="mt-6 text-sm text-gray-500">
+                ¿Nuevo aquí? <span className="text-[#00D1FF] font-bold cursor-pointer" onClick={() => setView('register')}>Crea una cuenta</span>
+              </p>
+            </div>
+          ) : (
+            <div id="register-box">
+               {/* Aquí iría tu formulario de registro similar al de arriba */}
+               <button onClick={() => setView('login')} className="text-xs text-gray-500 mt-4">Volver al login</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* CONTENIDO PRINCIPAL (RESERVAS) */}
+      {user && view === 'home' && (
+        <div className="p-5 overflow-y-auto">
+          <div className="taxcoin-card">
+            <div>
+              <p className="text-[10px] font-bold text-[#39FF14] mb-1">Taxcoins</p>
+              <p className="text-2xl font-black text-white">{user.taxcoins?.toFixed(2) || '0.00'} <small className="text-xs text-gray-500">TC</small></p>
+            </div>
+            <i className="fa-solid fa-crown text-3xl text-[#39FF14] opacity-40"></i>
+          </div>
+          
+          <div className="space-y-4 mt-4">
+            <div className="input-group">
+              <label>Recogida</label>
+              <input type="text" placeholder="¿Dónde?" id="origin" />
+            </div>
+            <div className="input-group">
+              <label>Destino</label>
+              <input type="text" placeholder="¿A dónde vas?" id="destination" />
+            </div>
+            <button className="btn-main">CALCULAR PRECIO</button>
+          </div>
         </div>
       )}
 
       {/* NAVEGACIÓN INFERIOR */}
       {user && (
         <nav>
-          <div onClick={() => setView('home')} className={view === 'home' ? 'nav-btn active' : 'nav-btn'}>
-            <i className="fa-solid fa-compass"></i>
-            <span>RESERVAR</span>
+          <div onClick={() => setView('home')} className={`nav-btn ${view === 'home' ? 'active' : ''}`}>
+            <i className="fa-solid fa-compass text-xl block"></i>
+            <span className="text-[9px] font-bold">RESERVAR</span>
           </div>
-          {/* ...otros botones de nav */}
+          <div onClick={() => setView('hucha')} className={`nav-btn ${view === 'hucha' ? 'active' : ''}`}>
+            <i className="fa-solid fa-receipt text-xl block"></i>
+            <span className="text-[9px] font-bold">VIAJES</span>
+          </div>
+          <div onClick={() => setView('perfil')} className={`nav-btn ${view === 'perfil' ? 'active' : ''}`}>
+            <i className="fa-solid fa-user-gear text-xl block"></i>
+            <span className="text-[9px] font-bold">PERFIL</span>
+          </div>
         </nav>
       )}
     </div>
