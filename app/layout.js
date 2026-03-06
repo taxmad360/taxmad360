@@ -1,11 +1,10 @@
 import './globals.css'
 
+// 1. Metadata Estándar (Información de la App)
 export const metadata = {
   title: 'TaxMad – Premium TXMD',
   description: 'Black Mobility PWA',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
   manifest: '/manifest.json',
-  themeColor: '#39FF14',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -13,9 +12,18 @@ export const metadata = {
   },
 }
 
+// 2. Configuración del Viewport (Esto quita los avisos de Vercel)
+export const viewport = {
+  themeColor: '#39FF14',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
+
 export default function RootLayout({ children }) {
-  // REEMPLAZA "TU_API_KEY_AQUI" con tu clave real de Google Cloud console
-  const googleMapsUrl = `https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI&libraries=places,geometry&loading=async`;
+  // ⚠️ REEMPLAZA "TU_API_KEY_AQUI" con tu clave real de Google Cloud console
+  const googleMapsUrl = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places,geometry&callback=initMap`;
 
   return (
     <html lang="es">
@@ -31,7 +39,7 @@ export default function RootLayout({ children }) {
         {/* Script de Google Maps Global */}
         <script src={googleMapsUrl} async defer></script>
       </head>
-      <body className="antialiased">
+      <body className="antialiased bg-black text-white">
         {children}
       </body>
     </html>
