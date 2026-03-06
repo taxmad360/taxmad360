@@ -2,15 +2,12 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// --- LIMPIEZA DE VARIABLES ---
+// --- LIMPIEZA AUTOMÁTICA DE URL ---
 const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const rawKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-// Quitamos posibles espacios o textos extraños como "Url. "
 const S_URL = rawUrl.replace('Url. ', '').trim();
 const S_KEY = rawKey.trim();
 
-// Solo inicializamos si la URL empieza por http
 const supabase = (S_URL.startsWith('http')) ? createClient(S_URL, S_KEY) : null;
 
 export default function DriverTerminal() {
@@ -31,7 +28,7 @@ export default function DriverTerminal() {
     }
   }, []);
 
-  // Escucha en tiempo real (Realtime)
+  // Escucha de viajes en tiempo real
   useEffect(() => {
     if (!supabase || !isConnected || !driver) return;
 
@@ -51,59 +48,114 @@ export default function DriverTerminal() {
 
   const intentarLogin = async (e) => {
     e.preventDefault();
-    if (!supabase) return alert("Error: URL de base de datos inválida.");
+    if (!supabase) return alert("Error de configuración");
     const u = e.target.user.value;
     const p = e.target.pass.value;
 
-    const { data: d } = await supabase.from('drivers').select('*').eq('usuario', u).single();
+    const { data: d, error } = await supabase.from('drivers').select('*').eq('usuario', u).single();
+    
     if (d && d.password === p) {
       setDriver(d);
       setView('panel');
       localStorage.setItem('txmd_driver', JSON.stringify(d));
     } else {
-      alert("Acceso denegado");
+      alert("Credenciales incorrectas");
     }
   };
 
+  const toggleStatus = async () => {
+    if (!driver || !supabase) return;
+    const newStatus = !isConnected;
+    await supabase.from('drivers').update({ estado: newStatus ? 'activo' : 'inactivo' }).eq('id', driver.id);
+    setIsConnected(newStatus);
+  };
+
   if (!mounted) return <div className="min-h-screen bg-black" />;
-  if (!supabase) return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-10 text-center">
-      <h1 className="text-[#39FF14] font-black text-2xl mb-4">ERROR DE CONEXIÓN</h1>
-      <p className="text-zinc-500 text-sm">La URL de Supabase es incorrecta o contiene texto extra como "Url. ". Corrígelo en Vercel Settings.</p>
-    </div>
-  );
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 font-sans">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-[#39FF14] selection:text-black">
       {view === 'login' ? (
-        <div className="max-w-md mx-auto pt-24 text-center">
-          <h1 className="text-5xl font-black italic mb-2">TAX<span className="text-[#39FF14]">MAD</span></h1>
-          <form onSubmit={intentarLogin} className="space-y-4 text-left">
-            <input name="user" className="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl" placeholder="Usuario" required />
-            <input name="pass" type="password" className="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl" placeholder="Password" required />
-            <button type="submit" className="w-full bg-[#39FF14] text-black py-5 rounded-2xl font-black">ENTRAR</button>
+        <div className="max-w-md mx-auto pt-32 px-6 text-center">
+          <h1 className="text-6xl font-black italic tracking-tighter mb-2">
+            TAX<span className="text-[#39FF14]">MAD</span>
+          </h1>
+          <p className="text-[10px] tracking-[5px] text-zinc-500 uppercase mb-12">Driver Terminal</p>
+          
+          <form onSubmit={intentarLogin} className="space-y-4">
+            <input name="user" className="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl focus:border-[#39FF14] outline-none transition-all text-white" placeholder="ID Usuario" required />
+            <input name="pass" type="password" className="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl focus:border-[#39FF14] outline-none transition-all text-white" placeholder="Contraseña" required />
+            <button type="submit" className="w-full bg-[#39FF14] text-black py-5 rounded-2xl font-black shadow-[0_0_20px_rgba(57,255,20,0.3)] active:scale-95 transition-all">
+              ENTRAR AL SISTEMA
+            </button>
           </form>
         </div>
       ) : (
-        <div className="max-w-md mx-auto flex flex-col h-screen">
-          <header className="flex justify-between items-center py-6">
-            <h2 className="text-xl font-black italic">{driver?.nombre}</h2>
-            <button onClick={() => setIsConnected(!isConnected)} className={`px-6 py-2 rounded-full font-black text-[10px] ${isConnected ? 'bg-[#39FF14] text-black shadow-[0_0_20px_#39FF14]' : 'bg-zinc-800'}`}>
+        <div className="max-w-md mx-auto h-screen flex flex-col p-6">
+          <header className="flex justify-between items-center py-6 border-b border-zinc-900">
+            <div>
+              <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Unidad Activa</p>
+              <h2 className="text-xl font-black italic uppercase text-[#39FF14]">{driver?.nombre || 'Admin'}</h2>
+            </div>
+            <button 
+              onClick={toggleStatus}
+              className={`px-6 py-2 rounded-full font-black text-[10px] transition-all duration-500 ${
+                isConnected ? 'bg-[#39FF14] text-black shadow-[0_0_20px_#39FF14]' : 'bg-zinc-800 text-zinc-500'
+              }`}
+            >
               {isConnected ? '• ONLINE' : 'OFFLINE'}
             </button>
           </header>
+
           <main className="flex-1 flex flex-col justify-center items-center">
-             <div className={`w-24 h-24 rounded-full border-2 border-[#39FF14] ${isConnected ? 'animate-ping' : 'opacity-20'}`} />
-             <p className="mt-8 text-[10px] tracking-[4px] text-zinc-500 uppercase">{isConnected ? 'Escaneando...' : 'GPS Pausado'}</p>
+             <div className="relative mb-10">
+                <div className={`w-32 h-32 rounded-full border-2 border-[#39FF14] flex items-center justify-center ${isConnected ? 'animate-ping opacity-20' : 'opacity-10'}`}></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                   <div className={`w-5 h-5 rounded-full bg-[#39FF14] ${isConnected ? 'shadow-[0_0_20px_#39FF14]' : 'grayscale opacity-30'}`}></div>
+                </div>
+             </div>
+             <p className="text-[11px] font-bold tracking-[5px] text-zinc-500 uppercase animate-pulse">
+               {isConnected ? 'Escaneando Servicios...' : 'GPS en pausa'}
+             </p>
           </main>
 
+          {/* TARJETA DE VIAJE EN TIEMPO REAL */}
           {activeTrip && (
-            <div className="fixed inset-x-6 bottom-10 bg-zinc-900 border-2 border-[#39FF14] rounded-[30px] p-8 animate-bounce">
-              <p className="text-[#39FF14] font-black text-xs mb-2 italic">¡NUEVO VIAJE!</p>
-              <p className="text-xl font-bold mb-4">{activeTrip.origen} → {activeTrip.destino}</p>
-              <button onClick={() => setActiveTrip(null)} className="w-full bg-[#39FF14] text-black py-4 rounded-xl font-black">ACEPTAR {activeTrip.precio}€</button>
+            <div className="fixed inset-x-6 bottom-10 bg-zinc-900 border-2 border-[#39FF14] rounded-[35px] p-8 shadow-[0_0_50px_rgba(57,255,20,0.4)] animate-in slide-in-from-bottom-full duration-500 z-50">
+               <div className="flex justify-between items-start mb-6">
+                  <span className="bg-[#39FF14] text-black text-[10px] font-black px-3 py-1 rounded-full uppercase">Nuevo Viaje</span>
+                  <span className="text-2xl font-black text-white">{activeTrip.precio}€</span>
+               </div>
+               
+               <div className="space-y-3 mb-8">
+                  <div>
+                    <p className="text-[9px] text-zinc-500 font-bold uppercase">Recogida</p>
+                    <p className="text-sm font-bold text-white">{activeTrip.origen}</p>
+                  </div>
+                  <div className="border-l-2 border-dashed border-zinc-800 h-4 ml-1"></div>
+                  <div>
+                    <p className="text-[9px] text-zinc-500 font-bold uppercase">Destino</p>
+                    <p className="text-sm font-bold text-zinc-300">{activeTrip.destino}</p>
+                  </div>
+               </div>
+
+               <button 
+                onClick={() => { alert("Viaje Aceptado"); setActiveTrip(null); }}
+                className="w-full bg-[#39FF14] text-black py-5 rounded-2xl font-black text-lg active:scale-95 transition-all"
+               >
+                 ACEPTAR SERVICIO
+               </button>
+               <button onClick={() => setActiveTrip(null)} className="w-full mt-4 text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Ignorar</button>
             </div>
           )}
+          
+          <footer className="pb-6 flex justify-center">
+             <button 
+               onClick={() => { localStorage.removeItem('txmd_driver'); setView('login'); }}
+               className="text-[9px] text-zinc-700 font-bold uppercase tracking-widest hover:text-red-500 transition-colors"
+             >
+               Cerrar Sesión
+             </button>
+          </footer>
         </div>
       )}
     </div>
