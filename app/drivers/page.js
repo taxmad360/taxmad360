@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const S_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wdxtnvblohqipscpxer.supabase.co';
-const S_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''; 
+const S_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHRudmJsb2xocWlwc2NweGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NzQxNzIsImV4cCI6MjA4ODA1MDE3Mn0.xO19SVN8gowDATLWDEpyakcZXbdGg2Iex8C-ZEWL2dM'; 
 const supabase = createClient(S_URL, S_KEY);
 
 export default function DriverTerminal() {
