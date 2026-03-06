@@ -2,88 +2,107 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-const S_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wdxtnvblohqipscpxer.supabase.co';
-const S_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHRudmJsb2xocWlwc2NweGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NzQxNzIsImV4cCI6MjA4ODA1MDE3Mn0.xO19SVN8gowDATLWDEpyakcZXbdGg2Iex8C-ZEWL2dM'; 
-const supabase = createClient(S_URL, S_KEY);
+// Inicialización segura para evitar errores en el build de Vercel
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey) 
+  : null
 
 export default function DriverTerminal() {
-  const [driver, setDriver] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [view, setView] = useState('login');
-  const [trips, setTrips] = useState([]);
+  const [driver, setDriver] = useState(null)
+  const [isConnected, setIsConnected] = useState(false)
+  const [view, setView] = useState('login')
 
+  // Recuperar sesión guardada
   useEffect(() => {
-    const savedDriver = localStorage.getItem('txmd_driver');
-    if (savedDriver) {
-      try {
-        setDriver(JSON.parse(savedDriver));
-        setView('panel');
-      } catch (e) {
-        localStorage.removeItem('txmd_driver');
-      }
+    const saved = localStorage.getItem('txmd_driver')
+    if (saved) {
+      setDriver(JSON.parse(saved))
+      setView('panel')
     }
-  }, []);
+  }, [])
 
-  const intentarLogin = async (e) => {
-    e.preventDefault();
-    const u = e.target.user.value;
-    const p = e.target.pass.value;
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    if (!supabase) return alert("Error: Configuración de base de datos no encontrada.")
 
-    const { data: d, error } = await supabase
+    const user = e.target.user.value
+    const pass = e.target.pass.value
+
+    const { data, error } = await supabase
       .from('drivers')
       .select('*')
-      .eq('usuario', u)
-      .single();
+      .eq('usuario', user)
+      .single()
 
-    if (d && d.password === p) {
-      if (d.acceso_bloqueado) {
-        alert("⚠️ TERMINAL BLOQUEADA");
-        return;
-      }
-      setDriver(d);
-      setView('panel');
-      localStorage.setItem('txmd_driver', JSON.stringify(d));
+    if (data && data.password === pass) {
+      setDriver(data)
+      setView('panel')
+      localStorage.setItem('txmd_driver', JSON.stringify(data))
     } else {
-      alert("Credenciales inválidas");
+      alert("Credenciales incorrectas")
     }
-  };
+  }
 
   const toggleStatus = async () => {
-    if (!driver) return;
-    const newStatus = !isConnected;
-    const { error } = await supabase
+    if (!driver || !supabase) return
+    const nextStatus = !isConnected
+    
+    await supabase
       .from('drivers')
-      .update({ estado: newStatus ? 'activo' : 'inactivo' })
-      .eq('id', driver.id);
-    if (!error) setIsConnected(newStatus);
-  };
+      .update({ estado: nextStatus ? 'activo' : 'inactivo' })
+      .eq('id', driver.id)
+
+    setIsConnected(nextStatus)
+  }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white p-6 font-sans">
       {view === 'login' ? (
-        <div className="p-8 text-center flex flex-col justify-center min-h-screen">
-          <h1 className="text-4xl font-black italic">TAX<span className="text-[#39FF14]">MAD</span></h1>
-          <form onSubmit={intentarLogin} className="mt-8 space-y-4">
-            <input name="user" type="text" className="w-full bg-zinc-900 p-4 rounded-xl" placeholder="Usuario" required />
-            <input name="pass" type="password" className="w-full bg-zinc-900 p-4 rounded-xl" placeholder="••••" required />
-            <button type="submit" className="w-full bg-[#39FF14] text-black py-4 rounded-xl font-black">ENTRAR</button>
+        <div className="max-w-md mx-auto pt-20 text-center">
+          <h1 className="text-6xl font-black italic tracking-tighter mb-2">
+            TAX<span className="text-[#39FF14]">MAD</span>
+          </h1>
+          <p className="text-[10px] tracking-[6px] text-zinc-500 uppercase mb-12">Driver Terminal</p>
+          
+          <form onSubmit={handleLogin} className="space-y-4 text-left">
+            <input name="user" className="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl focus:border-[#39FF14] outline-none transition-all" placeholder="Usuario ID" required />
+            <input name="pass" type="password" className="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl focus:border-[#39FF14] outline-none transition-all" placeholder="Contraseña" required />
+            <button type="submit" className="w-full bg-[#39FF14] text-black py-5 rounded-2xl font-black shadow-[0_0_25px_rgba(57,255,20,0.2)]">ENTRAR AL SISTEMA</button>
           </form>
         </div>
       ) : (
-        <div className="flex flex-col h-screen">
-          <header className="p-5 flex justify-between border-b border-zinc-900">
-            <p className="font-bold">{driver?.nombre}</p>
-            <button onClick={toggleStatus} className={`px-4 py-1 rounded-full text-[10px] font-bold ${isConnected ? 'bg-[#39FF14] text-black' : 'bg-zinc-800 text-zinc-500'}`}>
+        <div className="max-w-md mx-auto h-screen flex flex-col">
+          <header className="flex justify-between items-center py-6 border-b border-zinc-900">
+            <div>
+              <p className="text-[9px] font-bold text-zinc-500 uppercase">Unidad Activa</p>
+              <h2 className="text-xl font-black italic uppercase">{driver?.nombre}</h2>
+            </div>
+            <button 
+              onClick={toggleStatus}
+              className={`px-6 py-2 rounded-full font-black text-[10px] transition-all ${
+                isConnected ? 'bg-[#39FF14] text-black shadow-[0_0_15px_#39FF14]' : 'bg-zinc-800 text-zinc-500'
+              }`}
+            >
               {isConnected ? 'ONLINE' : 'OFFLINE'}
             </button>
           </header>
-          <main className="flex-1 p-6">
-            <div className="h-48 bg-zinc-900 rounded-3xl flex items-center justify-center border border-zinc-800">
-               <p className="text-zinc-600 font-bold uppercase tracking-widest text-[10px]">Mapa GPS Activo</p>
-            </div>
+
+          <main className="flex-1 flex flex-col justify-center items-center">
+             <div className="relative">
+                <div className={`w-32 h-32 rounded-full border-2 border-[#39FF14] flex items-center justify-center ${isConnected ? 'animate-ping opacity-20' : 'opacity-10'}`}></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                   <div className={`w-4 h-4 rounded-full bg-[#39FF14] ${isConnected ? 'shadow-[0_0_15px_#39FF14]' : 'grayscale'}`}></div>
+                </div>
+             </div>
+             <p className="mt-8 text-[11px] font-bold tracking-[4px] text-zinc-500 uppercase">
+               {isConnected ? 'Escaneando Servicios...' : 'GPS en pausa'}
+             </p>
           </main>
         </div>
       )}
     </div>
-  );
+  )
 }
