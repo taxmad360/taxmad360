@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 // --- CONFIGURACIÓN DE CONEXIÓN SEGURA ---
-// Estas variables se configuran en el panel de Vercel (Environment Variables)
+// Se recomienda dejar las comillas vacías aquí y configurar las llaves en el panel de Vercel
 const S_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://wdxtnvblolhqipscpxer.supabase.co';
-const S_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_zOMBuq-XNjESL-0p03fafQ_2hDT6Cni'; 
+const S_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''; 
 const supabase = createClient(S_URL, S_KEY);
 
 export default function DriverTerminal() {
@@ -18,8 +18,12 @@ export default function DriverTerminal() {
   useEffect(() => {
     const savedDriver = localStorage.getItem('txmd_driver');
     if (savedDriver) {
-      setDriver(JSON.parse(savedDriver));
-      setView('panel');
+      try {
+        setDriver(JSON.parse(savedDriver));
+        setView('panel');
+      } catch (e) {
+        localStorage.removeItem('txmd_driver');
+      }
     }
   }, []);
 
@@ -61,7 +65,11 @@ export default function DriverTerminal() {
       })
       .eq('id', driver.id);
 
-    if (!error) setIsConnected(newStatus);
+    if (!error) {
+      setIsConnected(newStatus);
+    } else {
+      alert("Error al cambiar estado: " + error.message);
+    }
   };
 
   const logout = () => {
@@ -105,7 +113,7 @@ export default function DriverTerminal() {
           <header className="p-5 flex justify-between items-center bg-zinc-950/50 backdrop-blur-md border-b border-zinc-900 sticky top-0 z-50">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center font-bold text-[#39FF14] shadow-inner">
-                {driver.nombre[0]}
+                {driver.nombre ? driver.nombre[0] : 'T'}
               </div>
               <div>
                 <p className="text-[9px] text-zinc-500 font-black uppercase tracking-tighter">Driver Oficial</p>
@@ -150,7 +158,7 @@ export default function DriverTerminal() {
                           </p>
                         </div>
                       ) : (
-                        <p>Lista de viajes aquí...</p>
+                        <p className="text-center text-xs text-zinc-500">Lista de viajes disponible</p>
                       )}
                    </div>
                 </div>
@@ -174,15 +182,15 @@ export default function DriverTerminal() {
           {/* MENÚ INFERIOR */}
           <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm h-20 bg-zinc-950/80 backdrop-blur-xl flex justify-around items-center border border-zinc-800 px-6 rounded-3xl shadow-2xl z-50">
             <button onClick={() => setView('panel')} className={`flex flex-col items-center transition-all ${view === 'panel' ? 'text-[#39FF14] scale-110' : 'text-zinc-600'}`}>
-              <i className="fa-solid fa-tower-broadcast text-xl"></i>
+              <span className="text-xl">📡</span>
               <span className="text-[8px] font-black mt-1 uppercase">Radar</span>
             </button>
             <button onClick={() => setView('viajes')} className={`flex flex-col items-center transition-all ${view === 'viajes' ? 'text-[#39FF14] scale-110' : 'text-zinc-600'}`}>
-              <i className="fa-solid fa-route text-xl"></i>
+              <span className="text-xl">🚕</span>
               <span className="text-[8px] font-black mt-1 uppercase">Viajes</span>
             </button>
             <button onClick={() => setView('perfil')} className={`flex flex-col items-center transition-all ${view === 'perfil' ? 'text-[#39FF14] scale-110' : 'text-zinc-600'}`}>
-              <i className="fa-solid fa-user-gear text-xl"></i>
+              <span className="text-xl">👤</span>
               <span className="text-[8px] font-black mt-1 uppercase">Perfil</span>
             </button>
           </nav>
