@@ -1,6 +1,6 @@
 import './globals.css'
 
-// 1. Metadata Estándar (Información de la App)
+// 1. Metadata (SEO y PWA)
 export const metadata = {
   title: 'TaxMad – Premium TXMD',
   description: 'Black Mobility PWA',
@@ -12,7 +12,7 @@ export const metadata = {
   },
 }
 
-// 2. Configuración del Viewport (Esto quita los avisos de Vercel)
+// 2. Viewport (Configuración visual - Evita avisos en Vercel)
 export const viewport = {
   themeColor: '#39FF14',
   width: 'device-width',
@@ -22,21 +22,21 @@ export const viewport = {
 }
 
 export default function RootLayout({ children }) {
-  // ⚠️ REEMPLAZA "TU_API_KEY_AQUI" con tu clave real de Google Cloud console
-  const googleMapsUrl = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places,geometry&callback=initMap`;
+  // Hemos quitado "&callback=initMap" para evitar errores de carga en páginas que no usan mapa
+  const googleMapsUrl = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places,geometry`;
 
   return (
     <html lang="es">
       <head>
-        {/* Cargamos FontAwesome para los iconos */}
+        {/* FontAwesome 6.5.1 - Versión estable para los iconos del terminal */}
         <link 
           rel="stylesheet" 
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
         />
-        {/* El logo para iPhone */}
+        {/* Icono para iPhone */}
         <link rel="apple-touch-icon" href="/logo.png" />
         
-        {/* Script de Google Maps Global */}
+        {/* Google Maps Script */}
         <script src={googleMapsUrl} async defer></script>
       </head>
       <body className="antialiased bg-black text-white">
