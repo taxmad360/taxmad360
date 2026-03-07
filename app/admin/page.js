@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// Conexión limpia usando tus variables de entorno
-const S_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const S_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Conexión usando variables de entorno
+const S_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const S_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(S_URL, S_KEY);
 
 export default function AdminPanel() {
@@ -12,44 +12,45 @@ export default function AdminPanel() {
   const [tab, setTab] = useState('drivers');
   const [drivers, setDrivers] = useState([]);
   
-  // Estado para el formulario de nuevo conductor
-  const [newDriver, setNewDriver] = useState({
-    nombre: '', usuario: '', password: '', comision_pendiente_10: 0
-  });
+  // Estado para los campos del nuevo conductor (solo para la creación)
+  const [nombreForm, setNombreForm] = useState('');
+  const [userForm, setUserForm] = useState('');
+  const [passForm, setPassForm] = useState('');
 
-  // 1. LOGIN DE ADMINISTRADOR
+  // 1. LOGIN DE ADMINISTRADOR (Lee directamente del formulario para evitar bloqueos)
   const loginAdmin = (e) => {
     e.preventDefault();
     const u = e.target.user.value;
     const p = e.target.pass.value;
-    // Credenciales maestras
+    
     if (u === 'superadmin' && p === 'madrid2026') {
       setIsAdmin(true);
       fetchDrivers();
     } else {
-      alert("Acceso Denegado");
+      alert("Acceso Denegado: Usuario o Clave incorrectos.");
     }
   };
 
   // 2. CARGAR LISTA DE CONDUCTORES
   const fetchDrivers = async () => {
-    const { data } = await supabase.from('drivers').select('*').order('created_at', { ascending: false });
-    setDrivers(data || []);
+    const { data, error } = await supabase.from('drivers').select('*').order('created_at', { ascending: false });
+    if (!error) setDrivers(data || []);
   };
 
-  // 3. REGISTRAR NUEVO CONDUCTOR (Función añadida)
-  const handleCreateDriver = async () => {
-    if (!newDriver.nombre || !newDriver.usuario || !newDriver.password) {
-      return alert("Rellena los campos básicos");
-    }
+  // 3. REGISTRAR NUEVO CONDUCTOR
+  const handleCreateDriver = async (e) => {
+    e.preventDefault();
+    if (!nombreForm || !userForm || !passForm) return alert("Completa todos los campos");
     
-    const { error } = await supabase.from('drivers').insert([newDriver]);
+    const { error } = await supabase.from('drivers').insert([
+      { nombre: nombreForm, usuario: userForm, password: passForm, comision_pendiente_10: 0 }
+    ]);
     
     if (error) {
-      alert("Error al registrar: " + error.message);
+      alert("Error: " + error.message);
     } else {
       alert("Conductor registrado con éxito");
-      setNewDriver({ nombre: '', usuario: '', password: '', comision_pendiente_10: 0 });
+      setNombreForm(''); setUserForm(''); setPassForm('');
       fetchDrivers();
     }
   };
@@ -63,44 +64,68 @@ export default function AdminPanel() {
 
   // 5. SALDAR DEUDA
   const resetDeuda = async (id) => {
-    if(!confirm("¿Confirmar que el conductor ha pagado su comisión?")) return;
+    if(!confirm("¿Saldar la deuda de este conductor?")) return;
     await supabase.from('drivers').update({ comision_pendiente_10: 0 }).eq('id', id);
     fetchDrivers();
   };
 
+  // PANTALLA DE LOGIN (Si no es Admin)
   if (!isAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#001229] p-6 text-white font-['Montserrat']">
-        <div className="bg-[#0a2551] w-full max-w-md p-8 rounded-2xl text-center shadow-2xl border border-white/5">
-          <h1 className="text-3xl font-black mb-2 italic">Tax<span className="text-sky-400">Mad</span></h1>
-          <p className="text-[10px] tracking-[4px] text-gray-400 mb-8 uppercase font-bold">Comando Central</p>
-          <form onSubmit={loginAdmin} className="space-y-4 text-left">
-            <input name="user" type="text" placeholder="ID Administrador" className="lm-input-admin w-full" />
-            <input name="pass" type="password" placeholder="Clave Maestra" className="lm-input-admin w-full" />
-            <button className="w-full bg-sky-500 py-4 rounded-xl font-black text-black uppercase mt-4 hover:bg-sky-400 transition-colors">ENTRAR AL SISTEMA</button>
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#001229] p-6 text-white z-[9999] overflow-y-auto">
+        <div className="bg-[#0a2551] w-full max-w-md p-10 rounded-3xl text-center shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10">
+          <h1 className="text-4xl font-black mb-2 italic tracking-tighter">Tax<span className="text-sky-400">Mad</span></h1>
+          <p className="text-[10px] tracking-[5px] text-sky-400/50 mb-10 uppercase font-black">Control Central</p>
+          
+          <form onSubmit={loginAdmin} className="space-y-5 text-left">
+            <div>
+              <label className="text-[9px] font-bold text-gray-400 uppercase ml-2">ID Administrador</label>
+              <input 
+                name="user" 
+                type="text" 
+                className="lm-input-admin w-full mt-1" 
+                placeholder="Ingresa usuario..."
+                required 
+              />
+            </div>
+            <div>
+              <label className="text-[9px] font-bold text-gray-400 uppercase ml-2">Clave Maestra</label>
+              <input 
+                name="pass" 
+                type="password" 
+                className="lm-input-admin w-full mt-1" 
+                placeholder="••••••••"
+                required 
+              />
+            </div>
+            <button type="submit" className="w-full bg-sky-500 py-4 rounded-2xl font-black text-[#001229] uppercase mt-6 hover:bg-sky-400 active:scale-95 transition-all shadow-lg shadow-sky-500/20">
+              ACCEDER AL COMANDO
+            </button>
           </form>
         </div>
       </div>
     )
   }
 
+  // PANEL PRINCIPAL (Si ya es Admin)
   return (
     <div className="min-h-screen bg-[#001229] p-4 md:p-8 text-white font-['Montserrat']">
-      <header className="max-w-6xl mx-auto flex justify-between items-center mb-8 bg-[#0a2551] p-6 rounded-2xl border border-white/5">
+      <header className="max-w-6xl mx-auto flex justify-between items-center mb-10 bg-[#0a2551] p-6 rounded-3xl border border-white/5 shadow-xl">
         <div>
-          <h1 className="text-2xl font-black italic tracking-tighter uppercase">CONTROL <span className="text-sky-400">TOTAL</span></h1>
-          <p className="text-[9px] font-bold text-gray-500 uppercase">Administrador: <span className="text-green-500 font-black">SUPERADMIN</span></p>
+          <h1 className="text-2xl font-black italic tracking-tighter uppercase">DASHBOARD <span className="text-sky-400">MASTER</span></h1>
+          <p className="text-[9px] font-bold text-green-500 uppercase tracking-widest">Sistema En Línea</p>
         </div>
-        <button onClick={() => setIsAdmin(false)} className="bg-rose-500/10 text-rose-500 px-4 py-2 rounded-lg font-bold text-xs uppercase border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all">Desconectar</button>
+        <button onClick={() => location.reload()} className="bg-rose-500/10 text-rose-500 px-5 py-2 rounded-xl font-bold text-[10px] uppercase border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all">Cerrar Sesión</button>
       </header>
 
       <div className="max-w-6xl mx-auto">
-        <div className="flex gap-6 mb-8 border-b border-white/5">
+        {/* TABS NAVEGACIÓN */}
+        <div className="flex gap-8 mb-10 border-b border-white/5">
           {['drivers', 'servicios', 'clientes'].map(t => (
             <button 
               key={t}
               onClick={() => setTab(t)}
-              className={`pb-4 px-2 font-bold text-xs uppercase tracking-widest transition-all ${tab === t ? 'text-sky-400 border-b-2 border-sky-400' : 'text-gray-500'}`}
+              className={`pb-4 px-2 font-black text-[10px] uppercase tracking-[3px] transition-all ${tab === t ? 'text-sky-400 border-b-2 border-sky-400' : 'text-gray-500 hover:text-gray-300'}`}
             >
               {t}
             </button>
@@ -108,71 +133,43 @@ export default function AdminPanel() {
         </div>
 
         {tab === 'drivers' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
-            {/* Formulario Alta mejorado */}
-            <div className="bg-[#0a2551] p-6 rounded-2xl h-fit border border-white/5">
-               <h3 className="text-sky-400 font-black mb-6 uppercase text-[10px] tracking-widest">Registrar Nueva Unidad</h3>
-               <div className="space-y-3">
-                 <input 
-                   type="text" 
-                   placeholder="Nombre Completo" 
-                   className="lm-input-admin" 
-                   value={newDriver.nombre}
-                   onChange={(e) => setNewDriver({...newDriver, nombre: e.target.value})}
-                 />
-                 <input 
-                   type="text" 
-                   placeholder="Usuario de Acceso" 
-                   className="lm-input-admin" 
-                   value={newDriver.usuario}
-                   onChange={(e) => setNewDriver({...newDriver, usuario: e.target.value})}
-                 />
-                 <input 
-                   type="password" 
-                   placeholder="Contraseña" 
-                   className="lm-input-admin" 
-                   value={newDriver.password}
-                   onChange={(e) => setNewDriver({...newDriver, password: e.target.value})}
-                 />
-                 <button 
-                   onClick={handleCreateDriver}
-                   className="w-full bg-green-500 py-3 rounded-xl font-black text-black uppercase mt-4 text-[10px] tracking-widest"
-                 >
-                   Dar de Alta Conductor
-                 </button>
-               </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 animate-in fade-in slide-in-from-bottom-2">
+            {/* Formulario Registro */}
+            <div className="bg-[#0a2551] p-8 rounded-3xl h-fit border border-white/5 shadow-2xl">
+               <h3 className="text-sky-400 font-black mb-8 uppercase text-xs tracking-widest">Alta de Unidad</h3>
+               <form onSubmit={handleCreateDriver} className="space-y-4">
+                 <input type="text" placeholder="Nombre" className="lm-input-admin" value={nombreForm} onChange={(e) => setNombreForm(e.target.value)} />
+                 <input type="text" placeholder="Usuario" className="lm-input-admin" value={userForm} onChange={(e) => setUserForm(e.target.value)} />
+                 <input type="password" placeholder="Clave" className="lm-input-admin" value={passForm} onChange={(e) => setPassForm(e.target.value)} />
+                 <button className="w-full bg-green-500 py-4 rounded-2xl font-black text-black uppercase mt-4 text-[10px] tracking-widest shadow-lg shadow-green-500/20">Registrar</button>
+               </form>
             </div>
 
-            {/* Lista Drivers */}
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {drivers.length === 0 && <p className="text-gray-500 text-xs italic">No hay conductores registrados.</p>}
+            {/* Lista de Drivers */}
+            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
               {drivers.map(d => (
-                <div key={d.id} className={`bg-[#0a2551] p-5 rounded-2xl border border-white/5 shadow-lg ${d.baneado ? 'border-l-4 border-l-rose-500 opacity-60' : ''}`}>
-                  <div className="flex justify-between items-start mb-4">
+                <div key={d.id} className={`bg-[#0a2551] p-6 rounded-3xl border border-white/5 transition-all ${d.baneado ? 'opacity-40 grayscale' : 'hover:border-sky-400/30'}`}>
+                  <div className="flex justify-between items-start mb-6">
                     <div>
-                      <h4 className="font-black text-sm uppercase text-white">{d.nombre}</h4>
-                      <p className="text-[8px] text-gray-500 font-mono">USUARIO: {d.usuario}</p>
+                      <h4 className="font-black text-base uppercase leading-tight">{d.nombre}</h4>
+                      <p className="text-[9px] text-sky-400 font-bold mt-1 uppercase tracking-tighter">User: {d.usuario}</p>
                     </div>
                     <button 
                       onClick={() => toggleBloqueo(d.id, d.baneado)}
-                      className={`text-[9px] font-black uppercase px-2 py-1 rounded border ${d.baneado ? 'text-green-400 border-green-400/30' : 'text-rose-500 border-rose-500/30'}`}
+                      className={`text-[8px] font-black uppercase px-3 py-1.5 rounded-lg border ${d.baneado ? 'text-green-400 border-green-400/20 bg-green-400/5' : 'text-rose-500 border-rose-500/20 bg-rose-500/5'}`}
                     >
-                      {d.baneado ? 'ACTIVAR' : 'BLOQUEAR'}
+                      {d.baneado ? 'Desbloquear' : 'Bloquear'}
                     </button>
                   </div>
-                  <div className="flex justify-between items-end border-t border-white/5 pt-4">
+                  
+                  <div className="flex justify-between items-end border-t border-white/5 pt-6">
                     <div>
-                      <p className="text-[8px] text-gray-500 uppercase font-bold tracking-widest">Comisión 10%</p>
-                      <p className={`text-xl font-black ${d.comision_pendiente_10 > 0 ? 'text-orange-400' : 'text-zinc-500'}`}>
+                      <p className="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-1">Comisión Pendiente</p>
+                      <p className={`text-2xl font-black ${d.comision_pendiente_10 > 0 ? 'text-orange-400' : 'text-zinc-700'}`}>
                         {d.comision_pendiente_10?.toFixed(2) || "0.00"}€
                       </p>
                     </div>
-                    <button 
-                      onClick={() => resetDeuda(d.id)}
-                      className="bg-sky-500 text-black px-4 py-2 rounded-lg font-black text-[9px] uppercase active:scale-95 transition-transform"
-                    >
-                      Saldar
-                    </button>
+                    <button onClick={() => resetDeuda(d.id)} className="bg-sky-500 text-[#001229] px-5 py-2 rounded-xl font-black text-[9px] uppercase shadow-lg shadow-sky-500/10">Cobrado</button>
                   </div>
                 </div>
               ))}
@@ -183,20 +180,20 @@ export default function AdminPanel() {
 
       <style jsx>{`
         .lm-input-admin {
-          background: rgba(0,0,0,0.4);
+          background: #000c1d;
           border: 1px solid rgba(255,255,255,0.05);
-          border-radius: 12px;
-          padding: 14px 16px;
+          border-radius: 15px;
+          padding: 16px;
           color: white;
           width: 100%;
           outline: none;
-          font-size: 12px;
-          transition: all 0.3s ease;
+          font-size: 14px;
+          transition: all 0.3s;
         }
         .lm-input-admin:focus {
-          border-color: #00B5FF;
-          background: rgba(0,0,0,0.6);
-          box-shadow: 0 0 15px rgba(0, 181, 255, 0.1);
+          border-color: #38bdf8;
+          background: #001229;
+          box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
         }
       `}</style>
     </div>
