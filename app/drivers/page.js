@@ -14,7 +14,8 @@ export default function DriverTerminal() {
   const [driver, setDriver] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [view, setView] = useState('login');
-  const [activeTrip, setActiveTrip] = useState(null);
+  const [activeTrip, setActiveTrip] = useState(null); // Viaje entrante (radar)
+  const [currentTrip, setCurrentTrip] = useState(null); // Viaje aceptado (navegación)
   const [mounted, setMounted] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
 
@@ -31,7 +32,7 @@ export default function DriverTerminal() {
 
   // Escucha de viajes en tiempo real
   useEffect(() => {
-    if (!supabase || !isConnected || !driver) return;
+    if (!supabase || !isConnected || !driver || currentTrip) return;
 
     const channel = supabase
       .channel('nuevos-viajes')
@@ -39,7 +40,6 @@ export default function DriverTerminal() {
         { event: 'INSERT', schema: 'public', table: 'viajes', filter: `estado_viaje=eq.pendiente` }, 
         (payload) => {
           if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
-          // Sonido opcional
           const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
           audio.play().catch(() => {});
           setActiveTrip(payload.new);
@@ -48,7 +48,7 @@ export default function DriverTerminal() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [isConnected, driver]);
+  }, [isConnected, driver, currentTrip]);
 
   const intentarLogin = async (e) => {
     e.preventDefault();
@@ -74,7 +74,6 @@ export default function DriverTerminal() {
     setIsConnected(newStatus);
   };
 
-  // --- FUNCIÓN PARA ACEPTAR EL SERVICIO ---
   const aceptarViaje = async () => {
     if (!activeTrip || !driver || !supabase) return;
     setIsAccepting(true);
@@ -87,11 +86,11 @@ export default function DriverTerminal() {
           driver_id: driver.id 
         })
         .eq('id', activeTrip.id)
-        .eq('estado_viaje', 'pendiente'); // Doble check para evitar que otro lo acepte a la vez
+        .eq('estado_viaje', 'pendiente');
 
       if (error) throw error;
 
-      alert("✅ ¡VIAJE ACEPTADO! Dirígete al punto de recogida.");
+      setCurrentTrip(activeTrip); // Pasamos el viaje a la vista de navegación
       setActiveTrip(null); 
       
     } catch (err) {
@@ -100,6 +99,19 @@ export default function DriverTerminal() {
       setActiveTrip(null);
     } finally {
       setIsAccepting(false);
+    }
+  };
+
+  const finalizarViaje = async () => {
+    if (!currentTrip || !supabase) return;
+    const { error } = await supabase
+      .from('viajes')
+      .update({ estado_viaje: 'finalizado' })
+      .eq('id', currentTrip.id);
+
+    if (!error) {
+      setCurrentTrip(null);
+      alert("Servicio completado con éxito");
     }
   };
 
@@ -113,7 +125,6 @@ export default function DriverTerminal() {
             TAX<span className="text-[#39FF14]">MAD</span>
           </h1>
           <p className="text-[10px] tracking-[5px] text-zinc-500 uppercase mb-12">Driver Terminal</p>
-          
           <form onSubmit={intentarLogin} className="space-y-4">
             <input name="user" className="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl focus:border-[#39FF14] outline-none transition-all text-white" placeholder="ID Usuario" required />
             <input name="pass" type="password" className="w-full bg-zinc-900 border border-zinc-800 p-5 rounded-2xl focus:border-[#39FF14] outline-none transition-all text-white" placeholder="Contraseña" required />
@@ -129,37 +140,68 @@ export default function DriverTerminal() {
               <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Unidad Activa</p>
               <h2 className="text-xl font-black italic uppercase text-[#39FF14]">{driver?.nombre || 'Admin'}</h2>
             </div>
-            <button 
-              onClick={toggleStatus}
-              className={`px-6 py-2 rounded-full font-black text-[10px] transition-all duration-500 ${
-                isConnected ? 'bg-[#39FF14] text-black shadow-[0_0_20px_#39FF14]' : 'bg-zinc-800 text-zinc-500'
-              }`}
-            >
-              {isConnected ? '• ONLINE' : 'OFFLINE'}
-            </button>
+            {!currentTrip && (
+              <button 
+                onClick={toggleStatus}
+                className={`px-6 py-2 rounded-full font-black text-[10px] transition-all duration-500 ${
+                  isConnected ? 'bg-[#39FF14] text-black shadow-[0_0_20px_#39FF14]' : 'bg-zinc-800 text-zinc-500'
+                }`}
+              >
+                {isConnected ? '• ONLINE' : 'OFFLINE'}
+              </button>
+            )}
           </header>
 
-          <main className="flex-1 flex flex-col justify-center items-center">
-             <div className="relative mb-10">
-                <div className={`w-32 h-32 rounded-full border-2 border-[#39FF14] flex items-center justify-center ${isConnected ? 'animate-ping opacity-20' : 'opacity-10'}`}></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                   <div className={`w-5 h-5 rounded-full bg-[#39FF14] ${isConnected ? 'shadow-[0_0_20px_#39FF14]' : 'grayscale opacity-30'}`}></div>
+          {currentTrip ? (
+            /* VISTA DE NAVEGACIÓN ACTIVA */
+            <div className="flex-1 flex flex-col py-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="bg-zinc-900 border border-[#39FF14] rounded-[35px] p-8 mb-6 shadow-[0_0_30px_rgba(57,255,20,0.05)]">
+                <p className="text-[10px] text-[#39FF14] font-bold uppercase mb-6 tracking-widest italic">Servicio en curso</p>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-3xl font-black leading-tight">{currentTrip.origen}</h3>
+                    <p className="text-zinc-500 text-[10px] uppercase font-bold mt-1">Punto de Recogida</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <a 
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(currentTrip.origen)}&travelmode=driving`}
+                      target="_blank"
+                      className="flex-1 bg-white text-black py-5 rounded-2xl font-black text-center text-xs flex items-center justify-center gap-3 active:scale-95 transition-all"
+                    >
+                      ABRIR GOOGLE MAPS
+                    </a>
+                  </div>
                 </div>
-             </div>
-             <p className="text-[11px] font-bold tracking-[5px] text-zinc-500 uppercase animate-pulse">
-               {isConnected ? 'Escaneando Servicios...' : 'GPS en pausa'}
-             </p>
-          </main>
+              </div>
+              <button 
+                onClick={finalizarViaje}
+                className="mt-auto w-full bg-zinc-900 text-zinc-500 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[3px] border border-zinc-800 hover:text-white transition-all"
+              >
+                Finalizar Servicio
+              </button>
+            </div>
+          ) : (
+            /* VISTA DEL RADAR (SOLO SI NO HAY VIAJE) */
+            <main className="flex-1 flex flex-col justify-center items-center">
+               <div className="relative mb-10">
+                  <div className={`w-32 h-32 rounded-full border-2 border-[#39FF14] flex items-center justify-center ${isConnected ? 'animate-ping opacity-20' : 'opacity-10'}`}></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                     <div className={`w-5 h-5 rounded-full bg-[#39FF14] ${isConnected ? 'shadow-[0_0_20px_#39FF14]' : 'grayscale opacity-30'}`}></div>
+                  </div>
+               </div>
+               <p className="text-[11px] font-bold tracking-[5px] text-zinc-500 uppercase animate-pulse">
+                 {isConnected ? 'Escaneando Servicios...' : 'GPS en pausa'}
+               </p>
+            </main>
+          )}
 
-          {/* TARJETA DE VIAJE EN TIEMPO REAL */}
-          {activeTrip && (
+          {activeTrip && !currentTrip && (
             <div className="fixed inset-x-6 bottom-10 bg-zinc-900 border-2 border-[#39FF14] rounded-[35px] p-8 shadow-[0_0_50px_rgba(57,255,20,0.4)] animate-in slide-in-from-bottom-full duration-500 z-50">
                <div className="flex justify-between items-start mb-6">
                   <span className="bg-[#39FF14] text-black text-[10px] font-black px-3 py-1 rounded-full uppercase">Nuevo Viaje</span>
                   <span className="text-2xl font-black text-white">{activeTrip.precio}€</span>
                </div>
-               
-               <div className="space-y-3 mb-8">
+               <div className="space-y-3 mb-8 text-left">
                   <div>
                     <p className="text-[9px] text-zinc-500 font-bold uppercase">Recogida</p>
                     <p className="text-sm font-bold text-white">{activeTrip.origen}</p>
@@ -170,29 +212,14 @@ export default function DriverTerminal() {
                     <p className="text-sm font-bold text-zinc-300">{activeTrip.destino}</p>
                   </div>
                </div>
-
-               <button 
-                onClick={aceptarViaje}
-                disabled={isAccepting}
-                className="w-full bg-[#39FF14] text-black py-5 rounded-2xl font-black text-lg active:scale-95 transition-all disabled:opacity-50"
-               >
+               <button onClick={aceptarViaje} disabled={isAccepting} className="w-full bg-[#39FF14] text-black py-5 rounded-2xl font-black text-lg active:scale-95 transition-all disabled:opacity-50">
                  {isAccepting ? 'PROCESANDO...' : 'ACEPTAR SERVICIO'}
-               </button>
-               <button 
-                 onClick={() => setActiveTrip(null)} 
-                 disabled={isAccepting}
-                 className="w-full mt-4 text-[9px] text-zinc-600 font-bold uppercase tracking-widest"
-               >
-                 Ignorar
                </button>
             </div>
           )}
           
-          <footer className="pb-6 flex justify-center">
-             <button 
-               onClick={() => { localStorage.removeItem('txmd_driver'); setView('login'); }}
-               className="text-[9px] text-zinc-700 font-bold uppercase tracking-widest hover:text-red-500 transition-colors"
-             >
+          <footer className="pb-6 flex justify-center mt-4">
+             <button onClick={() => { localStorage.removeItem('txmd_driver'); setView('login'); }} className="text-[9px] text-zinc-700 font-bold uppercase tracking-widest hover:text-red-500 transition-colors">
                Cerrar Sesión
              </button>
           </footer>
