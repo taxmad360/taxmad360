@@ -16,6 +16,7 @@ export default function DriverTerminal() {
   const [view, setView] = useState('login');
   const [activeTrip, setActiveTrip] = useState(null);
   const [mounted, setMounted] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -38,6 +39,9 @@ export default function DriverTerminal() {
         { event: 'INSERT', schema: 'public', table: 'viajes', filter: `estado_viaje=eq.pendiente` }, 
         (payload) => {
           if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+          // Sonido opcional
+          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+          audio.play().catch(() => {});
           setActiveTrip(payload.new);
         }
       )
@@ -52,7 +56,7 @@ export default function DriverTerminal() {
     const u = e.target.user.value;
     const p = e.target.pass.value;
 
-    const { data: d, error } = await supabase.from('drivers').select('*').eq('usuario', u).single();
+    const { data: d } = await supabase.from('drivers').select('*').eq('usuario', u).single();
     
     if (d && d.password === p) {
       setDriver(d);
@@ -68,6 +72,35 @@ export default function DriverTerminal() {
     const newStatus = !isConnected;
     await supabase.from('drivers').update({ estado: newStatus ? 'activo' : 'inactivo' }).eq('id', driver.id);
     setIsConnected(newStatus);
+  };
+
+  // --- FUNCIÓN PARA ACEPTAR EL SERVICIO ---
+  const aceptarViaje = async () => {
+    if (!activeTrip || !driver || !supabase) return;
+    setIsAccepting(true);
+
+    try {
+      const { error } = await supabase
+        .from('viajes')
+        .update({ 
+          estado_viaje: 'aceptado', 
+          driver_id: driver.id 
+        })
+        .eq('id', activeTrip.id)
+        .eq('estado_viaje', 'pendiente'); // Doble check para evitar que otro lo acepte a la vez
+
+      if (error) throw error;
+
+      alert("✅ ¡VIAJE ACEPTADO! Dirígete al punto de recogida.");
+      setActiveTrip(null); 
+      
+    } catch (err) {
+      console.error(err);
+      alert("Lo sentimos, este viaje ya no está disponible.");
+      setActiveTrip(null);
+    } finally {
+      setIsAccepting(false);
+    }
   };
 
   if (!mounted) return <div className="min-h-screen bg-black" />;
@@ -139,12 +172,19 @@ export default function DriverTerminal() {
                </div>
 
                <button 
-                onClick={() => { alert("Viaje Aceptado"); setActiveTrip(null); }}
-                className="w-full bg-[#39FF14] text-black py-5 rounded-2xl font-black text-lg active:scale-95 transition-all"
+                onClick={aceptarViaje}
+                disabled={isAccepting}
+                className="w-full bg-[#39FF14] text-black py-5 rounded-2xl font-black text-lg active:scale-95 transition-all disabled:opacity-50"
                >
-                 ACEPTAR SERVICIO
+                 {isAccepting ? 'PROCESANDO...' : 'ACEPTAR SERVICIO'}
                </button>
-               <button onClick={() => setActiveTrip(null)} className="w-full mt-4 text-[9px] text-zinc-600 font-bold uppercase tracking-widest">Ignorar</button>
+               <button 
+                 onClick={() => setActiveTrip(null)} 
+                 disabled={isAccepting}
+                 className="w-full mt-4 text-[9px] text-zinc-600 font-bold uppercase tracking-widest"
+               >
+                 Ignorar
+               </button>
             </div>
           )}
           
