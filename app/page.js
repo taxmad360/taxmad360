@@ -1,158 +1,143 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import BuscadorDirecciones from './components/BuscadorDirecciones'
 
-const S_URL = 'https://wdxtnvblolhqipscpxer.supabase.co';
-const S_KEY = 'TU_LLAVE_COMPLETA_AQUI'; 
-const supabase = createClient(S_URL, S_KEY);
+// --- CONEXIÓN SEGURA ---
+const S_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/^Url\.\s*/i, '').trim();
+const S_KEY = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
+const supabase = (S_URL.startsWith('http')) ? createClient(S_URL, S_KEY) : null;
 
-export default function HomePage() {
-  const [user, setUser] = useState(null);
-  const [view, setView] = useState('login'); 
-  const [loading, setLoading] = useState(false);
-  const [origen, setOrigen] = useState('');
-  const [destino, setDestino] = useState('');
-  const [loginForm, setLoginForm] = useState({ user: '', pass: '' });
+export default function DriverTerminal() {
+  const [driver, setDriver] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [view, setView] = useState('login');
+  const [activeTrip, setActiveTrip] = useState(null); // El que sale en el radar
+  const [currentTrip, setCurrentTrip] = useState(null); // El aceptado
+  const [mensajes, setMensajes] = useState([]);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('txmd_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-      setView('home');
-    }
+    const saved = localStorage.getItem('txmd_driver');
+    if (saved) { setDriver(JSON.parse(saved)); setView('panel'); }
   }, []);
 
-  const intentarAcceso = async () => {
-    setLoading(true);
-    const { data } = await supabase.from('clientes').select('*').eq('usuario', loginForm.user).single();
-    if (data && data.password === loginForm.pass) {
-      setUser(data);
-      localStorage.setItem('txmd_user', JSON.stringify(data));
-      setView('home');
-    } else {
-      alert("Error de acceso");
+  // REALTIME: Escucha de Viajes y Chat
+  useEffect(() => {
+    if (!supabase || !isConnected || !driver) return;
+
+    // Canal para nuevos viajes
+    const tripChannel = supabase.channel('radar')
+      .on('postgres_changes', { event: 'INSERT', table: 'viajes', filter: 'estado_viaje=eq.pendiente' }, 
+      (payload) => { setActiveTrip(payload.new); })
+      .subscribe();
+
+    // Canal para mensajes (solo si hay viaje activo)
+    let msgChannel;
+    if (currentTrip) {
+      msgChannel = supabase.channel('chat')
+        .on('postgres_changes', { event: 'INSERT', table: 'mensajes', filter: `viaje_id=eq.${currentTrip.id}` }, 
+        (payload) => { setMensajes(prev => [...prev, payload.new]); })
+        .subscribe();
     }
-    setLoading(false);
+
+    return () => { 
+      supabase.removeChannel(tripChannel); 
+      if (msgChannel) supabase.removeChannel(msgChannel);
+    };
+  }, [isConnected, driver, currentTrip]);
+
+  const intentarLogin = async (e) => {
+    e.preventDefault();
+    const { data } = await supabase.from('drivers').select('*').eq('usuario', e.target.user.value).single();
+    if (data && data.password === e.target.pass.value) {
+      setDriver(data); setView('panel');
+      localStorage.setItem('txmd_driver', JSON.stringify(data));
+    } else { alert("Error de acceso"); }
   };
 
-  const cerrarSesion = () => {
-    localStorage.removeItem('txmd_user');
-    setUser(null);
-    setView('login');
+  const aceptarViaje = async () => {
+    const { error } = await supabase.from('viajes').update({ estado_viaje: 'aceptado', driver_id: driver.id }).eq('id', activeTrip.id);
+    if (!error) { setCurrentTrip(activeTrip); setActiveTrip(null); }
   };
+
+  const enviarMsjRapido = async (txt) => {
+    await supabase.from('mensajes').insert([{ viaje_id: currentTrip.id, remitente: 'driver', contenido: txt }]);
+  };
+
+  if (view === 'login') return (
+    <div className="min-h-screen bg-black flex items-center justify-center p-6">
+      <form onSubmit={intentarLogin} className="w-full max-w-xs space-y-4">
+        <h1 className="text-[#39FF14] text-4xl font-black italic text-center mb-10">DRIVERS</h1>
+        <input name="user" placeholder="Usuario" className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
+        <input name="pass" type="password" placeholder="Clave" className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
+        <button className="w-full bg-[#39FF14] text-black py-4 rounded-xl font-black">ENTRAR</button>
+      </form>
+    </div>
+  );
 
   return (
-    <div className="mobile-container">
-      {/* HEADER GLOBAL */}
-      {user && view !== 'login' && (
-        <header className="user-header">
-          <div className="flex items-center gap-3">
-            <img 
-              src={user.foto || 'https://via.placeholder.com/150'} 
-              className="w-11 h-11 rounded-full border-2 border-[#BC00FF] object-cover cursor-pointer"
-              onClick={() => setView('perfil')}
-            />
-            <div>
-              <p className="text-[8px] font-black text-[#BC00FF] uppercase tracking-widest">Premium User</p>
-              <h2 className="text-sm font-bold text-white">{user.nombre}</h2>
+    <div className="min-h-screen bg-black text-white p-6">
+      <header className="flex justify-between items-center mb-10">
+        <h2 className="text-[#39FF14] font-black italic">TAX<span className="text-white">MAD</span></h2>
+        <button onClick={() => setIsConnected(!isConnected)} className={`px-4 py-2 rounded-full text-[10px] font-bold ${isConnected ? 'bg-[#39FF14] text-black shadow-[0_0_15px_#39FF14]' : 'bg-zinc-800'}`}>
+          {isConnected ? 'ONLINE' : 'OFFLINE'}
+        </button>
+      </header>
+
+      {currentTrip ? (
+        <div className="space-y-6 animate-in slide-in-from-bottom-5 duration-500">
+          <div className="bg-zinc-900 p-8 rounded-[35px] border border-[#39FF14]">
+            <p className="text-[10px] text-[#39FF14] font-bold uppercase mb-4">Viaje en curso</p>
+            <h3 className="text-2xl font-black">{currentTrip.origen}</h3>
+            <div className="flex gap-2 mt-6">
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(currentTrip.origen)}`} target="_blank" className="flex-1 bg-white text-black py-4 rounded-xl font-bold text-center text-xs">ABRIR GPS 📍</a>
+              <button onClick={() => setShowChat(true)} className="w-14 bg-zinc-800 rounded-xl flex items-center justify-center text-xl">💬</button>
             </div>
           </div>
-          <img src="/logo.png" alt="TaxMad" className="app-logo" />
-        </header>
-      )}
-
-      {/* 1. VISTA: LOGIN */}
-      {!user && (
-        <div id="auth-screen">
-          <div className="mb-10 flex flex-col items-center">
-            <img src="/logo.png" alt="TaxMad Logo" className="auth-logo" />
-            <h1 className="text-3xl font-black italic header-gradient">TaxMad</h1>
-            <p className="text-[10px] tracking-[4px] opacity-50 uppercase text-white mt-2">Black Mobility</p>
+          <button onClick={() => setCurrentTrip(null)} className="w-full py-4 text-zinc-600 font-bold text-[10px] uppercase tracking-widest">Finalizar Servicio</button>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+          <div className={`w-24 h-24 rounded-full border-2 border-[#39FF14] flex items-center justify-center ${isConnected ? 'animate-ping' : 'opacity-20'}`}>
+            <div className="w-4 h-4 bg-[#39FF14] rounded-full"></div>
           </div>
-          <input type="text" placeholder="Usuario" className="input-auth" onChange={(e) => setLoginForm({...loginForm, user: e.target.value})} />
-          <input type="password" placeholder="Contraseña" className="input-auth" onChange={(e) => setLoginForm({...loginForm, pass: e.target.value})} />
-          <button onClick={intentarAcceso} className="btn-main mt-4">{loading ? '...' : 'ENTRAR'}</button>
+          <p className="mt-8 text-[10px] font-bold tracking-[4px] text-zinc-500 uppercase">{isConnected ? 'Buscando Clientes...' : 'GPS Pausado'}</p>
         </div>
       )}
 
-      {/* 2. VISTA: HOME (RESERVAS) */}
-      {user && view === 'home' && (
-        <div className="p-5 overflow-y-auto animate-in fade-in duration-500">
-          <div className="taxcoin-card">
-            <div>
-              <p className="text-[10px] font-bold text-[#39FF14] mb-1 uppercase">Mis Taxcoins</p>
-              <p className="text-2xl font-black text-white">{user.taxcoins?.toFixed(2) || '0.00'} TC</p>
-            </div>
-            <i className="fa-solid fa-crown text-3xl text-[#39FF14] opacity-40"></i>
+      {/* ALERT DE NUEVO VIAJE */}
+      {activeTrip && !currentTrip && (
+        <div className="fixed inset-x-6 bottom-10 bg-zinc-900 border-2 border-[#39FF14] p-8 rounded-[35px] shadow-2xl z-50">
+          <div className="flex justify-between items-start mb-4">
+            <span className="bg-[#39FF14] text-black px-2 py-1 rounded text-[9px] font-black uppercase">Nuevo viaje</span>
+            <span className="text-2xl font-black">{activeTrip.precio}€</span>
           </div>
-          <div className="space-y-4 mt-4">
-            <div className="input-group">
-              <label>Recogida</label>
-              <BuscadorDirecciones placeholder="¿Dónde estás?" onSelect={setOrigen} />
-            </div>
-            <div className="input-group">
-              <label>Destino</label>
-              <BuscadorDirecciones placeholder="¿A dónde vas?" onSelect={setDestino} />
-            </div>
-            <button className="btn-main">SOLICITAR TAXMAD</button>
-          </div>
+          <p className="font-bold text-sm mb-6">{activeTrip.origen}</p>
+          <button onClick={aceptarViaje} className="w-full bg-[#39FF14] text-black py-4 rounded-xl font-black">ACEPTAR</button>
         </div>
       )}
 
-      {/* 3. VISTA: HUCHA (HISTORIAL) */}
-      {user && view === 'hucha' && (
-        <div className="p-6 overflow-y-auto h-full">
-          <h2 className="text-2xl font-black italic mb-6">Mis <span className="text-[#39FF14]">Viajes</span></h2>
-          <div className="opacity-30 text-center py-20 text-[10px] font-bold uppercase tracking-[4px]">
-            No hay viajes recientes
+      {/* VENTANA DE CHAT */}
+      {showChat && (
+        <div className="fixed inset-0 bg-black z-[100] p-6 flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-[#39FF14] font-black">CHAT CON CLIENTE</h3>
+            <button onClick={() => setShowChat(false)} className="text-xs font-bold">CERRAR X</button>
           </div>
-        </div>
-      )}
-
-      {/* 4. VISTA: PERFIL */}
-      {user && view === 'perfil' && (
-        <div className="p-6 overflow-y-auto h-full text-center">
-           <div className="photo-picker mb-6">
-              <img src={user.foto || 'https://via.placeholder.com/150'} alt="Profile" />
-           </div>
-           <h2 className="text-xl font-black text-white mb-1">{user.nombre}</h2>
-           <p className="text-xs text-zinc-500 mb-8">{user.usuario}</p>
-           
-           <div className="card-txmd text-left space-y-4 mb-8">
-              <div className="flex justify-between border-b border-zinc-800 pb-2">
-                <span className="text-zinc-500 text-[10px] font-bold uppercase">Estado</span>
-                <span className="text-[#39FF14] text-[10px] font-bold">ACTIVO</span>
+          <div className="flex-1 overflow-y-auto space-y-4 mb-6">
+            {mensajes.map((m, i) => (
+              <div key={i} className={`flex ${m.remitente === 'driver' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`p-4 rounded-2xl max-w-[80%] text-sm font-bold ${m.remitente === 'driver' ? 'bg-[#39FF14] text-black' : 'bg-zinc-800 text-white'}`}>{m.contenido}</div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-500 text-[10px] font-bold uppercase">Miembro desde</span>
-                <span className="text-white text-[10px] font-bold">2024</span>
-              </div>
-           </div>
-
-           <button onClick={cerrarSesion} className="text-rose-500 text-[10px] font-black uppercase tracking-[3px] border border-rose-500/30 p-4 rounded-xl w-full">
-              Cerrar Sesión Premium
-           </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {["Ya estoy aquí", "5 min más", "Ok", "En la puerta"].map(t => (
+              <button key={t} onClick={() => enviarMsjRapido(t)} className="bg-zinc-900 py-3 rounded-lg text-[10px] font-bold border border-zinc-800">{t}</button>
+            ))}
+          </div>
         </div>
-      )}
-
-      {/* NAV INFERIOR */}
-      {user && (
-        <nav>
-          <div onClick={() => setView('home')} className={`nav-btn ${view === 'home' ? 'active' : ''}`}>
-            <i className="fa-solid fa-compass text-xl block"></i>
-            <span className="text-[9px] font-bold">RESERVAR</span>
-          </div>
-          <div onClick={() => setView('hucha')} className={`nav-btn ${view === 'hucha' ? 'active' : ''}`}>
-            <i className="fa-solid fa-receipt text-xl block"></i>
-            <span className="text-[9px] font-bold">VIAJES</span>
-          </div>
-          <div onClick={() => setView('perfil')} className={`nav-btn ${view === 'perfil' ? 'active' : ''}`}>
-            <i className="fa-solid fa-user-gear text-xl block"></i>
-            <span className="text-[9px] font-bold">PERFIL</span>
-          </div>
-        </nav>
       )}
     </div>
-  )
+  );
 }
