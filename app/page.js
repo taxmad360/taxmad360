@@ -2,142 +2,183 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// --- CONEXIÓN SEGURA ---
-const S_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/^Url\.\s*/i, '').trim();
+const S_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
 const S_KEY = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
 const supabase = (S_URL.startsWith('http')) ? createClient(S_URL, S_KEY) : null;
 
-export default function DriverTerminal() {
-  const [driver, setDriver] = useState(null);
+export default function DriverApp() {
   const [isConnected, setIsConnected] = useState(false);
-  const [view, setView] = useState('login');
-  const [activeTrip, setActiveTrip] = useState(null); // El que sale en el radar
-  const [currentTrip, setCurrentTrip] = useState(null); // El aceptado
+  const [currentTrip, setCurrentTrip] = useState(null);
   const [mensajes, setMensajes] = useState([]);
+  const [nuevoMsj, setNuevoMsj] = useState('');
   const [showChat, setShowChat] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('txmd_driver');
-    if (saved) { setDriver(JSON.parse(saved)); setView('panel'); }
-  }, []);
+  // 🔔 Función para sonido de alerta
+  const playAlert = () => {
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2505/2505-preview.mp3');
+    audio.play().catch(() => console.log("Esperando interacción para audio"));
+  };
 
-  // REALTIME: Escucha de Viajes y Chat
+  // 📡 Escuchar viajes nuevos (Radar)
   useEffect(() => {
-    if (!supabase || !isConnected || !driver) return;
-
-    // Canal para nuevos viajes
-    const tripChannel = supabase.channel('radar')
-      .on('postgres_changes', { event: 'INSERT', table: 'viajes', filter: 'estado_viaje=eq.pendiente' }, 
-      (payload) => { setActiveTrip(payload.new); })
+    if (!supabase || !isConnected) return;
+    
+    const channel = supabase.channel('radar-driver')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        table: 'viajes', 
+        filter: 'estado_viaje=eq.pendiente' 
+      }, (payload) => { 
+        setCurrentTrip(payload.new);
+        playAlert(); // Suena cuando entra un servicio
+      })
       .subscribe();
 
-    // Canal para mensajes (solo si hay viaje activo)
-    let msgChannel;
-    if (currentTrip) {
-      msgChannel = supabase.channel('chat')
-        .on('postgres_changes', { event: 'INSERT', table: 'mensajes', filter: `viaje_id=eq.${currentTrip.id}` }, 
-        (payload) => { setMensajes(prev => [...prev, payload.new]); })
-        .subscribe();
-    }
+    return () => { supabase.removeChannel(channel); };
+  }, [isConnected]);
 
-    return () => { 
-      supabase.removeChannel(tripChannel); 
-      if (msgChannel) supabase.removeChannel(msgChannel);
-    };
-  }, [isConnected, driver, currentTrip]);
+  // 💬 Escuchar mensajes en tiempo real
+  useEffect(() => {
+    if (!supabase || !currentTrip) return;
+    const msgChannel = supabase.channel(`chat-${currentTrip.id}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        table: 'mensajes', 
+        filter: `viaje_id=eq.${currentTrip.id}` 
+      }, (payload) => { 
+        setMensajes((prev) => [...prev, payload.new]);
+      }).subscribe();
 
-  const intentarLogin = async (e) => {
-    e.preventDefault();
-    const { data } = await supabase.from('drivers').select('*').eq('usuario', e.target.user.value).single();
-    if (data && data.password === e.target.pass.value) {
-      setDriver(data); setView('panel');
-      localStorage.setItem('txmd_driver', JSON.stringify(data));
-    } else { alert("Error de acceso"); }
-  };
+    return () => { supabase.removeChannel(msgChannel); };
+  }, [currentTrip]);
 
   const aceptarViaje = async () => {
-    const { error } = await supabase.from('viajes').update({ estado_viaje: 'aceptado', driver_id: driver.id }).eq('id', activeTrip.id);
-    if (!error) { setCurrentTrip(activeTrip); setActiveTrip(null); }
+    const { data, error } = await supabase
+      .from('viajes')
+      .update({ estado_viaje: 'aceptado' })
+      .eq('id', currentTrip.id)
+      .select()
+      .single();
+    if (!error) setCurrentTrip(data);
   };
 
-  const enviarMsjRapido = async (txt) => {
-    await supabase.from('mensajes').insert([{ viaje_id: currentTrip.id, remitente: 'driver', contenido: txt }]);
+  const finalizarViaje = async () => {
+    await supabase.from('viajes').update({ estado_viaje: 'finalizado' }).eq('id', currentTrip.id);
+    setCurrentTrip(null);
+    setMensajes([]);
   };
 
-  if (view === 'login') return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6">
-      <form onSubmit={intentarLogin} className="w-full max-w-xs space-y-4">
-        <h1 className="text-[#39FF14] text-4xl font-black italic text-center mb-10">DRIVERS</h1>
-        <input name="user" placeholder="Usuario" className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
-        <input name="pass" type="password" placeholder="Clave" className="w-full bg-zinc-900 p-4 rounded-xl outline-none" />
-        <button className="w-full bg-[#39FF14] text-black py-4 rounded-xl font-black">ENTRAR</button>
-      </form>
-    </div>
-  );
+  const enviarMensaje = async (texto) => {
+    const msg = texto || nuevoMsj;
+    if (!msg.trim()) return;
+    await supabase.from('mensajes').insert([{ 
+      viaje_id: currentTrip.id, 
+      remitente: 'driver', 
+      contenido: msg 
+    }]);
+    setNuevoMsj('');
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <header className="flex justify-between items-center mb-10">
-        <h2 className="text-[#39FF14] font-black italic">TAX<span className="text-white">MAD</span></h2>
-        <button onClick={() => setIsConnected(!isConnected)} className={`px-4 py-2 rounded-full text-[10px] font-bold ${isConnected ? 'bg-[#39FF14] text-black shadow-[0_0_15px_#39FF14]' : 'bg-zinc-800'}`}>
-          {isConnected ? 'ONLINE' : 'OFFLINE'}
-        </button>
+    <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center w-full max-w-[414px] mx-auto font-sans">
+      <header className="w-full flex justify-between items-center py-6">
+        <h1 className="text-2xl italic font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-[#39FF14] to-white">TAXMAD <span className="text-[10px] not-italic align-top border border-[#39FF14] px-1 rounded">DRIVER</span></h1>
+        <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-[#39FF14] animate-pulse shadow-[0_0_15px_#39FF14]' : 'bg-red-600'}`}></div>
       </header>
 
-      {currentTrip ? (
-        <div className="space-y-6 animate-in slide-in-from-bottom-5 duration-500">
-          <div className="bg-zinc-900 p-8 rounded-[35px] border border-[#39FF14]">
-            <p className="text-[10px] text-[#39FF14] font-bold uppercase mb-4">Viaje en curso</p>
-            <h3 className="text-2xl font-black">{currentTrip.origen}</h3>
-            <div className="flex gap-2 mt-6">
-              <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(currentTrip.origen)}`} target="_blank" className="flex-1 bg-white text-black py-4 rounded-xl font-bold text-center text-xs">ABRIR GPS 📍</a>
-              <button onClick={() => setShowChat(true)} className="w-14 bg-zinc-800 rounded-xl flex items-center justify-center text-xl">💬</button>
-            </div>
-          </div>
-          <button onClick={() => setCurrentTrip(null)} className="w-full py-4 text-zinc-600 font-bold text-[10px] uppercase tracking-widest">Finalizar Servicio</button>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center h-[60vh]">
-          <div className={`w-24 h-24 rounded-full border-2 border-[#39FF14] flex items-center justify-center ${isConnected ? 'animate-ping' : 'opacity-20'}`}>
-            <div className="w-4 h-4 bg-[#39FF14] rounded-full"></div>
-          </div>
-          <p className="mt-8 text-[10px] font-bold tracking-[4px] text-zinc-500 uppercase">{isConnected ? 'Buscando Clientes...' : 'GPS Pausado'}</p>
-        </div>
-      )}
+      <button 
+        onClick={() => setIsConnected(!isConnected)}
+        className={`w-full py-5 rounded-[24px] font-black uppercase tracking-[4px] text-[10px] transition-all duration-500 ${isConnected ? 'bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30' : 'bg-zinc-900 text-zinc-500 border border-white/5 shadow-none'}`}
+      >
+        {isConnected ? '• UNIDAD EN SERVICIO' : 'IR AL TRABAJO'}
+      </button>
 
-      {/* ALERT DE NUEVO VIAJE */}
-      {activeTrip && !currentTrip && (
-        <div className="fixed inset-x-6 bottom-10 bg-zinc-900 border-2 border-[#39FF14] p-8 rounded-[35px] shadow-2xl z-50">
-          <div className="flex justify-between items-start mb-4">
-            <span className="bg-[#39FF14] text-black px-2 py-1 rounded text-[9px] font-black uppercase">Nuevo viaje</span>
-            <span className="text-2xl font-black">{activeTrip.precio}€</span>
-          </div>
-          <p className="font-bold text-sm mb-6">{activeTrip.origen}</p>
-          <button onClick={aceptarViaje} className="w-full bg-[#39FF14] text-black py-4 rounded-xl font-black">ACEPTAR</button>
-        </div>
-      )}
+      <div className="w-full mt-10">
+        {isConnected ? (
+          <div className="w-full">
+            {!currentTrip ? (
+              <div className="bg-zinc-900/30 border border-white/5 rounded-[40px] text-center py-24">
+                <div className="relative w-20 h-20 mx-auto mb-6">
+                   <div className="absolute inset-0 border-4 border-[#39FF14]/20 rounded-full"></div>
+                   <div className="absolute inset-0 border-4 border-[#39FF14] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <p className="text-zinc-500 font-bold uppercase text-[9px] tracking-[5px] animate-pulse">Buscando Clientes</p>
+              </div>
+            ) : (
+              <div className="bg-[#0f0f0f] border-2 border-[#39FF14] p-8 rounded-[40px] animate-in zoom-in duration-300">
+                <div className="flex justify-between items-start mb-6">
+                  <span className="bg-[#39FF14] text-black text-[9px] font-black px-3 py-1 rounded-full uppercase">Servicio Disponible</span>
+                  <span className="text-2xl font-black text-white">{currentTrip.precio}€</span>
+                </div>
+                
+                <div className="space-y-4 mb-8">
+                  <div>
+                    <p className="text-[9px] text-zinc-500 uppercase font-black">Recogida</p>
+                    <h3 className="text-lg font-bold leading-tight">{currentTrip.origen}</h3>
+                  </div>
+                  <div className="border-l-2 border-dashed border-zinc-800 ml-1 py-1 h-4"></div>
+                  <div>
+                    <p className="text-[9px] text-zinc-500 uppercase font-black">Destino</p>
+                    <h3 className="text-lg font-bold text-zinc-300">{currentTrip.destino}</h3>
+                  </div>
+                </div>
 
-      {/* VENTANA DE CHAT */}
+                {currentTrip.estado_viaje === 'pendiente' ? (
+                  <button onClick={aceptarViaje} className="w-full bg-[#39FF14] text-black py-5 rounded-[20px] font-black uppercase text-xs shadow-[0_10px_30px_rgba(57,255,20,0.2)]">ACEPTAR VIAJE</button>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <button onClick={() => setShowChat(true)} className="flex-1 bg-zinc-800 text-white py-4 rounded-xl font-bold text-[10px] uppercase">CHAT 💬</button>
+                      <button className="flex-1 bg-[#00D1FF] text-black py-4 rounded-xl font-bold text-[10px] uppercase">Waze / Maps 📍</button>
+                    </div>
+                    <button onClick={finalizarViaje} className="w-full bg-white text-black py-4 rounded-xl font-black uppercase text-[10px]">FINALIZAR SERVICIO</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+             <p className="text-zinc-700 font-black uppercase text-xs tracking-[8px]">FUERA DE LÍNEA</p>
+          </div>
+        )}
+      </div>
+
+      {/* CHAT MODAL DRIVER */}
       {showChat && (
-        <div className="fixed inset-0 bg-black z-[100] p-6 flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-[#39FF14] font-black">CHAT CON CLIENTE</h3>
-            <button onClick={() => setShowChat(false)} className="text-xs font-bold">CERRAR X</button>
+        <div className="fixed inset-0 bg-black z-[5000] p-6 flex flex-col animate-in slide-in-from-bottom">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-xl font-black italic">COMUNICACIÓN <span className="text-[#39FF14]">CLIENTE</span></h2>
+            <button onClick={() => setShowChat(false)} className="bg-white/5 px-4 py-2 rounded-full text-[9px] font-black uppercase">Cerrar</button>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-4 mb-6">
+
+          <div className="flex-1 overflow-y-auto space-y-4 no-scrollbar pb-4">
             {mensajes.map((m, i) => (
               <div key={i} className={`flex ${m.remitente === 'driver' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`p-4 rounded-2xl max-w-[80%] text-sm font-bold ${m.remitente === 'driver' ? 'bg-[#39FF14] text-black' : 'bg-zinc-800 text-white'}`}>{m.contenido}</div>
+                <div className={`p-4 rounded-[20px] max-w-[85%] text-sm font-bold ${m.remitente === 'driver' ? 'bg-[#39FF14] text-black' : 'bg-zinc-900 text-white border border-white/5'}`}>
+                  {m.contenido}
+                </div>
               </div>
             ))}
           </div>
+
           <div className="grid grid-cols-2 gap-2 mb-4">
-            {["Ya estoy aquí", "5 min más", "Ok", "En la puerta"].map(t => (
-              <button key={t} onClick={() => enviarMsjRapido(t)} className="bg-zinc-900 py-3 rounded-lg text-[10px] font-bold border border-zinc-800">{t}</button>
+            {["Estoy llegando", "5 minutos", "Ok recibido", "En el punto"].map(t => (
+              <button key={t} onClick={() => enviarMensaje(t)} className="bg-zinc-900 border border-white/5 py-3 rounded-xl text-[9px] font-bold text-[#00D1FF] uppercase">{t}</button>
             ))}
+          </div>
+
+          <div className="flex gap-2">
+            <input 
+              value={nuevoMsj} 
+              onChange={(e) => setNuevoMsj(e.target.value)} 
+              placeholder="Escribe al cliente..." 
+              className="flex-1 bg-zinc-900 border border-white/10 p-4 rounded-xl outline-none focus:border-[#39FF14] text-sm" 
+            />
+            <button onClick={() => enviarMensaje()} className="bg-[#00D1FF] text-black px-6 rounded-xl font-black uppercase text-[10px]">OK</button>
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }
