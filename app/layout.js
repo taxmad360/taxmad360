@@ -11,7 +11,9 @@ export const metadata = {
     title: 'TaxMad',
   },
   icons: {
-    apple: '/logo.png',
+    // Cambiado de /logo.png a /logotipo.png para coincidir con tu carpeta public
+    apple: '/logotipo.png',
+    icon: '/logotipo.png',
   },
 }
 
@@ -24,7 +26,8 @@ export const viewport = {
 }
 
 export default function RootLayout({ children }) {
-  const googleMapsUrl = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places,geometry`;
+  // Se añade loading=async en la URL para resolver el warning de la consola
+  const googleMapsUrl = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places,geometry&loading=async`;
 
   return (
     <html lang="es">
@@ -38,8 +41,8 @@ export default function RootLayout({ children }) {
         <main className="min-h-screen">
           {children}
         </main>
-        {/* Cargamos Google Maps de forma segura al final */}
-        <Script src={googleMapsUrl} strategy="afterInteractive" />
+        {/* Usamos lazyOnload para que no interfiera con la carga inicial de la PWA */}
+        <Script src={googleMapsUrl} strategy="lazyOnload" />
       </body>
     </html>
   )
