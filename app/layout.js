@@ -1,4 +1,5 @@
 import './globals.css'
+import Script from 'next/script'
 
 export const metadata = {
   title: 'TaxMad – Premium TXMD',
@@ -23,7 +24,6 @@ export const viewport = {
 }
 
 export default function RootLayout({ children }) {
-  // Nota: Asegúrate de que esta API Key sea la definitiva
   const googleMapsUrl = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries=places,geometry`;
 
   return (
@@ -32,15 +32,14 @@ export default function RootLayout({ children }) {
         <link 
           rel="stylesheet" 
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
-          precedence="default"
         />
-        {/* Cargamos Google Maps de forma optimizada */}
-        <script src={googleMapsUrl} async defer></script>
       </head>
-      <body className="antialiased bg-black text-white selection:bg-neon-green selection:text-black">
+      <body className="antialiased bg-black text-white">
         <main className="min-h-screen">
           {children}
         </main>
+        {/* Cargamos Google Maps de forma segura al final */}
+        <Script src={googleMapsUrl} strategy="afterInteractive" />
       </body>
     </html>
   )
