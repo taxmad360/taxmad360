@@ -1,51 +1,63 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { calcularTarifaTaxMad, obtenerDistanciaGoogle } from '@/lib/utils/tarifa'
+import { calcularTarifaTaxMad } from '@/lib/utils/tarifa' // Asegura que esta función sea pura
 
-const S_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').trim();
-const S_KEY = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
-const supabase = (S_URL.startsWith('http')) ? createClient(S_URL, S_KEY) : null;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+);
 
 export default function ClientApp() {
   const [viajeActivo, setViajeActivo] = useState(null);
   const [mensajes, setMensajes] = useState([]);
   const [nuevoMsj, setNuevoMsj] = useState('');
-  const [showChat, setShowChat] = useState(false);
-  const [isListening, setIsListening] = useState(null);
+  const [precioCalculado, setPrecioCalculado] = useState(0); // Estado centralizado
   
-  // Estados para el cálculo de precio
-  const [distanciaEstimada, setDistanciaEstimada] = useState(0);
-  const [mostrandoPrecio, setMostrandoPrecio] = useState(false);
-  const [formDatos, setFormDatos] = useState({ origen: '', destino: '' });
+  // ... (tus otros estados)
 
-  // 📡 Realtime: Sincronización
+  // 1. Corrección: Enviar mensaje al chat
+  const enviarMensaje = async (e) => {
+    e.preventDefault();
+    if (!nuevoMsj.trim()) return;
+    await supabase.from('mensajes').insert({
+      viaje_id: viajeActivo.id,
+      contenido: nuevoMsj,
+      remitente: 'cliente'
+    });
+    setNuevoMsj('');
+  };
+
+  // 2. Optimización: Memoizar el cálculo para evitar recalculos innecesarios
+  const calcularPrecioFinal = useCallback(() => {
+    return calcularTarifaTaxMad({
+      esAeropuerto: formDatos.destino.toLowerCase().includes('aeropuerto'),
+      esDentroM30: true, // Esto debería venir de una lógica de geocerca real
+      distanciaKm: distanciaEstimada,
+      fechaHora: new Date(),
+      esPrecontratado: true
+    });
+  }, [formDatos, distanciaEstimada]);
+
+  // Actualiza el precio solo cuando cambian los datos
   useEffect(() => {
-    if (!supabase || !viajeActivo?.id) return;
-    const channel = supabase.channel(`viaje-${viajeActivo.id}`)
-      .on('postgres_changes', { event: 'INSERT', table: 'mensajes', filter: `viaje_id=eq.${viajeActivo.id}` }, 
-        (payload) => setMensajes((prev) => [...prev, payload.new])
-      )
-      .on('postgres_changes', { event: 'UPDATE', table: 'viajes', filter: `id=eq.${viajeActivo.id}` }, 
-        (payload) => setViajeActivo(payload.new)
-      ).subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [viajeActivo]);
+    setPrecioCalculado(calcularPrecioFinal());
+  }, [calcularPrecioFinal]);
 
-  // 🎙️ Dictado por Voz Mejorado
+  // 3. Corrección de voz: Seguridad en el cliente
   const handleDictado = (campo) => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return alert("Dictado no soportado");
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'es-ES';
-    recognition.start();
+    if (typeof window === 'undefined') return;
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) return alert("Dictado no soportado");
+    
+    const rec = new Recognition();
+    rec.lang = 'es-ES';
+    rec.start();
     setIsListening(campo);
-    recognition.onresult = (e) => {
-      const texto = e.results[0][0].transcript;
-      setFormDatos(prev => ({ ...prev, [campo]: texto }));
+    rec.onresult = (e) => {
+      setFormDatos(prev => ({ ...prev, [campo]: e.results[0][0].transcript }));
       setIsListening(null);
     };
-    recognition.onend = () => setIsListening(null);
   };
 
   // 💰 Lógica de Pre-Visualización de Tarifa
