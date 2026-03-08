@@ -1,5 +1,6 @@
 /**
  * Motor de cálculo de tarifas TaxMad 2026 con Integración Google Maps
+ * Corregido para evitar errores de compilación en Vercel
  */
 
 const FESTIVOS_MADRID_2026 = [
@@ -11,20 +12,29 @@ const FESTIVOS_MADRID_2026 = [
 
 // Función para obtener KM reales desde Google Maps
 export async function obtenerDistanciaGoogle(origen, destino) {
+  // PROTECCIÓN: Si no estamos en el navegador o Google no está cargado, devolvemos un estimado
+  if (typeof window === 'undefined' || !window.google || !window.google.maps) {
+    console.warn("Google Maps API no disponible en este entorno.");
+    return 10; // Distancia por defecto para que la app no se rompa
+  }
+
   try {
-    const service = new google.maps.DistanceMatrixService();
+    const service = new window.google.maps.DistanceMatrixService();
     const response = await service.getDistanceMatrix({
-      origins: [origen], // Puede ser dirección o {lat, lng}
+      origins: [origen],
       destinations: [destino],
-      travelMode: google.maps.TravelMode.DRIVING,
-      unitSystem: google.maps.UnitSystem.METRIC,
+      travelMode: window.google.maps.TravelMode.DRIVING,
+      unitSystem: window.google.maps.UnitSystem.METRIC,
     });
 
-    const distanciaMetros = response.rows[0].elements[0].distance.value;
-    return distanciaMetros / 1000; // Retorna KM
+    if (response.rows[0].elements[0].status === "OK") {
+      const distanciaMetros = response.rows[0].elements[0].distance.value;
+      return distanciaMetros / 1000; // Retorna KM
+    }
+    return 10; // Fallback si la dirección no se encuentra
   } catch (error) {
     console.error("Error calculando distancia:", error);
-    return 0;
+    return 10;
   }
 }
 
@@ -36,9 +46,12 @@ export function calcularTarifaTaxMad({
   fechaHora,
   esPrecontratado
 }) {
-  const hora = fechaHora.getHours();
-  const diaSemana = fechaHora.getDay();
-  const fechaISO = fechaHora.toISOString().split('T')[0];
+  // PROTECCIÓN: Validar que fechaHora sea un objeto Date válido
+  const fecha = (fechaHora instanceof Date && !isNaN(fechaHora)) ? fechaHora : new Date();
+  
+  const hora = fecha.getHours();
+  const diaSemana = fecha.getDay();
+  const fechaISO = fecha.toISOString().split('T')[0];
 
   // 1. TARIFA PRECONTRATADA (Gestión)
   const TARIFA_PRECONTRATADO = 7.00;
@@ -61,7 +74,7 @@ export function calcularTarifaTaxMad({
     const inicioT7 = 8.00;
     const metrosIncluidos = 1.450;
     const precioKmExtra = aplicarTarifa2 ? 1.60 : 1.40;
-    const distanciaExtra = Math.max(0, distanciaKm - (metrosIncluidos / 1000));
+    const distanciaExtra = Math.max(0, (distanciaKm || 0) - (metrosIncluidos / 1000));
     
     let total = inicioT7 + (distanciaExtra * precioKmExtra);
     if (esPrecontratado) total += TARIFA_PRECONTRATADO;
@@ -73,7 +86,7 @@ export function calcularTarifaTaxMad({
     ? { bajada: 3.20, km: 1.60 } 
     : { bajada: 2.55, km: 1.40 };
 
-  let total = config.bajada + (distanciaKm * config.km);
+  let total = config.bajada + ((distanciaKm || 0) * config.km);
 
   // 6. SUPLEMENTOS ESPECIALES (Navidad)
   const esNocheEspecial = (fechaISO === "2026-12-24" || fechaISO === "2026-12-31") && esNocturno;
