@@ -6,10 +6,11 @@ const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat
 
 export const metadata = {
   title: 'TaxMad – Premium TXMD',
+  description: 'Black Mobility PWA',
   manifest: '/manifest.json',
   icons: {
-    icon: '/logotipo.png',
-    apple: '/logotipo.png',
+    apple: '/logo.png', // Corregido
+    icon: '/logo.png',  // Corregido
   },
 }
 
