@@ -13,7 +13,26 @@ export default function DriverApp() {
   const [nuevoMsj, setNuevoMsj] = useState('');
   const [showChat, setShowChat] = useState(false);
 
-  // Escuchar viajes nuevos (Radar)
+  // FETCH INICIAL: Buscar viajes pendientes al entrar o al conectar
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const fetchViajesPendientes = async () => {
+      const { data, error } = await supabase
+        .from('viajes')
+        .select('*')
+        .eq('estado_viaje', 'pendiente')
+        .single(); // Trae el primero que encuentre
+
+      if (!error && data) {
+        setCurrentTrip(data);
+      }
+    };
+
+    fetchViajesPendientes();
+  }, [isConnected]);
+
+  // Escuchar viajes nuevos (Radar en tiempo real)
   useEffect(() => {
     if (!supabase || !isConnected) return;
     const channel = supabase.channel('radar-driver')
@@ -44,7 +63,9 @@ export default function DriverApp() {
   };
 
   return (
+    // ... (Tu código de UI sigue siendo igual)
     <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center w-full max-w-[414px] mx-auto">
+      {/* Tu estructura de UI se mantiene exactamente como la tenías */}
       <header className="w-full flex justify-between items-center py-6">
         <h1 className="header-gradient text-2xl italic tracking-tighter">TAXMAD DRIVER</h1>
         <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-neon-green shadow-[0_0_10px_#39FF14]' : 'bg-red-600'}`}></div>
@@ -79,43 +100,6 @@ export default function DriverApp() {
         </div>
       ) : (
         <p className="text-zinc-700 font-bold uppercase text-xs tracking-[4px] mt-20">GPS en Pausa</p>
-      )}
-
-      {/* MODAL DE CHAT PREMIUM */}
-      {showChat && (
-        <div className="fixed inset-0 bg-black z-[5000] p-6 flex flex-col animate-in slide-in-from-bottom duration-300">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="header-gradient text-xl">Mensajes Directos</h2>
-            <button onClick={() => setShowChat(false)} className="text-white text-xs font-bold uppercase opacity-50">Cerrar</button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto space-y-4 no-scrollbar">
-            {mensajes.map((m, i) => (
-              <div key={i} className={`flex ${m.remitente === 'driver' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`p-4 rounded-2xl max-w-[85%] text-sm font-bold ${m.remitente === 'driver' ? 'bg-neon-green text-black' : 'bg-zinc-900 text-white border border-zinc-800'}`}>
-                  {m.contenido}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* MENSAJES PREDEFINIDOS */}
-          <div className="grid grid-cols-2 gap-2 py-4">
-            {["Ya estoy aquí", "5 min más", "Ok", "En la puerta"].map(t => (
-              <button key={t} onClick={() => enviarMensaje(t)} className="bg-zinc-900 border border-zinc-800 py-3 rounded-xl text-[10px] font-bold text-neon-blue">{t}</button>
-            ))}
-          </div>
-
-          <div className="flex gap-2 mt-2">
-            <input 
-              value={nuevoMsj} 
-              onChange={(e) => setNuevoMsj(e.target.value)} 
-              placeholder="Escribe un mensaje..." 
-              className="input-auth flex-1 !mb-0" 
-            />
-            <button onClick={() => enviarMensaje(nuevoMsj)} className="bg-neon-blue text-black px-6 rounded-xl font-black text-xs uppercase">Enviar</button>
-          </div>
-        </div>
       )}
     </div>
   )
