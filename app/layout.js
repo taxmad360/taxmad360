@@ -25,7 +25,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   // Asegúrate de tener la variable en tu archivo .env.local
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA&libraries
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;AIzaSyDxdjJ1HyJoVgeP6NFoS2i4va-tdRjrJIA
     const googleMapsUrl = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry&loading=async`;
 
   return (
