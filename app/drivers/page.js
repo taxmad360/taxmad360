@@ -5,8 +5,8 @@ import { createClient } from "@supabase/supabase-js";
 
 // conexión a Supabase
 const supabase = createClient(
-  process.env.Url. https://wdxtnvblolhqipscpxer.supabase.com,
-  process.env.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHRudmJsb2xocWlwc2NweGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NzQxNzIsImV4cCI6MjA4ODA1MDE3Mn0.xO19SVN8gowDATLWDEpyakcZXbdGg2Iex8C-ZEWL2dM
+  "https://wdxtnvblolhqipscpxer.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHRudmJsb2xocWlwc2NweGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NzQxNzIsImV4cCI6MjA4ODA1MDE3Mn0.xO19SVN8gowDATLWDEpyakcZXbdGg2Iex8C-ZEWL2dM"
 );
 
 export default function DriversPage() {
@@ -17,14 +17,17 @@ export default function DriversPage() {
 
   // obtener usuario de sesión
   useEffect(() => {
+
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
+
       if (data?.user) {
         setUser(data.user);
       }
     };
 
     getUser();
+
   }, []);
 
   // iniciar GPS
@@ -36,22 +39,32 @@ export default function DriversPage() {
     }
 
     navigator.geolocation.watchPosition(
+
       (position) => {
+
         setGpsStatus("GPS activo");
 
-        console.log("Lat:", position.coords.latitude);
-        console.log("Lng:", position.coords.longitude);
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        console.log("Lat:", lat);
+        console.log("Lng:", lng);
 
       },
+
       (error) => {
+
         console.error(error);
         setGpsStatus("GPS bloqueado");
+
       },
+
       {
         enableHighAccuracy: true,
         maximumAge: 10000,
         timeout: 10000
       }
+
     );
 
   }, []);
@@ -65,6 +78,7 @@ export default function DriversPage() {
     }
 
     const nuevoEstado = !isConnected;
+
     setIsConnected(nuevoEstado);
 
     const { error } = await supabase
@@ -73,14 +87,21 @@ export default function DriversPage() {
       .eq("id", user.id);
 
     if (error) {
+
       console.error("Error al actualizar estado:", error);
+
       setIsConnected(!nuevoEstado);
+
     } else {
+
       console.log(`Estado cambiado a: ${nuevoEstado ? "ONLINE" : "OFFLINE"}`);
+
     }
+
   };
 
   return (
+
     <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
 
       <h1 className="text-4xl font-black mb-8">
@@ -90,15 +111,22 @@ export default function DriversPage() {
       <div className="bg-[#0d1626] p-10 rounded-3xl shadow-lg text-center w-[320px]">
 
         <div className="flex justify-between mb-6">
+
           <span>Sistema</span>
-          <span className={`px-3 py-1 rounded-full text-sm ${
-            isConnected ? "bg-green-500 text-black" : "bg-gray-600"
-          }`}>
+
+          <span
+            className={`px-3 py-1 rounded-full text-sm ${
+              isConnected ? "bg-green-500 text-black" : "bg-gray-600"
+            }`}
+          >
             {isConnected ? "ONLINE" : "OFFLINE"}
           </span>
+
         </div>
 
-        <p className="text-gray-400 mb-8">{gpsStatus}</p>
+        <p className="text-gray-400 mb-8">
+          {gpsStatus}
+        </p>
 
         <button
           onClick={toggleOnlineStatus}
@@ -114,5 +142,7 @@ export default function DriversPage() {
       </div>
 
     </div>
+
   );
+
 }
