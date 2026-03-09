@@ -1,148 +1,80 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-// conexión a Supabase
-const supabase = createClient(
-  "https://wdxtnvblolhqipscpxer.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkeHRudmJsb2xocWlwc2NweGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NzQxNzIsImV4cCI6MjA4ODA1MDE3Mn0.xO19SVN8gowDATLWDEpyakcZXbdGg2Iex8C-ZEWL2dM"
-);
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export default function DriversPage() {
-
+  const supabase = createClientComponentClient();
   const [user, setUser] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [gpsStatus, setGpsStatus] = useState("GPS en espera");
+  const [gpsStatus, setGpsStatus] = useState("Iniciando GPS...");
 
-  // obtener usuario de sesión
   useEffect(() => {
-
     const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-
-      if (data?.user) {
-        setUser(data.user);
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setUser(user);
     };
-
     getUser();
+  }, [supabase]);
 
-  }, []);
-
-  // iniciar GPS
   useEffect(() => {
+    if (!user || !isConnected) return;
 
-    if (!("geolocation" in navigator)) {
-      setGpsStatus("GPS no disponible");
-      return;
-    }
+    const watchId = navigator.geolocation.watchPosition(
+      async (position) => {
+        setGpsStatus("Transmitiendo ubicación...");
+        const { latitude: lat, longitude: lng } = position.coords;
 
-    navigator.geolocation.watchPosition(
+        // ACTUALIZACIÓN CRÍTICA: Enviamos la posición a Supabase
+        const { error } = await supabase
+          .from("conductores")
+          .update({ 
+            last_lat: lat, 
+            last_lng: lng, 
+            last_update: new Date().toISOString() 
+          })
+          .eq("id", user.id);
 
-      (position) => {
-
-        setGpsStatus("GPS activo");
-
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-
-        console.log("Lat:", lat);
-        console.log("Lng:", lng);
-
+        if (error) console.error("Error GPS Sync:", error.message);
       },
-
-      (error) => {
-
-        console.error(error);
-        setGpsStatus("GPS bloqueado");
-
-      },
-
-      {
-        enableHighAccuracy: true,
-        maximumAge: 10000,
-        timeout: 10000
-      }
-
+      (error) => setGpsStatus("Error de señal GPS"),
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
     );
 
-  }, []);
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [user, isConnected, supabase]);
 
-  // cambiar estado online/offline
   const toggleOnlineStatus = async () => {
-
-    if (!user) {
-      console.log("Usuario no cargado");
-      return;
-    }
-
+    if (!user) return alert("Debes iniciar sesión");
     const nuevoEstado = !isConnected;
-
-    setIsConnected(nuevoEstado);
-
+    
     const { error } = await supabase
       .from("conductores")
       .update({ online: nuevoEstado })
       .eq("id", user.id);
 
-    if (error) {
-
-      console.error("Error al actualizar estado:", error);
-
-      setIsConnected(!nuevoEstado);
-
-    } else {
-
-      console.log(`Estado cambiado a: ${nuevoEstado ? "ONLINE" : "OFFLINE"}`);
-
-    }
-
+    if (!error) setIsConnected(nuevoEstado);
   };
 
   return (
-
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
-
-      <h1 className="text-4xl font-black mb-8">
-        TAX<span className="text-green-400">MAD</span>
-      </h1>
-
-      <div className="bg-[#0d1626] p-10 rounded-3xl shadow-lg text-center w-[320px]">
-
-        <div className="flex justify-between mb-6">
-
-          <span>Sistema</span>
-
-          <span
-            className={`px-3 py-1 rounded-full text-sm ${
-              isConnected ? "bg-green-500 text-black" : "bg-gray-600"
-            }`}
-          >
-            {isConnected ? "ONLINE" : "OFFLINE"}
-          </span>
-
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white p-6">
+      <h1 className="text-4xl font-black mb-8 italic text-[#39FF14]">TAX<span className="text-white">MAD</span></h1>
+      <div className="bg-zinc-900 p-8 rounded-[2rem] border border-white/10 w-full max-w-sm text-center shadow-2xl">
+        <div className="flex justify-between items-center mb-10">
+          <span className="font-bold text-zinc-400">ESTADO</span>
+          <div className={`h-3 w-3 rounded-full animate-pulse ${isConnected ? 'bg-[#39FF14]' : 'bg-red-500'}`} />
         </div>
-
-        <p className="text-gray-400 mb-8">
-          {gpsStatus}
-        </p>
+        
+        <p className="text-sm font-mono text-zinc-500 mb-10 uppercase tracking-widest">{gpsStatus}</p>
 
         <button
           onClick={toggleOnlineStatus}
-          className={`w-full p-4 rounded-xl font-bold ${
-            isConnected
-              ? "bg-[#39FF14] text-black"
-              : "bg-red-500 text-white"
+          className={`w-full p-6 rounded-2xl font-black text-lg transition-all transform active:scale-95 ${
+            isConnected ? "bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]" : "bg-[#39FF14] text-black shadow-[0_0_20px_rgba(57,255,20,0.4)]"
           }`}
         >
-          {isConnected ? "ONLINE" : "OFFLINE"}
+          {isConnected ? "DESCONECTAR" : "INICIAR TURNO"}
         </button>
-
       </div>
-
     </div>
-
   );
-
 }
