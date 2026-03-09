@@ -1,26 +1,26 @@
-'use client'
-import { useState } from 'react'
+// 🟢 Función para cambiar estado online/offline
+const toggleOnlineStatus = async () => {
+  const nuevoEstado = !isConnected;
+  setIsConnected(nuevoEstado);
 
-export default function DriverDashboard() {
-  const [status, setStatus] = useState('OFFLINE');
+  // Actualizamos en Supabase
+  const { error } = await supabase
+    .from('conductores')
+    .update({ online: nuevoEstado })
+    .eq('id', user.id); // Asegúrate de tener el user.id de la sesión
 
-  return (
-    <div className="flex justify-center items-center min-h-screen bg-[#eef2f6]">
-      <div className="w-full max-w-sm p-6 bg-white rounded-3xl shadow-lg text-center">
-        <div className="flex justify-between items-center mb-10">
-          <h2 className="font-bold text-[#112F5C]">TaxMad Driver</h2>
-          <span className={`px-3 py-1 rounded-full text-xs ${status === 'ONLINE' ? 'bg-green-200' : 'bg-red-200'}`}>
-            {status}
-          </span>
-        </div>
-        
-        <button 
-          className="w-full py-4 bg-[#00B5FF] text-white rounded-xl font-bold"
-          onClick={() => setStatus(status === 'OFFLINE' ? 'ONLINE' : 'OFFLINE')}
-        >
-          {status === 'OFFLINE' ? 'IR ONLINE' : 'IR OFFLINE'}
-        </button>
-      </div>
-    </div>
-  );
-}
+  if (error) {
+    console.error("Error al actualizar estado:", error);
+    setIsConnected(!nuevoEstado); // Revertir si falla
+  } else {
+    console.log(`Estado cambiado a: ${nuevoEstado ? 'ONLINE' : 'OFFLINE'}`);
+  }
+};
+
+// ... luego en tu JSX:
+<button 
+  onClick={toggleOnlineStatus}
+  className={`p-6 rounded-full font-black ${isConnected ? 'bg-[#39FF14] text-black' : 'bg-red-500 text-white'}`}
+>
+  {isConnected ? 'ONLINE' : 'OFFLINE'}
+</button>
