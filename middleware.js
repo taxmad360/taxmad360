@@ -1,22 +1,23 @@
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 
-export function middleware(request) {
-  const { pathname } = request.nextUrl
+export async function middleware(req) {
+  const res = NextResponse.next()
+  const supabase = createMiddlewareClient({ req, res })
 
-  // Si alguien intenta entrar a /admin o /drivers sin permiso
-  // Por ahora solo registramos en consola, luego pondremos el bloqueo real
-  if (pathname.startsWith('/admin')) {
-    console.log("👮 Acceso a Zona de Control: ", pathname)
+  // 1. Obtener sesión actual
+  const { data: { session } } = await supabase.auth.getSession()
+
+  // 2. Proteger rutas: Si no hay sesión, redirigir al login
+  if (!session) {
+    if (req.nextUrl.pathname.startsWith('/admin') || req.nextUrl.pathname.startsWith('/drivers')) {
+      return NextResponse.redirect(new URL('/login', req.url))
+    }
   }
 
-  if (pathname.startsWith('/drivers')) {
-    console.log("🚖 Acceso a Terminal de Conductor: ", pathname)
-  }
-
-  return NextResponse.next()
+  return res
 }
 
-// Esto le dice a Next.js que solo actúe en estas rutas
 export const config = {
   matcher: ['/admin/:path*', '/drivers/:path*'],
 }
