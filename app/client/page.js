@@ -1,74 +1,77 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase';
-import { obtenerDistanciaGoogle, calcularTarifaTaxMad } from '../../lib/utils/tarifa'
+import { supabase } from '../../lib/supabase' // ✅ Path correcto
+import { obtenerDistanciaGoogle, calcularTarifaTaxMad } from '../../lib/tarifas' // ✅ Path corregido (era '../../lib/utils/tarifa')
 
 export default function ClientApp() {
-  const [user, setUser] = useState(null);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
-  
-  const [viajeActivo, setViajeActivo] = useState(null);
-  const [mensajes, setMensajes] = useState([]);
-  const [nuevoMsj, setNuevoMsj] = useState('');
-  const [showChat, setShowChat] = useState(false);
+  const [user, setUser] = useState(null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLogin, setIsLogin] = useState(true)
+
+  const [viajeActivo, setViajeActivo] = useState(null)
+  const [mensajes, setMensajes] = useState([])
+  const [nuevoMsj, setNuevoMsj] = useState('')
+  const [showChat, setShowChat] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
-    const { data } = supabase.auth.onAuthStateChange((_, session) => setUser(session?.user ?? null));
-    return () => data.subscription.unsubscribe();
-  }, []);
+    if (!supabase) return // ✅ Guard añadido
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null))
+    const { data } = supabase.auth.onAuthStateChange((_, session) => setUser(session?.user ?? null))
+    return () => data.subscription.unsubscribe()
+  }, [])
 
   // 1. TELEMETRÍA: Envío de ubicación cada 3 min
   useEffect(() => {
-    if (!user) return;
+    if (!user || !supabase) return // ✅ Guard añadido
 
     const enviarUbicacion = () => {
       navigator.geolocation.getCurrentPosition(async (pos) => {
-        const { latitude, longitude } = pos.coords;
+        const { latitude, longitude } = pos.coords
         await supabase.from('ubicaciones').upsert({
           user_id: user.id,
           latitud: latitude,
           longitud: longitude,
           updated_at: new Date().toISOString()
-        });
-      }, (err) => console.error("Error GPS:", err));
-    };
+        })
+      }, (err) => console.error("Error GPS:", err))
+    }
 
-    enviarUbicacion();
-    const interval = setInterval(enviarUbicacion, 180000); // 3 minutos
-    return () => clearInterval(interval);
-  }, [user]);
+    enviarUbicacion()
+    const interval = setInterval(enviarUbicacion, 180000)
+    return () => clearInterval(interval)
+  }, [user])
 
   // 2. REALTIME: Sincronización de Viajes y Chat
   useEffect(() => {
-    if (!viajeActivo?.id) return;
+    if (!viajeActivo?.id || !supabase) return // ✅ Guard añadido
     const channel = supabase.channel(`viaje-${viajeActivo.id}`)
-      .on('postgres_changes', { event: 'INSERT', table: 'mensajes', filter: `viaje_id=eq.${viajeActivo.id}` }, 
+      .on('postgres_changes', { event: 'INSERT', table: 'mensajes', filter: `viaje_id=eq.${viajeActivo.id}` },
         (payload) => setMensajes((prev) => [...prev, payload.new])
       )
-      .on('postgres_changes', { event: 'UPDATE', table: 'viajes', filter: `id=eq.${viajeActivo.id}` }, 
+      .on('postgres_changes', { event: 'UPDATE', table: 'viajes', filter: `id=eq.${viajeActivo.id}` },
         (payload) => setViajeActivo(payload.new)
-      ).subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [viajeActivo]);
+      ).subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [viajeActivo])
 
   const handleAuth = async (e) => {
-    e.preventDefault();
-    const { error } = isLogin 
+    e.preventDefault()
+    if (!supabase) return alert("Error de configuración. Contacta al administrador.")
+    const { error } = isLogin
       ? await supabase.auth.signInWithPassword({ email, password })
-      : await supabase.auth.signUp({ email, password });
-    if (error) alert(error.message);
-  };
+      : await supabase.auth.signUp({ email, password })
+    if (error) alert(error.message)
+  }
 
   const pedirTaxi = async (e) => {
-    e.preventDefault();
-    const origen = e.target.origen.value;
-    const destino = e.target.destino.value;
+    e.preventDefault()
+    if (!supabase) return
+    const origen = e.target.origen.value
+    const destino = e.target.destino.value
 
-    const km = await obtenerDistanciaGoogle(origen, destino);
-    const precio = calcularTarifaTaxMad({ distanciaKm: km, fechaHora: new Date() });
+    const km = await obtenerDistanciaGoogle(origen, destino)
+    const precio = calcularTarifaTaxMad({ distanciaKm: km, fechaHora: new Date() })
 
     const { data, error } = await supabase.from('viajes').insert([{
       origen,
@@ -77,21 +80,20 @@ export default function ClientApp() {
       precio,
       estado_viaje: 'pendiente',
       user_id: user.id
-    }]).select().single();
+    }]).select().single()
 
-    if (!error) setViajeActivo(data);
-    else alert("Error al solicitar: " + error.message);
-  };
+    if (!error) setViajeActivo(data)
+    else alert("Error al solicitar: " + error.message)
+  }
 
   const enviarMensaje = async (e) => {
-    e.preventDefault();
-    if (!nuevoMsj.trim()) return;
-    await supabase.from('mensajes').insert([{ viaje_id: viajeActivo.id, remitente: 'cliente', contenido: nuevoMsj }]);
-    setNuevoMsj('');
-  };
+    e.preventDefault()
+    if (!nuevoMsj.trim() || !supabase) return
+    await supabase.from('mensajes').insert([{ viaje_id: viajeActivo.id, remitente: 'cliente', contenido: nuevoMsj }])
+    setNuevoMsj('')
+  }
 
   if (!user) {
-    // ... (Tu UI de Login que ya tenías)
     return (
       <div className="min-h-screen bg-black text-white p-8 flex flex-col justify-center max-w-[414px] mx-auto">
         <h1 className="text-4xl italic font-black mb-10 header-gradient">TAXMAD {isLogin ? 'LOGIN' : 'REGISTRO'}</h1>
@@ -104,7 +106,7 @@ export default function ClientApp() {
           {isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
         </button>
       </div>
-    );
+    )
   }
 
   return (
@@ -144,5 +146,5 @@ export default function ClientApp() {
         </div>
       )}
     </div>
-  );
+  )
 }
