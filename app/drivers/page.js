@@ -9,8 +9,37 @@ const supabase = (S_URL.startsWith('http')) ? createClient(S_URL, S_KEY) : null;
 export default function DriverApp() {
   const [isConnected, setIsConnected] = useState(false);
   const [currentTrip, setCurrentTrip] = useState(null);
+  const [user, setUser] = useState(null); // Estado para el usuario logueado
 
-  // 1. FETCH INICIAL: Buscar viajes pendientes
+  // Obtener usuario al cargar
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setUser(data.user);
+    });
+  }, []);
+
+  // 1. TELEMETRÍA: Envío de ubicación cada 3 min
+  useEffect(() => {
+    if (!user) return;
+
+    const enviarUbicacion = () => {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        await supabase.from('ubicaciones').upsert({
+          user_id: user.id,
+          latitud: latitude,
+          longitud: longitude,
+          updated_at: new Date().toISOString()
+        });
+      }, (err) => console.error("Error GPS:", err));
+    };
+
+    enviarUbicacion();
+    const interval = setInterval(enviarUbicacion, 180000); // 3 minutos
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // 2. FETCH INICIAL: Buscar viajes pendientes
   useEffect(() => {
     if (!isConnected || !supabase) return;
     const fetchViajes = async () => {
@@ -20,11 +49,11 @@ export default function DriverApp() {
     fetchViajes();
   }, [isConnected]);
 
-  // 2. ACEPTAR VIAJE
+  // 3. ACEPTAR VIAJE
   const aceptarViaje = async () => {
     const { data, error } = await supabase
       .from('viajes')
-      .update({ estado_viaje: 'aceptado' })
+      .update({ estado_viaje: 'aceptado', driver_id: user.id })
       .eq('id', currentTrip.id)
       .select()
       .single();
@@ -33,7 +62,7 @@ export default function DriverApp() {
     else alert("Error al aceptar: " + error.message);
   };
 
-  // 3. FINALIZAR VIAJE
+  // 4. FINALIZAR VIAJE
   const finalizarViaje = async () => {
     const { error } = await supabase
       .from('viajes')
@@ -49,7 +78,7 @@ export default function DriverApp() {
     }
   };
 
-  // 4. Escuchar viajes nuevos
+  // 5. Escuchar viajes nuevos
   useEffect(() => {
     if (!supabase || !isConnected) return;
     const channel = supabase.channel('radar-driver')
@@ -78,7 +107,6 @@ export default function DriverApp() {
             <div className="card-txmd border-neon-green animate-in fade-in space-y-4">
               <h3 className="text-xl font-bold">{currentTrip.origen} ➔ {currentTrip.destino}</h3>
               
-              {/* Resumen económico */}
               <div className="flex gap-4">
                 <div className="flex-1 bg-zinc-900 p-3 rounded-xl">
                   <p className="text-[9px] text-zinc-500 uppercase">Precio</p>
