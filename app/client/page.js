@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { obtenerDistanciaGoogle, calcularTarifaTaxMad } from '@/lib/utils/tarifa'
+import { obtenerDistanciaGoogle, calcularTarifaTaxMad } from '../../lib/utils/tarifa'
 
 export default function ClientApp() {
   const [user, setUser] = useState(null);
