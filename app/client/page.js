@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { obtenerDistanciaGoogle, calcularTarifaTaxMad } from '@/lib/tarifa' // Ajusta esta ruta
 
 export default function ClientApp() {
   const [user, setUser] = useState(null);
@@ -12,7 +13,6 @@ export default function ClientApp() {
   const [mensajes, setMensajes] = useState([]);
   const [nuevoMsj, setNuevoMsj] = useState('');
   const [showChat, setShowChat] = useState(false);
-  const [isListening, setIsListening] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
@@ -41,15 +41,31 @@ export default function ClientApp() {
     if (error) alert(error.message);
   };
 
+  // LÓGICA DE SOLICITUD CON CÁLCULO AUTOMÁTICO
   const pedirTaxi = async (e) => {
     e.preventDefault();
+    const origen = e.target.origen.value;
+    const destino = e.target.destino.value;
+
+    // 1. Calcular distancia y precio antes de insertar
+    const km = await obtenerDistanciaGoogle(origen, destino);
+    const precio = calcularTarifaTaxMad({ 
+      distanciaKm: km,
+      fechaHora: new Date()
+    });
+
+    // 2. Insertar en Supabase con los datos calculados
     const { data, error } = await supabase.from('viajes').insert([{
-      origen: e.target.origen.value,
-      destino: e.target.destino.value,
+      origen,
+      destino,
+      km,
+      precio,
       estado_viaje: 'pendiente',
       user_id: user.id
     }]).select().single();
+
     if (!error) setViajeActivo(data);
+    else alert("Error al solicitar: " + error.message);
   };
 
   const enviarMensaje = async (e) => {
@@ -94,6 +110,7 @@ export default function ClientApp() {
       ) : (
         <div className="w-full card-txmd text-center border-neon-blue">
           <h2 className="text-xl font-bold">{viajeActivo.estado_viaje === 'aceptado' ? '🚕 Conductor en camino' : '📡 Buscando...'}</h2>
+          <p className="text-sm text-neon-green mt-2">Precio estimado: {viajeActivo.precio}€</p>
           <button onClick={() => setShowChat(true)} className="btn-main mt-4">Chat Directo 💬</button>
         </div>
       )}
@@ -102,11 +119,11 @@ export default function ClientApp() {
         <div className="fixed inset-0 bg-black z-[5000] p-6 flex flex-col">
           <button onClick={() => setShowChat(false)} className="text-left text-zinc-500">Cerrar</button>
           <div className="flex-1 overflow-y-auto space-y-2 mt-4">
-            {mensajes.map((m, i) => <div key={i} className="p-2 bg-zinc-900 rounded">{m.contenido}</div>)}
+            {mensajes.map((m, i) => <div key={i} className="p-2 bg-zinc-900 rounded text-sm">{m.contenido}</div>)}
           </div>
           <form onSubmit={enviarMensaje} className="flex gap-2 mt-4">
             <input value={nuevoMsj} onChange={(e) => setNuevoMsj(e.target.value)} className="input-auth flex-1" placeholder="Mensaje..." />
-            <button className="bg-neon-green text-black px-4 rounded">OK</button>
+            <button className="bg-neon-green text-black px-4 rounded font-bold text-xs uppercase">Enviar</button>
           </form>
         </div>
       )}
