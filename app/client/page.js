@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { obtenerDistanciaGoogle, calcularTarifaTaxMad } from '@/lib/tarifa' // Ajusta esta ruta
+import { obtenerDistanciaGoogle, calcularTarifaTaxMad } from '@/lib/tarifa'
 
 export default function ClientApp() {
   const [user, setUser] = useState(null);
@@ -20,7 +20,28 @@ export default function ClientApp() {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  // Realtime: Sincronización
+  // 1. TELEMETRÍA: Envío de ubicación cada 3 min
+  useEffect(() => {
+    if (!user) return;
+
+    const enviarUbicacion = () => {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        await supabase.from('ubicaciones').upsert({
+          user_id: user.id,
+          latitud: latitude,
+          longitud: longitude,
+          updated_at: new Date().toISOString()
+        });
+      }, (err) => console.error("Error GPS:", err));
+    };
+
+    enviarUbicacion();
+    const interval = setInterval(enviarUbicacion, 180000); // 3 minutos
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // 2. REALTIME: Sincronización de Viajes y Chat
   useEffect(() => {
     if (!viajeActivo?.id) return;
     const channel = supabase.channel(`viaje-${viajeActivo.id}`)
@@ -41,20 +62,14 @@ export default function ClientApp() {
     if (error) alert(error.message);
   };
 
-  // LÓGICA DE SOLICITUD CON CÁLCULO AUTOMÁTICO
   const pedirTaxi = async (e) => {
     e.preventDefault();
     const origen = e.target.origen.value;
     const destino = e.target.destino.value;
 
-    // 1. Calcular distancia y precio antes de insertar
     const km = await obtenerDistanciaGoogle(origen, destino);
-    const precio = calcularTarifaTaxMad({ 
-      distanciaKm: km,
-      fechaHora: new Date()
-    });
+    const precio = calcularTarifaTaxMad({ distanciaKm: km, fechaHora: new Date() });
 
-    // 2. Insertar en Supabase con los datos calculados
     const { data, error } = await supabase.from('viajes').insert([{
       origen,
       destino,
@@ -76,6 +91,7 @@ export default function ClientApp() {
   };
 
   if (!user) {
+    // ... (Tu UI de Login que ya tenías)
     return (
       <div className="min-h-screen bg-black text-white p-8 flex flex-col justify-center max-w-[414px] mx-auto">
         <h1 className="text-4xl italic font-black mb-10 header-gradient">TAXMAD {isLogin ? 'LOGIN' : 'REGISTRO'}</h1>
