@@ -16,4 +16,4 @@ module.exports = {
     },
   },
   plugins: [],
-}; // Asegúrate de que termine en ; y no haya nada después.
+};
