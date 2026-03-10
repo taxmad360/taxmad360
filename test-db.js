@@ -7,3 +7,6 @@ async function probarConexion() {
   if (error) console.error("Error al insertar:", error);
   else console.log("¡Cliente insertado con éxito!", data);
 }
+
+// ¡Añade esto debajo!
+probarConexion();
