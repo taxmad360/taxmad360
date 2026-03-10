@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase' // ✅ Path correcto
-import { obtenerDistanciaGoogle, calcularTarifaTaxMad } from '../../lib/tarifas' // ✅ Path corregido (era '../../lib/utils/tarifa')
+import { obtenerDistanciaGoogle, calcularTarifaTaxMad } from '../../lib/utils/tarifas' // ✅ Path corregido
 
 export default function ClientApp() {
   const [user, setUser] = useState(null)
