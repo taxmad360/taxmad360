@@ -9,38 +9,46 @@ const FESTIVOS_MADRID_2026 = [
   "2026-12-08", "2026-12-25"
 ];
 
-// Función para obtener KM reales desde Google Maps
+// Función segura para obtener KM desde Google Maps
 export async function obtenerDistanciaGoogle(origen, destino) {
+  // Verificación de entorno: solo ejecutar si Google Maps está cargado en el navegador
+  if (typeof window === 'undefined' || !window.google || !window.google.maps) {
+    console.warn("Google Maps no cargado, usando distancia estimada.");
+    return 5.0; // Distancia estimada de respaldo
+  }
+
   try {
-    const service = new google.maps.DistanceMatrixService();
+    const service = new window.google.maps.DistanceMatrixService();
     const response = await service.getDistanceMatrix({
-      origins: [origen], // Puede ser dirección o {lat, lng}
+      origins: [origen],
       destinations: [destino],
-      travelMode: google.maps.TravelMode.DRIVING,
-      unitSystem: google.maps.UnitSystem.METRIC,
+      travelMode: window.google.maps.TravelMode.DRIVING,
+      unitSystem: window.google.maps.UnitSystem.METRIC,
     });
 
-    const distanciaMetros = response.rows[0].elements[0].distance.value;
-    return distanciaMetros / 1000; // Retorna KM
+    if (response.rows[0].elements[0].status === "OK") {
+      return response.rows[0].elements[0].distance.value / 1000;
+    }
+    return 5.0;
   } catch (error) {
     console.error("Error calculando distancia:", error);
-    return 0;
+    return 5.0;
   }
 }
 
 export function calcularTarifaTaxMad({
-  esAeropuerto,
-  esDentroM30,
-  esEstacionIfema,
-  distanciaKm,
-  fechaHora,
-  esPrecontratado
+  esAeropuerto = false,
+  esDentroM30 = false,
+  esEstacionIfema = false,
+  distanciaKm = 0,
+  fechaHora = new Date(),
+  esPrecontratado = false
 }) {
   const hora = fechaHora.getHours();
   const diaSemana = fechaHora.getDay();
   const fechaISO = fechaHora.toISOString().split('T')[0];
 
-  // 1. TARIFA PRECONTRATADA (Gestión)
+  // 1. TARIFA PRECONTRATADA
   const TARIFA_PRECONTRATADO = 7.00;
 
   // 2. DETERMINAR TARIFA 2 (Nocturna/Festiva)
@@ -75,7 +83,7 @@ export function calcularTarifaTaxMad({
 
   let total = config.bajada + (distanciaKm * config.km);
 
-  // 6. SUPLEMENTOS ESPECIALES (Navidad)
+  // 6. SUPLEMENTOS ESPECIALES
   const esNocheEspecial = (fechaISO === "2026-12-24" || fechaISO === "2026-12-31") && esNocturno;
   if (esNocheEspecial) total += 7.00;
 
