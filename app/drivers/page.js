@@ -13,93 +13,69 @@ export default function DriverApp() {
   const [nuevoMsj, setNuevoMsj] = useState('');
   const [showChat, setShowChat] = useState(false);
 
-  // FETCH INICIAL: Buscar viajes pendientes al entrar o al conectar
+  // 1. FETCH INICIAL: Buscar viajes pendientes
   useEffect(() => {
-    if (!isConnected) return;
-
-    const fetchViajesPendientes = async () => {
-      const { data, error } = await supabase
-        .from('viajes')
-        .select('*')
-        .eq('estado_viaje', 'pendiente')
-        .single(); // Trae el primero que encuentre
-
-      if (!error && data) {
-        setCurrentTrip(data);
-      }
+    if (!isConnected || !supabase) return;
+    const fetchViajes = async () => {
+      const { data } = await supabase.from('viajes').select('*').eq('estado_viaje', 'pendiente').single();
+      if (data) setCurrentTrip(data);
     };
-
-    fetchViajesPendientes();
+    fetchViajes();
   }, [isConnected]);
 
-  // Escuchar viajes nuevos (Radar en tiempo real)
+  // 2. ACEPTAR VIAJE
+  const aceptarViaje = async () => {
+    const { data, error } = await supabase
+      .from('viajes')
+      .update({ estado_viaje: 'aceptado' }) // Aquí podrías añadir driver_id: auth.user().id
+      .eq('id', currentTrip.id)
+      .select()
+      .single();
+
+    if (!error) setCurrentTrip(data);
+    else alert("Error al aceptar: " + error.message);
+  };
+
+  // 3. Escuchar viajes nuevos
   useEffect(() => {
     if (!supabase || !isConnected) return;
     const channel = supabase.channel('radar-driver')
       .on('postgres_changes', { event: 'INSERT', table: 'viajes', filter: 'estado_viaje=eq.pendiente' }, 
-        (payload) => { setCurrentTrip(payload.new); }
+        (payload) => setCurrentTrip(payload.new)
       ).subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => supabase.removeChannel(channel);
   }, [isConnected]);
 
-  // Escuchar mensajes en tiempo real
-  useEffect(() => {
-    if (!supabase || !currentTrip) return;
-    const msgChannel = supabase.channel(`chat-${currentTrip.id}`)
-      .on('postgres_changes', { event: 'INSERT', table: 'mensajes', filter: `viaje_id=eq.${currentTrip.id}` }, 
-        (payload) => { setMensajes((prev) => [...prev, payload.new]); }
-      ).subscribe();
-    return () => { supabase.removeChannel(msgChannel); };
-  }, [currentTrip]);
-
-  const enviarMensaje = async (texto) => {
-    if (!texto.trim()) return;
-    await supabase.from('mensajes').insert([{ 
-      viaje_id: currentTrip.id, 
-      remitente: 'driver', 
-      contenido: texto 
-    }]);
-    setNuevoMsj('');
-  };
-
   return (
-    // ... (Tu código de UI sigue siendo igual)
     <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center w-full max-w-[414px] mx-auto">
-      {/* Tu estructura de UI se mantiene exactamente como la tenías */}
       <header className="w-full flex justify-between items-center py-6">
         <h1 className="header-gradient text-2xl italic tracking-tighter">TAXMAD DRIVER</h1>
-        <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-neon-green shadow-[0_0_10px_#39FF14]' : 'bg-red-600'}`}></div>
+        <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-neon-green' : 'bg-red-600'}`}></div>
       </header>
 
-      <button 
-        onClick={() => setIsConnected(!isConnected)}
-        className={`btn-main mb-10 ${!isConnected ? '!bg-zinc-800 !text-zinc-500 !shadow-none' : ''}`}
-      >
+      <button onClick={() => setIsConnected(!isConnected)} className="btn-main mb-10">
         {isConnected ? '• Unidad Online' : 'Ir Online'}
       </button>
 
-      {isConnected ? (
-        <div className="w-full space-y-6">
+      {isConnected && (
+        <div className="w-full">
           {!currentTrip ? (
-            <div className="card-txmd text-center py-20">
-              <div className="w-16 h-16 border-4 border-neon-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest">Escaneando Servicios...</p>
-            </div>
+            <div className="card-txmd text-center py-20 text-zinc-500">Escaneando servicios...</div>
           ) : (
-            <div className="card-txmd animate-in fade-in zoom-in duration-500 border-neon-green">
-              <span className="text-neon-green text-[9px] font-black uppercase tracking-widest">Nuevo Viaje Disponible</span>
-              <h3 className="text-xl font-bold mt-2">{currentTrip.origen}</h3>
-              <p className="text-zinc-500 text-xs mb-6">Hacia: {currentTrip.destino}</p>
+            <div className="card-txmd border-neon-green animate-in fade-in">
+              <h3 className="text-xl font-bold">{currentTrip.origen} ➔ {currentTrip.destino}</h3>
+              <p className="text-[10px] text-zinc-500 mb-6 uppercase">Estado: {currentTrip.estado_viaje}</p>
               
-              <div className="flex gap-2">
-                <button onClick={() => setShowChat(true)} className="flex-1 bg-white text-black py-3 rounded-xl font-bold text-xs">CHAT CLIENTE 💬</button>
-                <button className="flex-1 bg-neon-blue text-black py-3 rounded-xl font-bold text-xs">MAPA 📍</button>
-              </div>
+              {currentTrip.estado_viaje === 'pendiente' ? (
+                <button onClick={aceptarViaje} className="w-full bg-neon-green text-black py-4 rounded-xl font-black uppercase">
+                  Aceptar Viaje
+                </button>
+              ) : (
+                <p className="text-neon-green font-bold text-center">Viaje en curso ✅</p>
+              )}
             </div>
           )}
         </div>
-      ) : (
-        <p className="text-zinc-700 font-bold uppercase text-xs tracking-[4px] mt-20">GPS en Pausa</p>
       )}
     </div>
   )
