@@ -1,4 +1,16 @@
+// 1. IMPORTACIONES SIEMPRE AL PRINCIPIO
+import { supabase } from '../lib/utils/supabase';
+
+// 2. LOG PARA DEPURAR (Si esto imprime 'undefined', el problema es la ruta o el export)
+console.log("¿Qué es supabase?", supabase); 
+
+// 3. DEFINICIÓN DE LA FUNCIÓN
 async function probarConexion() {
+  if (!supabase) {
+    console.error("Supabase no está inicializado. Revisa lib/utils/supabase.js");
+    return;
+  }
+
   const { data, error } = await supabase
     .from('clientes')
     .insert([{ nombre: 'Prueba', apellido: 'Usuario', usuario: 'test01' }])
@@ -7,7 +19,6 @@ async function probarConexion() {
   if (error) console.error("Error al insertar:", error);
   else console.log("¡Cliente insertado con éxito!", data);
 }
-import { supabase } from '../lib/utils/supabase'; // Asegura que la ruta sea correcta
 
-console.log("¿Qué es supabase?", supabase); // Si esto imprime 'undefined' o 'null', el problema está en la exportación// ¡Añade esto debajo!
+// 4. EJECUCIÓN
 probarConexion();
