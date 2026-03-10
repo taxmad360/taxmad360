@@ -5,17 +5,16 @@ const urlsToCache = [
   '/logo.png'
 ];
 
-// Instalación: Guardamos lo básico (logo y configuración)
+// Instalación: Guardamos lo básico
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(urlsToCache))
+      .then(() => self.skipWaiting()) // ✅ Corregido: skipWaiting dentro del waitUntil
   );
-  self.skipWaiting();
 });
 
-// Activación: Limpiamos cachés antiguos si los hubiera
+// Activación: Limpiamos cachés antiguos
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -30,7 +29,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Estrategia: Network First (Priorizar siempre los datos reales de los taxis)
+// Estrategia: Network First
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request).catch(() => {
