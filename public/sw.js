@@ -2,7 +2,7 @@ const CACHE_NAME = 'taxmad-v2';
 const urlsToCache = [
   '/',
   '/manifest.json',
-  '/logo.png'
+  '/logo-512.png'
 ];
 
 // Instalación: Guardamos lo básico (logo y configuración)
