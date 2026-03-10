@@ -11,7 +11,7 @@ export const metadata = {
     title: 'TaxMad',
   },
   icons: {
-    apple: '/logo.png',
+    apple: '/logo-512.png',
   },
 }
 
