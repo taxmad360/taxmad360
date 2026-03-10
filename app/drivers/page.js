@@ -9,9 +9,6 @@ const supabase = (S_URL.startsWith('http')) ? createClient(S_URL, S_KEY) : null;
 export default function DriverApp() {
   const [isConnected, setIsConnected] = useState(false);
   const [currentTrip, setCurrentTrip] = useState(null);
-  const [mensajes, setMensajes] = useState([]);
-  const [nuevoMsj, setNuevoMsj] = useState('');
-  const [showChat, setShowChat] = useState(false);
 
   // 1. FETCH INICIAL: Buscar viajes pendientes
   useEffect(() => {
@@ -27,7 +24,7 @@ export default function DriverApp() {
   const aceptarViaje = async () => {
     const { data, error } = await supabase
       .from('viajes')
-      .update({ estado_viaje: 'aceptado' }) // Aquí podrías añadir driver_id: auth.user().id
+      .update({ estado_viaje: 'aceptado' })
       .eq('id', currentTrip.id)
       .select()
       .single();
@@ -36,7 +33,23 @@ export default function DriverApp() {
     else alert("Error al aceptar: " + error.message);
   };
 
-  // 3. Escuchar viajes nuevos
+  // 3. FINALIZAR VIAJE
+  const finalizarViaje = async () => {
+    const { error } = await supabase
+      .from('viajes')
+      .update({ 
+        estado_viaje: 'finalizado',
+        fecha_finalizado: new Date().toISOString()
+      })
+      .eq('id', currentTrip.id);
+
+    if (!error) {
+      setCurrentTrip(null);
+      alert("Viaje finalizado con éxito.");
+    }
+  };
+
+  // 4. Escuchar viajes nuevos
   useEffect(() => {
     if (!supabase || !isConnected) return;
     const channel = supabase.channel('radar-driver')
@@ -50,7 +63,7 @@ export default function DriverApp() {
     <div className="min-h-screen bg-black text-white p-6 flex flex-col items-center w-full max-w-[414px] mx-auto">
       <header className="w-full flex justify-between items-center py-6">
         <h1 className="header-gradient text-2xl italic tracking-tighter">TAXMAD DRIVER</h1>
-        <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-neon-green' : 'bg-red-600'}`}></div>
+        <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-neon-green shadow-[0_0_10px_#39FF14]' : 'bg-red-600'}`}></div>
       </header>
 
       <button onClick={() => setIsConnected(!isConnected)} className="btn-main mb-10">
@@ -62,16 +75,29 @@ export default function DriverApp() {
           {!currentTrip ? (
             <div className="card-txmd text-center py-20 text-zinc-500">Escaneando servicios...</div>
           ) : (
-            <div className="card-txmd border-neon-green animate-in fade-in">
+            <div className="card-txmd border-neon-green animate-in fade-in space-y-4">
               <h3 className="text-xl font-bold">{currentTrip.origen} ➔ {currentTrip.destino}</h3>
-              <p className="text-[10px] text-zinc-500 mb-6 uppercase">Estado: {currentTrip.estado_viaje}</p>
               
+              {/* Resumen económico */}
+              <div className="flex gap-4">
+                <div className="flex-1 bg-zinc-900 p-3 rounded-xl">
+                  <p className="text-[9px] text-zinc-500 uppercase">Precio</p>
+                  <p className="font-black text-neon-green">{currentTrip.precio} €</p>
+                </div>
+                <div className="flex-1 bg-zinc-900 p-3 rounded-xl">
+                  <p className="text-[9px] text-zinc-500 uppercase">Distancia</p>
+                  <p className="font-black text-white">{Number(currentTrip.km).toFixed(1)} km</p>
+                </div>
+              </div>
+
               {currentTrip.estado_viaje === 'pendiente' ? (
                 <button onClick={aceptarViaje} className="w-full bg-neon-green text-black py-4 rounded-xl font-black uppercase">
                   Aceptar Viaje
                 </button>
               ) : (
-                <p className="text-neon-green font-bold text-center">Viaje en curso ✅</p>
+                <button onClick={finalizarViaje} className="w-full bg-neon-blue text-black py-4 rounded-xl font-black uppercase">
+                  Finalizar Viaje
+                </button>
               )}
             </div>
           )}
